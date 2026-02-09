@@ -125,6 +125,7 @@ export function CoursePage() {
         <SkillCourseCard
           imageSrc={course.imageSkillCard}
           title={course.title}
+          slug={course.slug}
         />
 
         {/* Подойдет для вас: от заголовка до карточек 40px; от карточек до «Направления» 60px */}
