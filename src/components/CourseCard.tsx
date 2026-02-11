@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 type CourseCardProps = {
@@ -12,8 +13,11 @@ type CourseCardProps = {
  * Гибкая: ширина подстраивается под сетку, не накладывается при уменьшении экрана.
  */
 export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
+  const [tooltipVisible, setTooltipVisible] = useState(false)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+
   return (
-    <Link to={`/course/${slug}`} className="block w-full min-w-0">
+    <Link to={`/course/${slug}`} className="block w-full min-w-0 overflow-visible" style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}>
       <article
         className="relative flex flex-col items-stretch w-full max-w-[360px] mx-auto gap-6 rounded-[30px] overflow-hidden bg-white pb-[15px]"
         style={{
@@ -31,8 +35,15 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
           />
           {/* Кнопка добавления — SVG из Figma node 33:2051 */}
           <span
-            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center shrink-0"
-            aria-hidden
+            className="absolute top-5 right-5 z-10 w-8 h-8 flex items-center justify-center shrink-0"
+            style={{ cursor: "url('/images/cursor.svg') 0 0, auto", pointerEvents: 'auto' }}
+            onMouseEnter={(e) => {
+              setTooltipPos({ x: e.clientX, y: e.clientY })
+              setTooltipVisible(true)
+            }}
+            onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setTooltipVisible(false)}
+            aria-label="Добавить курс"
           >
             <img
               src="/images/add-workout-button.svg"
@@ -41,6 +52,32 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
               height={32}
               className="w-8 h-8 object-contain"
             />
+            {tooltipVisible && (
+              <div
+                className="fixed z-50 flex flex-row items-center justify-center box-border"
+                style={{
+                  left: tooltipPos.x + 17,
+                  top: tooltipPos.y + 15,
+                  minWidth: 110,
+                  height: 27,
+                  padding: 6,
+                  gap: 10,
+                  border: '0.5px solid rgba(0, 0, 0, 1)',
+                  borderRadius: 5,
+                  background: 'rgba(255, 255, 255, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 14,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                  textAlign: 'left',
+                  color: 'rgba(32, 32, 32, 1)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Добавить курс
+              </div>
+            )}
           </span>
         </div>
         {/* Текстовый блок: по макету gap 20px, заголовок 32px, чипы gap 6px */}

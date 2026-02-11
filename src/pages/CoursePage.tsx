@@ -2,6 +2,7 @@ import { useParams, Navigate } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { SkillCourseCard } from '@/components/SkillCourseCard'
 import { getCourseBySlug, COURSE_COLORS } from '@/data/courses'
+import { useAuth } from '@/contexts/AuthContext'
 
 const COURSE_DESCRIPTIONS: Record<
   string,
@@ -109,6 +110,7 @@ function StarIcon({ className }: { className?: string }) {
 
 export function CoursePage() {
   const { slug } = useParams<{ slug: string }>()
+  const { user, openLoginModal } = useAuth()
   const course = slug ? getCourseBySlug(slug) : undefined
   const description = slug ? COURSE_DESCRIPTIONS[slug] : undefined
 
@@ -342,6 +344,7 @@ export function CoursePage() {
             {/* Frame 2043683033: кнопка 437×52, padding 16px 26px, radius 46px */}
             <button
               type="button"
+              onClick={openLoginModal}
               className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-opacity"
               style={{
                 width: 437,
@@ -356,7 +359,7 @@ export function CoursePage() {
                 fontSize: 18,
               }}
             >
-              Войдите, чтобы добавить курс
+              {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
             </button>
           </div>
 

@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],
+        stratos: ['StratosSkyeng', 'Roboto', 'sans-serif'],
       },
       colors: {
         page: '#FAFAFA',

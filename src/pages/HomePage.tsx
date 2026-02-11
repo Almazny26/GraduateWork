@@ -8,8 +8,8 @@ export function HomePage() {
     <div id="top" className="min-h-screen bg-page font-sans text-text">
       <Header />
       <Hero />
-      <section className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[60px] pb-10 sm:pb-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0">
+      <section className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[60px] pb-10 sm:pb-14 overflow-visible">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
           {COURSES.map((course) => (
             <CourseCard
               key={course.id}
