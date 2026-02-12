@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { SkillCourseCard } from '@/components/SkillCourseCard'
-import { getCourseBySlug, COURSE_COLORS } from '@/data/courses'
+import { getCourseBySlug } from '@/data/courses'
 import { useAuth } from '@/contexts/AuthContext'
 
 const COURSE_DESCRIPTIONS: Record<
@@ -111,6 +112,7 @@ function StarIcon({ className }: { className?: string }) {
 export function CoursePage() {
   const { slug } = useParams<{ slug: string }>()
   const { user, openLoginModal } = useAuth()
+  const [showcaseHovered, setShowcaseHovered] = useState(false)
   const course = slug ? getCourseBySlug(slug) : undefined
   const description = slug ? COURSE_DESCRIPTIONS[slug] : undefined
 
@@ -271,6 +273,8 @@ export function CoursePage() {
         <div
           className="relative w-full max-w-[1160px] overflow-hidden"
           style={{ minHeight: 588 }}
+          onMouseEnter={() => setShowcaseHovered(true)}
+          onMouseLeave={() => setShowcaseHovered(false)}
         >
           {/* Rectangle 111003296 / 111003295: 1160×486, radius 30, shadow, white */}
           <div
@@ -345,7 +349,7 @@ export function CoursePage() {
             <button
               type="button"
               onClick={openLoginModal}
-              className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-opacity"
+              className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)]"
               style={{
                 width: 437,
                 height: 52,
@@ -396,8 +400,14 @@ export function CoursePage() {
                 top: 52,
                 width: 565.51,
                 height: 567.28,
-                transform: 'rotate(-2.99deg)',
+                transform: showcaseHovered
+                  ? 'scale(1.08) rotate(-2.99deg)'
+                  : 'rotate(-2.99deg)',
                 transformOrigin: 'top left',
+                transition: 'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
+                filter: showcaseHovered
+                  ? 'drop-shadow(0 16px 30px rgba(0, 0, 0, 0.22))'
+                  : 'drop-shadow(0 5px 12px rgba(0, 0, 0, 0.13))',
               }}
               data-animation-layer="silhouette"
             >
@@ -437,8 +447,14 @@ export function CoursePage() {
                 top: 48.9,
                 width: 519.47,
                 height: 539.54,
-                transform: 'rotate(-2.99deg)',
+                transform: showcaseHovered
+                  ? 'scale(1.08) rotate(-2.99deg)'
+                  : 'rotate(-2.99deg)',
                 transformOrigin: 'top left',
+                transition: 'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
+                filter: showcaseHovered
+                  ? 'drop-shadow(0 28px 46px rgba(0, 0, 0, 0.3))'
+                  : 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15))',
               }}
             >
               <img

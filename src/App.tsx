@@ -5,6 +5,7 @@ import { LoginModal } from '@/components/LoginModal'
 import { HomePage } from '@/pages/HomePage'
 import { CoursePage } from '@/pages/CoursePage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { LessonPage } from '@/pages/LessonPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -22,6 +23,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/course/:slug" element={<CoursePage />} />
+        <Route path="/course/:slug/lesson/:lessonId" element={<LessonPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Routes>
       <LoginModal open={loginModalOpen} onClose={closeLoginModal} />
