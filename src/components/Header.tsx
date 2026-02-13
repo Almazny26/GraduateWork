@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function Header() {
   const { user, logout, openLoginModal } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const showTagline =
+    location.pathname === '/' || /^\/course\/[^/]+\/?$/.test(location.pathname)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -44,9 +47,11 @@ export function Header() {
             height={35}
           />
         </Link>
-        <p className="text-base sm:text-lg text-text opacity-50 leading-tight">
-          Онлайн-тренировки для занятий дома
-        </p>
+        {showTagline && (
+          <p className="text-base sm:text-lg text-text opacity-50 leading-tight">
+            Онлайн-тренировки для занятий дома
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-3 shrink-0 relative" ref={dropdownRef}>
         {user ? (

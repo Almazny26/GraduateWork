@@ -170,6 +170,8 @@ export function ProfilePage() {
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
   const lessonListRef = useRef<HTMLDivElement>(null)
   const [thumbTop, setThumbTop] = useState(0)
+  const [thumbHeight, setThumbHeight] = useState(116)
+  const [hasOverflow, setHasOverflow] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -223,10 +225,31 @@ export function ProfilePage() {
 
   const updateCustomScrollbar = () => {
     const el = lessonListRef.current
-    if (!el) return
-    const maxScroll = Math.max(1, el.scrollHeight - el.clientHeight)
-    const maxThumbTop = 359 - 116
+    if (!el) {
+      setHasOverflow(false)
+      setThumbTop(0)
+      setThumbHeight(116)
+      return
+    }
+    const viewportHeight = el.clientHeight
+    const contentHeight = el.scrollHeight
+    const overflow = contentHeight > viewportHeight + 1
+
+    setHasOverflow(overflow)
+    if (!overflow) {
+      setThumbTop(0)
+      setThumbHeight(viewportHeight)
+      return
+    }
+
+    const computedThumbHeight = Math.max(
+      116,
+      Math.min(viewportHeight, (viewportHeight / contentHeight) * viewportHeight),
+    )
+    const maxScroll = Math.max(1, contentHeight - viewportHeight)
+    const maxThumbTop = Math.max(0, viewportHeight - computedThumbHeight)
     const nextTop = (el.scrollTop / maxScroll) * maxThumbTop
+    setThumbHeight(computedThumbHeight)
     setThumbTop(nextTop)
   }
 
@@ -243,8 +266,15 @@ export function ProfilePage() {
       : `${lessonPickerCourse?.title ?? ''} на каждый день`
 
   useEffect(() => {
-    updateCustomScrollbar()
+    const raf = requestAnimationFrame(updateCustomScrollbar)
+    return () => cancelAnimationFrame(raf)
   }, [lessonPickerCourse, pickerLessons.length])
+
+  useEffect(() => {
+    const onResize = () => updateCustomScrollbar()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   if (!user) return null
 
@@ -352,12 +382,12 @@ export function ProfilePage() {
               Выберите тренировку
             </h3>
 
-            <div className="relative" style={{ width: 404, height: 359, marginTop: 48 }}>
+            <div className="relative" style={{ width: 404, height: 390, marginTop: 28 }}>
               <div
                 ref={lessonListRef}
                 onScroll={updateCustomScrollbar}
                 className="lesson-picker-scroll-hide flex flex-col items-start overflow-y-scroll overflow-x-hidden"
-                style={{ width: 404, height: 359, paddingRight: 24 }}
+                style={{ width: 404, height: 390, paddingRight: 24 }}
               >
                 {pickerLessons.map((lesson, index) => (
                   <div key={lesson.id} className="flex flex-col items-start" style={{ width: 354 }}>
@@ -441,31 +471,35 @@ export function ProfilePage() {
                   </div>
                 ))}
               </div>
-              <div
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: 6,
-                  height: 359,
-                  borderRadius: 10,
-                  background: 'rgba(247, 247, 247, 1)',
-                }}
-              />
-              <div
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  top: thumbTop,
-                  right: 0,
-                  width: 6,
-                  height: 116,
-                  borderRadius: 10,
-                  background: 'rgba(0, 0, 0, 1)',
-                  transition: 'top 120ms linear',
-                }}
-              />
+              {hasOverflow && (
+                <>
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 6,
+                      height: 390,
+                      borderRadius: 10,
+                      background: 'rgba(247, 247, 247, 1)',
+                    }}
+                  />
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      top: thumbTop,
+                      right: 0,
+                      width: 6,
+                      height: thumbHeight,
+                      borderRadius: 10,
+                      background: 'rgba(0, 0, 0, 1)',
+                      transition: 'top 120ms linear, height 120ms linear',
+                    }}
+                  />
+                </>
+              )}
             </div>
 
             <div
