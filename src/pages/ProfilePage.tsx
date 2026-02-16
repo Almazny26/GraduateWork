@@ -3,14 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCourseBySlug, type Course } from '@/data/courses'
+import { getCourseProgressMap } from '@/data/courseProgress'
 import { getLessonsByCourseSlug } from '@/data/lessons'
 
-/** Мок: купленные курсы пользователя с прогрессом (0–100) */
-const MOCK_PURCHASED: { slug: string; progress: number }[] = [
-  { slug: 'yoga', progress: 40 },
-  { slug: 'stretching', progress: 0 },
-  { slug: 'fitness', progress: 100 },
-]
+const PURCHASED_COURSE_SLUGS = ['yoga', 'stretching', 'fitness'] as const
 
 function ProfileCourseCard({
   course,
@@ -166,9 +162,14 @@ function ProfileCourseCard({
 export function ProfilePage() {
   const navigate = useNavigate()
   const { user, logout, openLoginModal } = useAuth()
+  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>(
+    () => getCourseProgressMap(),
+  )
   const [lessonPickerCourse, setLessonPickerCourse] = useState<Course | null>(null)
+  const [lessonPickerVisible, setLessonPickerVisible] = useState(false)
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
   const lessonListRef = useRef<HTMLDivElement>(null)
+  const lessonPickerCloseTimerRef = useRef<number | null>(null)
   const [thumbTop, setThumbTop] = useState(0)
   const [thumbHeight, setThumbHeight] = useState(116)
   const [hasOverflow, setHasOverflow] = useState(false)
@@ -186,22 +187,40 @@ export function ProfilePage() {
   }
 
   const openLessonPicker = (course: Course) => {
+    if (lessonPickerCloseTimerRef.current) {
+      window.clearTimeout(lessonPickerCloseTimerRef.current)
+      lessonPickerCloseTimerRef.current = null
+    }
     const lessons = getLessonsByCourseSlug(course.slug)
     setLessonPickerCourse(course)
     setSelectedLessonIds(lessons[0]?.id ? [lessons[0].id] : [])
+    requestAnimationFrame(() => setLessonPickerVisible(true))
   }
 
   const closeLessonPicker = () => {
-    setLessonPickerCourse(null)
-    setSelectedLessonIds([])
+    setLessonPickerVisible(false)
+    if (lessonPickerCloseTimerRef.current) {
+      window.clearTimeout(lessonPickerCloseTimerRef.current)
+    }
+    lessonPickerCloseTimerRef.current = window.setTimeout(() => {
+      setLessonPickerCourse(null)
+      setSelectedLessonIds([])
+      lessonPickerCloseTimerRef.current = null
+    }, 240)
   }
 
   useEffect(() => {
     if (!lessonPickerCourse) return
     const prevOverflow = document.body.style.overflow
+    const prevPaddingRight = document.body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
     return () => {
       document.body.style.overflow = prevOverflow
+      document.body.style.paddingRight = prevPaddingRight
     }
   }, [lessonPickerCourse])
 
@@ -253,8 +272,9 @@ export function ProfilePage() {
     setThumbTop(nextTop)
   }
 
-  const purchasedWithCourse = MOCK_PURCHASED.map(({ slug, progress }) => {
+  const purchasedWithCourse = PURCHASED_COURSE_SLUGS.map((slug) => {
     const course = getCourseBySlug(slug)
+    const progress = courseProgressMap[slug] ?? 0
     return course ? { course, progress } : null
   }).filter(Boolean) as { course: Course; progress: number }[]
   const pickerLessons = lessonPickerCourse
@@ -274,6 +294,26 @@ export function ProfilePage() {
     const onResize = () => updateCustomScrollbar()
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (lessonPickerCloseTimerRef.current) {
+        window.clearTimeout(lessonPickerCloseTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const syncProgress = () => setCourseProgressMap(getCourseProgressMap())
+    const onStorage = () => syncProgress()
+    const onFocus = () => syncProgress()
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   if (!user) return null
@@ -356,11 +396,20 @@ export function ProfilePage() {
       </main>
       {lessonPickerCourse && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/35 px-4"
+          className={`fixed inset-0 z-[120] flex items-center justify-center px-4 transition-opacity duration-300 ${
+            lessonPickerVisible
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none'
+          }`}
+          style={{ background: 'rgba(0, 0, 0, 0.35)' }}
           onClick={closeLessonPicker}
         >
           <div
-            className="rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center"
+            className={`rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
+              lessonPickerVisible
+                ? 'opacity-100 translate-y-0 scale-100'
+                : 'opacity-0 translate-y-2 scale-95'
+            }`}
             style={{ width: 460, height: 609, gap: 0, padding: 40 }}
             onClick={(e) => e.stopPropagation()}
           >

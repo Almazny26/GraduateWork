@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { getCourseBySlug } from '@/data/courses'
+import { getCourseProgressBySlug, setCourseProgressBySlug } from '@/data/courseProgress'
 import { getLessonByCourseAndLessonId } from '@/data/lessons'
 
 type ExerciseDef = {
@@ -46,27 +47,30 @@ const EXERCISE_ITEMS: ExerciseItem[] = Array.from({ length: 9 }, (_, idx) => {
   }
 })
 
-const INITIAL_EXERCISE_PROGRESS: Record<string, number> = Object.fromEntries(
-  EXERCISE_ITEMS.map((item) => [item.id, 0]),
-)
+function createExerciseProgress(value: number): Record<string, number> {
+  return Object.fromEntries(EXERCISE_ITEMS.map((item) => [item.id, value]))
+}
 
-const INITIAL_DRAFT_PROGRESS: Record<string, string> = Object.fromEntries(
-  EXERCISE_ITEMS.map((item) => [item.id, '0']),
-)
+function createDraftProgress(): Record<string, string> {
+  return Object.fromEntries(EXERCISE_ITEMS.map((item) => [item.id, '']))
+}
 
 export function LessonPage() {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>()
 
   const course = slug ? getCourseBySlug(slug) : undefined
   const lesson = slug && lessonId ? getLessonByCourseAndLessonId(slug, lessonId) : undefined
+  const initialCourseProgress = slug ? getCourseProgressBySlug(slug) : 0
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [progressModalOpen, setProgressModalOpen] = useState(false)
+  const [progressModalVisible, setProgressModalVisible] = useState(false)
   const [progressSavedModalOpen, setProgressSavedModalOpen] = useState(false)
+  const [progressSavedModalVisible, setProgressSavedModalVisible] = useState(false)
   const [exerciseProgress, setExerciseProgress] = useState<Record<string, number>>(
-    INITIAL_EXERCISE_PROGRESS,
+    () => createExerciseProgress(initialCourseProgress),
   )
   const [draftProgress, setDraftProgress] = useState<Record<string, string>>(
-    INITIAL_DRAFT_PROGRESS,
+    () => createDraftProgress(),
   )
   const progressListRef = useRef<HTMLDivElement>(null)
   const [progressScroll, setProgressScroll] = useState({
@@ -74,48 +78,147 @@ export function LessonPage() {
     thumbTop: 0,
     thumbHeight: 116,
   })
+  const progressSavedCloseTimerRef = useRef<number | null>(null)
+  const progressSavedUnmountTimerRef = useRef<number | null>(null)
+  const progressModalUnmountTimerRef = useRef<number | null>(null)
 
   if (!course || !lesson) {
     return <Navigate to="/profile" replace />
   }
 
   const openProgressModal = () => {
+    if (progressModalUnmountTimerRef.current) {
+      window.clearTimeout(progressModalUnmountTimerRef.current)
+      progressModalUnmountTimerRef.current = null
+    }
     setDraftProgress(
       Object.fromEntries(
-        EXERCISE_ITEMS.map((item) => [item.id, String(exerciseProgress[item.id] ?? 0)]),
+        EXERCISE_ITEMS.map((item) => {
+          const percent = exerciseProgress[item.id] ?? 0
+          const reps = Math.round((percent / 100) * 20)
+          return [item.id, reps === 0 ? '' : String(reps)]
+        }),
       ),
     )
     setProgressModalOpen(true)
   }
 
-  const closeProgressModal = () => setProgressModalOpen(false)
-
-  const saveProgress = () => {
-    const normalize = (value: string) => {
-      const num = Number(value.replace(/[^\d]/g, ''))
-      if (!Number.isFinite(num)) return 0
-      return Math.min(100, Math.max(0, num))
+  const closeProgressModal = () => {
+    setProgressModalVisible(false)
+    if (progressModalUnmountTimerRef.current) {
+      window.clearTimeout(progressModalUnmountTimerRef.current)
     }
-
-    setExerciseProgress(
-      Object.fromEntries(
-        EXERCISE_ITEMS.map((item) => [item.id, normalize(draftProgress[item.id] ?? '0')]),
-      ),
-    )
-    setProgressModalOpen(false)
-    setProgressSavedModalOpen(true)
+    progressModalUnmountTimerRef.current = window.setTimeout(() => {
+      setProgressModalOpen(false)
+      progressModalUnmountTimerRef.current = null
+    }, 240)
   }
 
-  const closeProgressSavedModal = () => setProgressSavedModalOpen(false)
+  const saveProgress = () => {
+    const normalizeReps = (value: string) => {
+      const digits = value.replace(/[^\d]/g, '')
+      if (!digits) return 0
+      const num = Number(digits)
+      if (!Number.isFinite(num)) return 0
+      return Math.max(0, num)
+    }
+    const repsToPercent = (reps: number) =>
+      Math.min(100, Math.max(0, Math.round((reps / 20) * 100)))
+
+    const nextExerciseProgress = Object.fromEntries(
+      EXERCISE_ITEMS.map((item) => [
+        item.id,
+        repsToPercent(normalizeReps(draftProgress[item.id] ?? '')),
+      ]),
+    ) as Record<string, number>
+    setExerciseProgress(nextExerciseProgress)
+    if (slug) {
+      const overallProgress = Math.round(
+        Object.values(nextExerciseProgress).reduce((sum, value) => sum + value, 0) /
+          EXERCISE_ITEMS.length,
+      )
+      setCourseProgressBySlug(slug, overallProgress)
+    }
+    setProgressModalVisible(false)
+    if (progressModalUnmountTimerRef.current) {
+      window.clearTimeout(progressModalUnmountTimerRef.current)
+    }
+    progressModalUnmountTimerRef.current = window.setTimeout(() => {
+      setProgressModalOpen(false)
+      progressModalUnmountTimerRef.current = null
+      setProgressSavedModalOpen(true)
+    }, 240)
+  }
+
+  const closeProgressSavedModal = () => {
+    setProgressSavedModalVisible(false)
+    if (progressSavedCloseTimerRef.current) {
+      window.clearTimeout(progressSavedCloseTimerRef.current)
+      progressSavedCloseTimerRef.current = null
+    }
+    if (progressSavedUnmountTimerRef.current) {
+      window.clearTimeout(progressSavedUnmountTimerRef.current)
+    }
+    progressSavedUnmountTimerRef.current = window.setTimeout(() => {
+      setProgressSavedModalOpen(false)
+      progressSavedUnmountTimerRef.current = null
+    }, 220)
+  }
 
   useEffect(() => {
     if (!progressModalOpen && !progressSavedModalOpen) return
     const prevOverflow = document.body.style.overflow
+    const prevPaddingRight = document.body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
     return () => {
       document.body.style.overflow = prevOverflow
+      document.body.style.paddingRight = prevPaddingRight
     }
   }, [progressModalOpen, progressSavedModalOpen])
+
+  useEffect(() => {
+    if (!progressModalOpen) return
+    const raf = requestAnimationFrame(() => setProgressModalVisible(true))
+    return () => {
+      cancelAnimationFrame(raf)
+      setProgressModalVisible(false)
+      if (progressModalUnmountTimerRef.current) {
+        window.clearTimeout(progressModalUnmountTimerRef.current)
+        progressModalUnmountTimerRef.current = null
+      }
+    }
+  }, [progressModalOpen])
+
+  useEffect(() => {
+    if (!slug) return
+    const courseProgress = getCourseProgressBySlug(slug)
+    setExerciseProgress(createExerciseProgress(courseProgress))
+    setDraftProgress(createDraftProgress())
+  }, [slug])
+
+  useEffect(() => {
+    if (!progressSavedModalOpen) return
+    const raf = requestAnimationFrame(() => setProgressSavedModalVisible(true))
+    progressSavedCloseTimerRef.current = window.setTimeout(() => {
+      closeProgressSavedModal()
+    }, 1600)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      if (progressSavedCloseTimerRef.current) {
+        window.clearTimeout(progressSavedCloseTimerRef.current)
+        progressSavedCloseTimerRef.current = null
+      }
+      if (progressSavedUnmountTimerRef.current) {
+        window.clearTimeout(progressSavedUnmountTimerRef.current)
+        progressSavedUnmountTimerRef.current = null
+      }
+    }
+  }, [progressSavedModalOpen])
 
   useEffect(() => {
     if (!progressModalOpen) return
@@ -168,6 +271,8 @@ export function LessonPage() {
       ro.disconnect()
     }
   }, [progressModalOpen])
+
+  const hasExistingProgress = Object.values(exerciseProgress).some((value) => value > 0)
 
   return (
     <div className="min-h-screen bg-page font-sans text-text">
@@ -333,7 +438,7 @@ export function LessonPage() {
                   textAlign: 'center',
                 }}
               >
-                Заполнить свой прогресс
+                {hasExistingProgress ? 'Обновить свой прогресс' : 'Заполнить свой прогресс'}
               </button>
             </div>
           </section>
@@ -342,11 +447,16 @@ export function LessonPage() {
       </main>
       {progressModalOpen && (
         <div
-          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/35 px-4"
+          className={`fixed inset-0 z-[130] flex items-center justify-center px-4 transition-opacity duration-300 ${
+            progressModalVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ background: 'rgba(0, 0, 0, 0.35)' }}
           onClick={closeProgressModal}
         >
           <div
-            className="bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col"
+            className={`bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col transition-all duration-300 ease-out ${
+              progressModalVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
+            }`}
             style={{ width: 460, height: 609, padding: 40, gap: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -391,11 +501,12 @@ export function LessonPage() {
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        value={draftProgress[item.id] ?? '0'}
+                        placeholder="0"
+                        value={draftProgress[item.id] ?? ''}
                         onChange={(e) =>
                           setDraftProgress((prev) => ({
                             ...prev,
-                            [item.id]: e.target.value,
+                            [item.id]: e.target.value.replace(/[^\d]/g, ''),
                           }))
                         }
                         className="w-full rounded-[10px] border border-[#C4C4C4] bg-white px-5"
@@ -472,11 +583,18 @@ export function LessonPage() {
       )}
       {progressSavedModalOpen && (
         <div
-          className="fixed inset-0 z-[140] flex items-center justify-center px-4"
+          className={`fixed inset-0 z-[140] flex items-center justify-center px-4 transition-opacity duration-200 ${
+            progressSavedModalVisible
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none'
+          }`}
+          style={{ background: 'rgba(0, 0, 0, 0.2)' }}
           onClick={closeProgressSavedModal}
         >
           <div
-            className="rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center"
+            className={`rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-200 ease-out ${
+              progressSavedModalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+            }`}
             style={{ width: 426, height: 270, gap: 34, padding: 40 }}
             onClick={(e) => e.stopPropagation()}
           >
