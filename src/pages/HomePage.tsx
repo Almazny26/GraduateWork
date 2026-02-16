@@ -8,10 +8,10 @@ export function HomePage() {
     <div id="top" className="min-h-screen bg-page font-sans text-text">
       <Header />
       <Hero />
-      <section className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[60px] pb-10 sm:pb-14 overflow-visible">
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] pb-0 sm:pb-14 overflow-visible">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
           {COURSES.map((course) => (
-            <div key={course.id} className="overflow-visible p-2 -m-2">
+            <div key={course.id} className="overflow-visible sm:p-2 sm:-m-2">
               <CourseCard
                 title={course.title}
                 imageSrc={course.image}
@@ -21,7 +21,8 @@ export function HomePage() {
           ))}
         </div>
       </section>
-      <footer className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-16 flex justify-center">
+      <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-6 sm:pt-0 pb-12 sm:pb-16">
+        <div className="w-full max-w-[343px] sm:max-w-none mx-auto flex justify-end sm:justify-center">
         <a
           href="#top"
           onClick={(e) => {
@@ -51,6 +52,7 @@ export function HomePage() {
             </span>
           </span>
         </a>
+        </div>
       </footer>
     </div>
   )

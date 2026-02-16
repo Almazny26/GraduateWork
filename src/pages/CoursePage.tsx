@@ -124,7 +124,7 @@ export function CoursePage() {
     <div className="min-h-screen bg-page font-sans text-text">
       <Header />
       {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[60px] flex flex-col">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
         <SkillCourseCard
           imageSrc={course.imageSkillCard}
@@ -141,14 +141,14 @@ export function CoursePage() {
             id="suits-heading"
             className="text-left"
             style={{
-              width: 810,
-              maxWidth: '100%',
-              height: 44,
+              width: '100%',
+              maxWidth: 810,
+              minHeight: 44,
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
               fontWeight: 600,
-              fontSize: '40px',
+              fontSize: 'clamp(30px, 7vw, 40px)',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -168,8 +168,8 @@ export function CoursePage() {
                   minWidth: 0,
                   flex: '1 1 280px',
                   maxWidth: '100%',
-                  height: 141,
-                  minHeight: 141,
+                  height: 'auto',
+                  minHeight: 120,
                   padding: 20,
                   gap: 10,
                   background:
@@ -205,7 +205,7 @@ export function CoursePage() {
                       fontFamily: 'Roboto, sans-serif',
                       fontStyle: 'normal',
                       fontWeight: 400,
-                      fontSize: '24px',
+                      fontSize: 'clamp(20px, 5.2vw, 24px)',
                       lineHeight: '110%',
                       letterSpacing: 0,
                       textAlign: 'left',
@@ -228,7 +228,7 @@ export function CoursePage() {
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
               fontWeight: 600,
-              fontSize: '40px',
+              fontSize: 'clamp(30px, 7vw, 40px)',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -269,8 +269,71 @@ export function CoursePage() {
       </div>
 
       {/* Group 1597880544: 1160×588 — по макету node 31-1394; 102px от верхнего блока */}
-      <section className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-[90px]">
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-[90px]">
+        <div className="md:hidden w-full max-w-[343px] mx-auto rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-hidden">
+          <img
+            src={course.image}
+            alt=""
+            className="w-full aspect-[343/325] object-cover object-top"
+          />
+          <div className="p-5 flex flex-col gap-5">
+            <h2
+              className="text-left"
+              style={{
+                color: 'rgba(0, 0, 0, 1)',
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 500,
+                fontSize: 32,
+                lineHeight: '100%',
+                letterSpacing: 0,
+              }}
+            >
+              {description.heroTitle}
+            </h2>
+            <div
+              className="flex flex-col gap-2"
+              style={{
+                opacity: 0.6,
+                color: 'rgba(0, 0, 0, 1)',
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 400,
+                fontSize: 18,
+                lineHeight: '110%',
+                letterSpacing: 0,
+              }}
+            >
+              {description.heroBullets.map((line) => (
+                <div key={line} className="flex items-center gap-3">
+                  <span
+                    className="rounded-full shrink-0 w-[6px] h-[6px]"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
+                    aria-hidden
+                  />
+                  {line}
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={openLoginModal}
+              className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity"
+              style={{
+                backgroundColor: 'rgba(188, 236, 48, 1)',
+                color: 'rgba(0, 0, 0, 1)',
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 400,
+                fontSize: 18,
+                lineHeight: '110%',
+              }}
+            >
+              {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
+            </button>
+          </div>
+        </div>
         <div
+          className="hidden md:block"
+        >
+          <div
           className="relative w-full max-w-[1160px] overflow-hidden"
           style={{ minHeight: 588 }}
           onMouseEnter={() => setShowcaseHovered(true)}
@@ -470,6 +533,7 @@ export function CoursePage() {
                 }}
               />
             </div>
+          </div>
           </div>
         </div>
       </section>

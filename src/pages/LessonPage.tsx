@@ -457,7 +457,12 @@ export function LessonPage() {
             className={`bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col transition-all duration-300 ease-out ${
               progressModalVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
             }`}
-            style={{ width: 460, height: 609, padding: 40, gap: 0 }}
+            style={{
+              width: 'min(460px, calc(100vw - 24px))',
+              height: 'min(609px, calc(100vh - 24px))',
+              padding: 'clamp(20px, 4vw, 40px)',
+              gap: 0,
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
@@ -465,7 +470,7 @@ export function LessonPage() {
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'StratosSkyeng, Roboto, sans-serif',
                 fontWeight: 400,
-                fontSize: 48,
+                fontSize: 'clamp(32px, 6vw, 48px)',
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'left',
@@ -562,7 +567,8 @@ export function LessonPage() {
               onClick={saveProgress}
               className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
               style={{
-                width: 380,
+                width: '100%',
+                maxWidth: 380,
                 height: 52,
                 alignSelf: 'center',
                 marginTop: 34,
@@ -595,7 +601,12 @@ export function LessonPage() {
             className={`rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-200 ease-out ${
               progressSavedModalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
-            style={{ width: 426, height: 270, gap: 34, padding: 40 }}
+            style={{
+              width: 'min(426px, calc(100vw - 24px))',
+              minHeight: 270,
+              gap: 34,
+              padding: 'clamp(20px, 4vw, 40px)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
@@ -605,7 +616,7 @@ export function LessonPage() {
                 fontFamily: 'Roboto, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 600,
-                fontSize: 40,
+                fontSize: 'clamp(30px, 6vw, 40px)',
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'center',

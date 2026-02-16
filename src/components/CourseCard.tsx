@@ -19,13 +19,13 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
   return (
     <Link to={`/course/${slug}`} className="block w-full min-w-0 overflow-visible group card-hover-group" style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}>
       <article
-        className="relative flex flex-col items-stretch w-full max-w-[360px] mx-auto gap-6 rounded-[30px] overflow-hidden bg-white pb-[15px]"
+        className="relative flex flex-col items-stretch w-full h-[492px] sm:h-auto max-w-[343px] sm:max-w-[360px] mx-0 sm:mx-auto gap-6 rounded-[30px] overflow-hidden bg-white pb-[15px]"
         style={{
           boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
         }}
       >
-          {/* Превью: соотношение сторон по макету 360×325 */}
-          <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[360/325] bg-[#F7F7F7]">
+          {/* Превью: mobile 343×325, desktop 360×325 */}
+          <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[343/325] sm:aspect-[360/325] bg-[#F7F7F7]">
             <img
               src={imageSrc}
               alt=""
@@ -61,7 +61,7 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
           </div>
           {/* Текстовый блок: по макету gap 20px, заголовок 32px, чипы gap 6px */}
           <div className="flex flex-col gap-5 w-full px-6 pb-1 rounded-b-[30px] bg-white">
-            <h2 className="text-[32px] font-medium leading-[1.1] text-[#000000] transition-transform duration-300 ease-out origin-left group-hover:scale-[1.03]">
+            <h2 className="text-[24px] sm:text-[32px] font-medium leading-[1.1] text-[#000000] transition-transform duration-300 ease-out origin-left group-hover:scale-[1.03]">
               <span className="card-title-glow">{title}</span>
             </h2>
             {/* Чипы: Frame 2043683021 — flex row, gap 6, padding 10, radius 50px, bg #F7F7F7; текст Roboto 16px 400, 110%, #202020 */}

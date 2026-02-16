@@ -4,21 +4,29 @@
  */
 export function Hero() {
   return (
-    <section className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[60px] flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-8 min-w-0">
+    <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-8 min-w-0">
       <h1
-        className="w-full max-w-[947px] lg:w-[947px] lg:h-[120px] text-left text-[60px] leading-[100%] text-[#000000]"
+        className="m-0 w-[327px] sm:w-full max-w-[327px] sm:max-w-[947px] lg:w-[947px] lg:h-[120px] text-left text-[32px] sm:text-[48px] lg:text-[60px] leading-[110%] text-[#000000] font-semibold sm:font-medium"
         style={{
           fontFamily: 'Roboto, sans-serif',
-          fontWeight: 500,
           letterSpacing: 0,
           textAlign: 'left',
         }}
       >
-        <span className="whitespace-nowrap">Начните заниматься спортом</span>
-        <br />
-        и улучшите качество жизни
+        <span className="sm:hidden">
+          Начните заниматься
+          <br />
+          спортом и улучшите
+          <br />
+          качество жизни
+        </span>
+        <span className="hidden sm:inline">
+          <span className="sm:whitespace-nowrap">Начните заниматься спортом</span>
+          <br />
+          и улучшите качество жизни
+        </span>
       </h1>
-      <div className="relative shrink-0">
+      <div className="relative shrink-0 hidden sm:block">
         {/* Frame 2043682951: 288×102, flex row center, gap 10, padding 16 20, radius 5, #BCEC30 */}
         <div
           className="relative font-sans flex flex-row justify-center items-center rounded-[5px]"

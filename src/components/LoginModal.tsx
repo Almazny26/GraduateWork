@@ -291,7 +291,7 @@ export function LoginModal({ open, onClose }: Props) {
         className={`relative w-full rounded-[30px] bg-white p-[40px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] transition-all duration-300 ease-out ${
           isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
         }`}
-        style={{ maxWidth: 366 }}
+        style={{ width: 'min(366px, calc(100vw - 24px))', padding: 'clamp(20px, 4vw, 40px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <img
@@ -299,7 +299,7 @@ export function LoginModal({ open, onClose }: Props) {
           alt="SkyFitnessPro"
           width={220}
           height={35}
-          className="mx-auto mb-[48px] h-[35px] w-[220px] object-contain"
+          className="mx-auto mb-[48px] h-[35px] w-full max-w-[220px] object-contain"
         />
 
         {mode === 'login' ? (

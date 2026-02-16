@@ -410,19 +410,25 @@ export function ProfilePage() {
                 ? 'opacity-100 translate-y-0 scale-100'
                 : 'opacity-0 translate-y-2 scale-95'
             }`}
-            style={{ width: 460, height: 609, gap: 0, padding: 40 }}
+            style={{
+              width: 'min(460px, calc(100vw - 24px))',
+              height: 'min(609px, calc(100vh - 24px))',
+              gap: 0,
+              padding: 'clamp(20px, 4vw, 40px)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
               style={{
-                width: 346,
-                height: 35,
+                width: '100%',
+                maxWidth: 346,
+                minHeight: 35,
                 margin: 0,
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'StratosSkyeng, Roboto, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
-                fontSize: 32,
+                fontSize: 'clamp(28px, 5vw, 32px)',
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'left',
@@ -431,18 +437,18 @@ export function ProfilePage() {
               Выберите тренировку
             </h3>
 
-            <div className="relative" style={{ width: 404, height: 390, marginTop: 28 }}>
+            <div className="relative w-full" style={{ flex: 1, minHeight: 0, marginTop: 28 }}>
               <div
                 ref={lessonListRef}
                 onScroll={updateCustomScrollbar}
                 className="lesson-picker-scroll-hide flex flex-col items-start overflow-y-scroll overflow-x-hidden"
-                style={{ width: 404, height: 390, paddingRight: 24 }}
+                style={{ width: '100%', height: '100%', paddingRight: 24 }}
               >
                 {pickerLessons.map((lesson, index) => (
-                  <div key={lesson.id} className="flex flex-col items-start" style={{ width: 354 }}>
+                  <div key={lesson.id} className="flex flex-col items-start w-full" style={{ maxWidth: 354 }}>
                     <label
                       className="flex items-start gap-3 cursor-pointer"
-                      style={{ width: 354, padding: index === 0 ? '0 0 10px 0' : '10px 0' }}
+                      style={{ width: '100%', padding: index === 0 ? '0 0 10px 0' : '10px 0' }}
                     >
                       <input
                         type="checkbox"
@@ -474,13 +480,14 @@ export function ProfilePage() {
                       <span className="flex flex-col" style={{ gap: 10 }}>
                         <span
                           style={{
-                            width: 320,
-                            height: 26,
+                            width: '100%',
+                            maxWidth: 320,
+                            minHeight: 26,
                             color: 'rgba(0, 0, 0, 1)',
                             fontFamily: 'Roboto, sans-serif',
                             fontStyle: 'normal',
                             fontWeight: 400,
-                            fontSize: 24,
+                            fontSize: 'clamp(20px, 4.6vw, 24px)',
                             lineHeight: '110%',
                             letterSpacing: 0,
                             textAlign: 'left',
@@ -490,13 +497,14 @@ export function ProfilePage() {
                         </span>
                         <span
                           style={{
-                            width: 320,
-                            height: 18,
+                            width: '100%',
+                            maxWidth: 320,
+                            minHeight: 18,
                             color: 'rgba(0, 0, 0, 1)',
                             fontFamily: 'Roboto, sans-serif',
                             fontStyle: 'normal',
                             fontWeight: 400,
-                            fontSize: 16,
+                            fontSize: 'clamp(14px, 3.4vw, 16px)',
                             lineHeight: '110%',
                             letterSpacing: 0,
                             textAlign: 'left',
@@ -509,8 +517,8 @@ export function ProfilePage() {
                     {index < pickerLessons.length - 1 && (
                       <div
                         style={{
-                          width: 354,
-                          minWidth: 354,
+                          width: '100%',
+                          minWidth: '100%',
                           maxWidth: 354,
                           height: 0,
                           border: '1px solid rgba(196, 196, 196, 1)',
@@ -529,7 +537,7 @@ export function ProfilePage() {
                       top: 0,
                       right: 0,
                       width: 6,
-                      height: 390,
+                      height: '100%',
                       borderRadius: 10,
                       background: 'rgba(247, 247, 247, 1)',
                     }}
@@ -560,7 +568,8 @@ export function ProfilePage() {
                 onClick={startSelectedLesson}
                 className="rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
                 style={{
-                  width: 424,
+                  width: '100%',
+                  maxWidth: 424,
                   height: 52,
                   fontFamily: 'Roboto, sans-serif',
                 }}
