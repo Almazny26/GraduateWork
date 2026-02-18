@@ -277,11 +277,11 @@ export function LessonPage() {
   return (
     <div className="min-h-screen bg-page font-sans text-text">
       <Header />
-      <main className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[39px] sm:pt-[49px] pb-12">
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[39px] sm:pt-[49px] pb-12">
         <div className="max-w-[1160px] flex flex-col gap-[40px]">
           <div className="flex items-center gap-4 flex-wrap">
             <h1
-              className="text-left text-[40px] leading-[1.1] text-black"
+              className="text-left text-[32px] sm:text-[40px] leading-[1.1] text-black"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 600 }}
             >
               {course.title}
@@ -290,8 +290,8 @@ export function LessonPage() {
 
           <section className="flex flex-col gap-5">
             <div
-              className="relative w-full max-w-[1160px] lg:h-[639px] rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
-              style={{ minHeight: 260 }}
+              className="relative w-full max-w-[343px] sm:max-w-[1160px] h-[189px] sm:h-auto lg:h-[639px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
+              style={{ minHeight: 189 }}
             >
               {!videoLoaded && (
                 <div className="absolute inset-0 z-[5]">
@@ -305,7 +305,7 @@ export function LessonPage() {
                 </div>
               )}
               <iframe
-                className="relative z-0 w-full h-full min-h-[260px]"
+                className="relative z-0 w-full h-full min-h-[189px] sm:min-h-[260px]"
                 src={lesson.youtubeEmbedUrl}
                 title={lesson.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -334,7 +334,7 @@ export function LessonPage() {
             style={{
               maxWidth: 1160,
               minHeight: 375,
-              padding: 40,
+              padding: 30,
               marginBottom: 260,
               marginTop: 8,
             }}
@@ -371,7 +371,11 @@ export function LessonPage() {
                   style={{ gap: 40 }}
                 >
                   {[0, 1, 2].map((col) => (
-                    <div key={col} className="flex flex-col" style={{ gap: 20, width: '100%', maxWidth: 333 }}>
+                    <div
+                      key={col}
+                      className="flex flex-col w-full max-w-[283px] sm:max-w-[333px]"
+                      style={{ gap: 20 }}
+                    >
                       {EXERCISE_ITEMS.slice(col * 3, col * 3 + 3).map((item) => {
                         const progress = exerciseProgress[item.id] ?? 0
                         return (
@@ -392,9 +396,9 @@ export function LessonPage() {
                               {`${item.label} ${progress}%`}
                             </span>
                             <div
+                              className="max-w-[283px] sm:max-w-[333px]"
                               style={{
                                 width: '100%',
-                                maxWidth: 333,
                                 height: 6,
                                 borderRadius: 50,
                                 background: 'rgba(234, 234, 234, 1)',
@@ -422,10 +426,9 @@ export function LessonPage() {
               <button
                 type="button"
                 onClick={openProgressModal}
-                className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
+                className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity max-w-[283px] sm:max-w-[274px]"
                 style={{
                   width: '100%',
-                  maxWidth: 274,
                   height: 52,
                   padding: '16px 26px',
                   background: 'rgba(188, 236, 48, 1)',

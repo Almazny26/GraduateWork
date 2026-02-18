@@ -9,9 +9,9 @@ type AuthMode = 'login' | 'register'
 
 const DEFAULT_USER = {
   name: 'Сергей',
-  login: 'sergey.petrov96',
+  login: 'admin',
   email: 'sergey.petrov96@mail.ru',
-  password: '12345678',
+  password: 'admin',
 }
 
 export function LoginModal({ open, onClose }: Props) {
@@ -110,10 +110,8 @@ export function LoginModal({ open, onClose }: Props) {
     setLoginError('')
     const loginName = loginValue.trim()
     const pass = password.trim()
-    const loginMatch =
-      loginName === DEFAULT_USER.login || loginName === DEFAULT_USER.email || loginName === ''
 
-    if (!loginMatch || pass !== DEFAULT_USER.password) {
+    if (loginName !== DEFAULT_USER.login || pass !== DEFAULT_USER.password) {
       setLoginError('Пароль введен неверно, попробуйте еще раз.')
       return
     }

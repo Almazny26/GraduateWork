@@ -53,30 +53,29 @@ export function Header() {
           </p>
         )}
       </div>
-      <div className="flex items-center gap-3 shrink-0 relative" ref={dropdownRef}>
+      <div className="ml-auto sm:ml-0 flex items-center gap-3 shrink-0 relative" ref={dropdownRef}>
         {user ? (
           <>
             <button
               type="button"
               onClick={() => setDropdownOpen((v) => !v)}
-              className="flex flex-row items-center gap-4 rounded-[46px] hover:opacity-90 transition-opacity py-1 pr-2 pl-1"
+              className="flex flex-row items-center gap-2 sm:gap-4 rounded-[46px] hover:opacity-90 transition-opacity py-1 pr-2 pl-1"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               <img
                 src="/images/photo_mini.png"
                 alt=""
-                className="w-[50px] h-[50px] shrink-0"
+                className="w-9 h-9 sm:w-[50px] sm:h-[50px] shrink-0"
                 width={50}
                 height={50}
               />
-              <span className="text-[24px] leading-[1.1] text-black font-normal text-right">
+              <span className="hidden sm:block text-[24px] leading-[1.1] text-black font-normal text-right">
                 {user.name}
               </span>
               <img
                 src="/images/down_svg.svg"
                 alt=""
-                className="shrink-0"
-                style={{ width: 12, height: 12, marginLeft: -4 }}
+                className="w-[14px] h-[10px] sm:w-3 sm:h-3 shrink-0 sm:ml-[-4px]"
               />
             </button>
             <div

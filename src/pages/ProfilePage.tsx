@@ -30,7 +30,7 @@ function ProfileCourseCard({
 
   return (
     <div
-      className="relative w-[360px] min-h-[649px] shrink-0 group overflow-visible card-hover-group"
+      className="relative w-[343px] sm:w-[360px] min-h-[649px] shrink-0 group overflow-visible card-hover-group"
       style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}
     >
       <article
@@ -45,7 +45,7 @@ function ProfileCourseCard({
         />
         <button
           type="button"
-          className="absolute rounded-full flex items-center justify-center hover:opacity-90 transition-transform duration-300 ease-out hover:scale-110 shrink-0"
+          className="absolute rounded-full flex items-center justify-center sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110 shrink-0"
           style={{
             top: 20,
             right: 20,
@@ -72,9 +72,10 @@ function ProfileCourseCard({
       <div className="flex flex-col gap-[40px] px-6 w-full items-start">
         <div className="flex flex-col w-full max-w-[300px]" style={{ gap: 20 }}>
           <h3
-            className="w-full font-stratos transition-transform duration-300 ease-out origin-left group-hover:scale-[1.03]"
+            className="w-full sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]"
             style={{
-              fontWeight: 400,
+              fontFamily: 'Roboto, sans-serif',
+              fontWeight: 500,
               fontSize: '32px',
               lineHeight: '110%',
               letterSpacing: 0,
@@ -118,7 +119,7 @@ function ProfileCourseCard({
         <button
           type="button"
           onClick={() => onOpenLessonPicker?.(course)}
-          className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal hover:opacity-90 transition-transform duration-300 ease-out hover:scale-[1.03]"
+          className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-[1.03]"
           style={{
             backgroundColor: '#BCEC30',
             fontFamily: 'Roboto, sans-serif',
@@ -319,21 +320,21 @@ export function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans text-black">
+    <div id="top" className="min-h-screen bg-[#FAFAFA] font-sans text-black">
       <Header />
-      <main className="max-w-[1440px] mx-auto px-6 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-12">
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-12">
         <div className="flex flex-col gap-[60px] max-w-[1160px]">
           {/* Блок «Профиль» — плашка по макету 60-1707 */}
           <section className="flex flex-col gap-[40px]">
             <h1
-              className="text-left font-semibold text-[40px] leading-[1.1] text-black max-w-[810px]"
-              style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 600 }}
+              className="text-left font-medium text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
+              style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
             >
               Профиль
             </h1>
             <div className="flex flex-col p-[30px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] w-full max-w-[1160px]">
               <div className="flex flex-row flex-wrap items-center gap-[33px]">
-                <div className="w-[197px] h-[197px] shrink-0 overflow-hidden rounded-[30px] bg-[#D9D9D9]">
+                <div className="w-[141px] h-[141px] sm:w-[197px] sm:h-[197px] shrink-0 overflow-hidden rounded-[30px] bg-[#D9D9D9]">
                   <img
                     src="/images/photo_big.png"
                     alt=""
@@ -345,7 +346,7 @@ export function ProfilePage() {
                 <div className="flex flex-col gap-[44px] min-w-0">
                   <div className="flex flex-col gap-[30px]">
                     <p
-                      className="text-left font-medium text-[32px] leading-[1.1] text-black max-w-[300px]"
+                      className="text-left font-medium text-[24px] sm:text-[32px] leading-[1.1] text-black max-w-[300px]"
                       style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
                     >
                       {user.name}
@@ -375,12 +376,12 @@ export function ProfilePage() {
           {/* Блок «Мои курсы» */}
           <section className="flex flex-col gap-[40px]">
             <h2
-              className="text-left font-semibold text-[40px] leading-[1.1] text-black max-w-[810px]"
-              style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 600 }}
+              className="text-left font-medium text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
+              style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
             >
               Мои курсы
             </h2>
-            <div className="flex flex-row flex-wrap gap-[40px] overflow-visible">
+            <div className="flex flex-row flex-wrap gap-6 sm:gap-[40px] overflow-visible">
               {purchasedWithCourse.map(({ course, progress }) => (
                 <ProfileCourseCard
                   key={course.slug}
@@ -394,6 +395,39 @@ export function ProfilePage() {
           </section>
         </div>
       </main>
+      <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-16">
+        <div className="w-full max-w-[343px] sm:max-w-none mx-auto flex justify-end sm:justify-center">
+          <a
+            href="#top"
+            onClick={(e) => {
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
+            style={{
+              width: 127,
+              height: 52,
+              gap: 8,
+              padding: '16px 26px',
+              background: 'rgba(188, 236, 48, 1)',
+              color: 'rgba(0, 0, 0, 1)',
+              fontFamily: 'Roboto, sans-serif',
+              fontWeight: 400,
+              fontSize: '18px',
+              lineHeight: '110%',
+              letterSpacing: 0,
+              textAlign: 'center',
+            }}
+          >
+            <span className="inline-flex flex-row items-baseline gap-1">
+              Наверх
+              <span className="inline-block -translate-y-1" aria-hidden>
+                ↑
+              </span>
+            </span>
+          </a>
+        </div>
+      </footer>
       {lessonPickerCourse && (
         <div
           className={`fixed inset-0 z-[120] flex items-center justify-center px-4 transition-opacity duration-300 ${

@@ -5,6 +5,15 @@ import { SkillCourseCard } from '@/components/SkillCourseCard'
 import { getCourseBySlug } from '@/data/courses'
 import { useAuth } from '@/contexts/AuthContext'
 
+const COMMON_DIRECTIONS = [
+  'Йога для новичков',
+  'Классическая йога',
+  'Кундалини-йога',
+  'Йогатерапия',
+  'Хатха-йога',
+  'Аштанга-йога',
+]
+
 const COURSE_DESCRIPTIONS: Record<
   string,
   {
@@ -16,18 +25,11 @@ const COURSE_DESCRIPTIONS: Record<
 > = {
   yoga: {
     suits: [
-      'Давно хотели попробовать йогу, но не решались начать',
-      'Хотите укрепить позвоночник, избавиться от болей в спине и суставах',
-      'Ищете активность, полезную для тела и души',
+      'Давно хотели попробовать\nйогу, но не решались начать',
+      'Хотите укрепить\nпозвоночник, избавиться\nот болей в спине\nи суставах',
+      'Ищете активность,\nполезную для тела и души',
     ],
-    directions: [
-      'Йога для новичков',
-      'Классическая йога',
-      'Кундалини-йога',
-      'Йогатерапия',
-      'Хатха-йога',
-      'Аштанга-йога',
-    ],
+    directions: COMMON_DIRECTIONS,
     heroTitle: 'Начните путь к новому телу',
     heroBullets: [
       'проработка всех групп мышц',
@@ -43,12 +45,7 @@ const COURSE_DESCRIPTIONS: Record<
       'Нужна реабилитация после травм',
       'Ищете спокойную нагрузку без прыжков',
     ],
-    directions: [
-      'Базовый стретчинг',
-      'Глубокий стретчинг',
-      'Стретчинг для спины',
-      'Динамический стретчинг',
-    ],
+    directions: COMMON_DIRECTIONS,
     heroTitle: 'Гибкость и здоровье',
     heroBullets: [
       'растяжка всех групп мышц',
@@ -62,11 +59,7 @@ const COURSE_DESCRIPTIONS: Record<
       'Готовы к регулярным тренировкам',
       'Цель — подтянутое тело',
     ],
-    directions: [
-      'Силовые тренировки',
-      'Функциональный тренинг',
-      'Круговая тренировка',
-    ],
+    directions: COMMON_DIRECTIONS,
     heroTitle: 'Сила и выносливость',
     heroBullets: [
       'проработка всех групп мышц',
@@ -80,7 +73,7 @@ const COURSE_DESCRIPTIONS: Record<
       'Хотите сжечь калории весело',
       'Есть степ-платформа или готовы импровизировать',
     ],
-    directions: ['Базовый степ', 'Степ-аэробика', 'Силовой степ'],
+    directions: COMMON_DIRECTIONS,
     heroTitle: 'Ритм и энергия',
     heroBullets: ['кардионагрузка', 'координация', 'выносливость'],
   },
@@ -90,7 +83,7 @@ const COURSE_DESCRIPTIONS: Record<
       'Хотите мягкую нагрузку',
       'Нужна практика для снятия стресса',
     ],
-    directions: ['Бодифлекс для начинающих', 'Классический бодифлекс'],
+    directions: COMMON_DIRECTIONS,
     heroTitle: 'Дыхание и лёгкость',
     heroBullets: ['дыхательные техники', 'растяжка', 'расслабление'],
   },
@@ -121,20 +114,21 @@ export function CoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-page font-sans text-text">
+    <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
       <Header />
       {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
         <SkillCourseCard
           imageSrc={course.imageSkillCard}
+          mobileImageSrc={course.image}
           title={course.title}
           slug={course.slug}
         />
 
         {/* Подойдет для вас: от заголовка до карточек 40px; от карточек до «Направления» 60px */}
         <section
-          className="w-full max-w-[1160px] flex flex-col gap-[40px] mt-8 sm:mt-[60px]"
+          className="w-full max-w-[343px] sm:max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px] mt-[40px] sm:mt-[60px]"
           aria-labelledby="suits-heading"
         >
           <h2
@@ -143,12 +137,11 @@ export function CoursePage() {
             style={{
               width: '100%',
               maxWidth: 810,
-              minHeight: 44,
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
-              fontWeight: 600,
-              fontSize: 'clamp(30px, 7vw, 40px)',
+              fontWeight: 500,
+              fontSize: '24px',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -157,19 +150,17 @@ export function CoursePage() {
             Подойдет для вас, если:
           </h2>
           <div
-            className="flex flex-row flex-wrap items-stretch"
+            className="flex flex-col sm:flex-row sm:flex-wrap items-stretch"
             style={{ gap: 17 }}
           >
             {description.suits.map((text, i) => (
               <div
                 key={i}
-                className="rounded-[28px] flex flex-col justify-start items-start min-w-0 flex-1 box-border overflow-hidden"
+                className="rounded-[28px] flex flex-col justify-start items-start min-w-0 flex-1 basis-full sm:basis-[280px] max-w-[343px] sm:max-w-full box-border overflow-hidden"
                 style={{
                   minWidth: 0,
-                  flex: '1 1 280px',
-                  maxWidth: '100%',
                   height: 'auto',
-                  minHeight: 120,
+                  minHeight: 0,
                   padding: 20,
                   gap: 10,
                   background:
@@ -177,8 +168,7 @@ export function CoursePage() {
                 }}
               >
                 <div
-                  className="flex flex-row justify-start items-center flex-1 min-w-0 w-full box-border"
-                  style={{ gap: 25 }}
+                  className="flex flex-row justify-start items-center gap-[25px] flex-1 min-w-0 w-full box-border"
                 >
                   {/* Цифра: Roboto Medium 75px, 135%, цвет #BCEC30 */}
                   <span
@@ -187,7 +177,7 @@ export function CoursePage() {
                       color: 'rgba(188, 236, 48, 1)',
                       fontFamily: 'Roboto, sans-serif',
                       fontWeight: 500,
-                      fontSize: 'clamp(48px, 10vw, 75px)',
+                      fontSize: '75px',
                       letterSpacing: 0,
                       textAlign: 'left',
                     }}
@@ -196,18 +186,15 @@ export function CoursePage() {
                   </span>
                   {/* Текст по макету: 268×78, white, Roboto Regular 24px, 110%, 400 */}
                   <span
-                    className="min-w-0 flex-1 break-words block text-left"
+                    className="min-w-0 flex-1 break-words whitespace-pre-line block text-left font-normal"
                     style={{
-                      width: 268,
-                      maxWidth: '100%',
-                      minHeight: 78,
                       color: 'rgba(255, 255, 255, 1)',
-                      fontFamily: 'Roboto, sans-serif',
+                      fontFamily: 'Roboto',
                       fontStyle: 'normal',
                       fontWeight: 400,
-                      fontSize: 'clamp(20px, 5.2vw, 24px)',
+                      fontSize: '18px',
                       lineHeight: '110%',
-                      letterSpacing: 0,
+                      letterSpacing: '0px',
                       textAlign: 'left',
                     }}
                   >
@@ -220,15 +207,15 @@ export function CoursePage() {
         </section>
 
         {/* Направления: от карточек до этого блока 60px; от этого блока до «Тренировки» 40px */}
-        <div className="w-full max-w-[1160px] flex flex-col gap-[40px] mt-[60px]">
+        <div className="w-full max-w-[343px] sm:max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px] mt-[40px] sm:mt-[60px]">
           <h2
             className="text-left"
             style={{
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
-              fontWeight: 600,
-              fontSize: 'clamp(30px, 7vw, 40px)',
+              fontWeight: 500,
+              fontSize: '24px',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -239,7 +226,7 @@ export function CoursePage() {
           {/* Frame 2043683031: 1160×146, flex column, gap 10, padding 30, radius 28, один цвет на всех страницах */}
           {/* Frame 2043683031: гибкий блок; на md+ — 2 строки, 158px по горизонтали, 34px между строками */}
           <div
-            className="w-full max-w-[1160px] min-h-[146px] rounded-[28px] p-4 sm:p-[30px] box-border flex flex-col justify-start items-start overflow-hidden"
+            className="w-full max-w-[343px] sm:max-w-[1160px] min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-start items-start overflow-hidden"
             style={{
               gap: 10,
               backgroundColor: 'rgba(188, 236, 48, 1)',
@@ -255,7 +242,7 @@ export function CoursePage() {
                 >
                   <StarIcon className="w-5 h-5 sm:w-[26px] sm:h-[26px] shrink-0 flex-shrink-0 mt-0.5" />
                   <span
-                    className="text-lg sm:text-[24px] font-normal leading-[1.1] min-w-0 break-words"
+                    className="text-[18px] sm:text-[24px] font-normal leading-[1.1] min-w-0 break-words"
                     style={{ color: 'rgba(0, 0, 0, 1)' }}
                   >
                     {name}
@@ -269,66 +256,115 @@ export function CoursePage() {
       </div>
 
       {/* Group 1597880544: 1160×588 — по макету node 31-1394; 102px от верхнего блока */}
-      <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-[90px]">
-        <div className="md:hidden w-full max-w-[343px] mx-auto rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-hidden">
-          <img
-            src={course.image}
-            alt=""
-            className="w-full aspect-[343/325] object-cover object-top"
-          />
-          <div className="p-5 flex flex-col gap-5">
-            <h2
-              className="text-left"
-              style={{
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontWeight: 500,
-                fontSize: 32,
-                lineHeight: '100%',
-                letterSpacing: 0,
-              }}
-            >
-              {description.heroTitle}
-            </h2>
-            <div
-              className="flex flex-col gap-2"
-              style={{
-                opacity: 0.6,
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontWeight: 400,
-                fontSize: 18,
-                lineHeight: '110%',
-                letterSpacing: 0,
-              }}
-            >
-              {description.heroBullets.map((line) => (
-                <div key={line} className="flex items-center gap-3">
-                  <span
-                    className="rounded-full shrink-0 w-[6px] h-[6px]"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
-                    aria-hidden
-                  />
-                  {line}
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={openLoginModal}
-              className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity"
-              style={{
-                backgroundColor: 'rgba(188, 236, 48, 1)',
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontWeight: 400,
-                fontSize: 18,
-                lineHeight: '110%',
-              }}
-            >
-              {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
-            </button>
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-14 xl:px-[140px] pt-[40px] sm:pt-0 pb-12 sm:pb-[90px]">
+        <div className="md:hidden relative -mt-[40px] w-full max-w-[343px] mx-auto min-h-[560px]">
+          <div
+            className="pointer-events-none absolute z-0"
+            style={{
+              left: '-84px',
+              top: '-256px',
+              width: '720px',
+              height: '420px',
+              transform: 'rotate(12.38deg)',
+              transformOrigin: 'top left',
+              opacity: 1,
+            }}
+            aria-hidden
+          >
+            <img
+              src="/images/green_line.svg?v=2"
+              alt=""
+              className="w-full h-full object-contain"
+            />
           </div>
+          <img
+            src="/images/man.png"
+            alt=""
+            className="pointer-events-none absolute right-[-124px] top-[-700px] z-[30] w-[740px] h-[998px] object-contain scale-125"
+            style={{ transformOrigin: 'top right' }}
+            onError={(e) => {
+              const img = e.currentTarget
+              if (img.getAttribute('data-fallback')) return
+              img.setAttribute('data-fallback', '1')
+              img.src = course.image
+            }}
+          />
+
+          <div className="relative z-[60] mt-[196px] w-full rounded-[30px] bg-white px-6 pb-6 pt-[30px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]">
+            <div className="flex flex-col gap-6">
+              <h2
+                className="text-left max-w-[240px]"
+                style={{
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto',
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: 32,
+                  lineHeight: '110%',
+                  letterSpacing: '0px',
+                  textAlign: 'left',
+                }}
+              >
+                {description.heroTitle}
+              </h2>
+              <div
+                className="flex flex-col gap-[8px]"
+                style={{
+                  opacity: 0.6,
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 18,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                }}
+              >
+                {description.heroBullets.map((line) => (
+                  <div key={line} className="flex items-start gap-3">
+                    <span
+                      className="rounded-full shrink-0 w-[4px] h-[4px] mt-[8px]"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
+                      aria-hidden
+                    />
+                    <span>{line}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={openLoginModal}
+                className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity flex items-center justify-center"
+                style={{
+                  backgroundColor: 'rgba(188, 236, 48, 1)',
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: 16,
+                  lineHeight: '110%',
+                  letterSpacing: '0px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '112px',
+                    height: '18px',
+                    textAlign: 'left',
+                    display: 'inline-block',
+                  }}
+                >
+                  {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
+                </span>
+              </button>
+            </div>
+          </div>
+          <img
+            src="/images/black_line.svg?v=4"
+            alt=""
+            className="pointer-events-none absolute right-[148px] top-[-218px] z-[25]"
+            style={{ width: '56px', height: '36px', opacity: 1 }}
+            aria-hidden
+          />
         </div>
         <div
           className="hidden md:block"

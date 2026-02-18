@@ -25,18 +25,18 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
         }}
       >
           {/* Превью: mobile 343×325, desktop 360×325 */}
-          <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[343/325] sm:aspect-[360/325] bg-[#F7F7F7]">
+          <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[343/325] sm:aspect-[360/325] bg-white">
             <img
               src={imageSrc}
               alt=""
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-contain sm:object-cover object-top bg-white"
               width={360}
               height={325}
             />
             {/* Кнопка добавления — внутри карточки, чтобы масштабировалась вместе с ней */}
             <button
               type="button"
-              className="absolute top-5 right-5 z-30 w-8 h-8 flex items-center justify-center shrink-0 p-0 border-0 bg-transparent pointer-events-auto transition-transform duration-300 ease-out hover:scale-110"
+              className="absolute top-5 right-5 z-30 w-8 h-8 flex items-center justify-center shrink-0 p-0 border-0 bg-transparent pointer-events-auto sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110"
               style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}
               onClick={(e) => {
                 e.preventDefault()
@@ -60,8 +60,8 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
             </button>
           </div>
           {/* Текстовый блок: по макету gap 20px, заголовок 32px, чипы gap 6px */}
-          <div className="flex flex-col gap-5 w-full px-6 pb-1 rounded-b-[30px] bg-white">
-            <h2 className="text-[24px] sm:text-[32px] font-medium leading-[1.1] text-[#000000] transition-transform duration-300 ease-out origin-left group-hover:scale-[1.03]">
+          <div className="flex flex-col gap-5 w-full px-[21.5px] pb-1 rounded-b-[30px] bg-white">
+            <h2 className="text-[24px] sm:text-[32px] font-medium leading-[1.1] text-[#000000] sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]">
               <span className="card-title-glow">{title}</span>
             </h2>
             {/* Чипы: Frame 2043683021 — flex row, gap 6, padding 10, radius 50px, bg #F7F7F7; текст Roboto 16px 400, 110%, #202020 */}
