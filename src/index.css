@@ -78,16 +78,6 @@
   min-height: 116px;
 }
 
-/* StratosSkyeng — шрифт по макету. Добавьте файл в public/fonts/ */
-@font-face {
-  font-family: 'StratosSkyeng';
-  src: url('/fonts/StratosSkyeng-Regular.woff2') format('woff2'),
-       url('/fonts/StratosSkyeng-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* Кастомный курсор по макету */
 body {
   cursor: url('/images/cursor.svg') 0 0, auto;

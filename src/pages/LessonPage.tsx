@@ -277,8 +277,8 @@ export function LessonPage() {
   return (
     <div className="min-h-screen bg-page font-sans text-text">
       <Header />
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[39px] sm:pt-[49px] pb-12">
-        <div className="max-w-[1160px] flex flex-col gap-[40px]">
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[35px] sm:pt-[49px] pb-12">
+        <div className="max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px]">
           <div className="flex items-center gap-4 flex-wrap">
             <h1
               className="text-left text-[32px] sm:text-[40px] leading-[1.1] text-black"
@@ -330,7 +330,96 @@ export function LessonPage() {
           </section>
 
           <section
-            className="w-full rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]"
+            className="sm:hidden w-full max-w-[343px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]"
+            style={{ padding: 30 }}
+          >
+            <div className="flex flex-col w-full gap-[40px]">
+              <div className="flex flex-col gap-[20px]">
+                <h2
+                  style={{
+                    width: '100%',
+                    maxWidth: 283,
+                    color: 'rgba(0, 0, 0, 1)',
+                    fontFamily: 'Roboto, sans-serif',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: 32,
+                    lineHeight: '110%',
+                    letterSpacing: 0,
+                    textAlign: 'left',
+                  }}
+                >
+                  Упражнения тренировки 2
+                </h2>
+
+                <div className="flex flex-col gap-[24px] w-full max-w-[283px]">
+                  {EXERCISE_ITEMS.map((item) => {
+                    const progress = exerciseProgress[item.id] ?? 0
+                    return (
+                      <div key={item.id} className="flex flex-col gap-[10px]">
+                        <span
+                          style={{
+                            color: 'rgba(0, 0, 0, 1)',
+                            fontFamily: 'Roboto, sans-serif',
+                            fontStyle: 'normal',
+                            fontWeight: 400,
+                            fontSize: 18,
+                            lineHeight: '110%',
+                            letterSpacing: 0,
+                            textAlign: 'left',
+                            whiteSpace: 'pre-line',
+                          }}
+                        >
+                          {`${item.label} ${progress}%`}
+                        </span>
+                        <div
+                          style={{
+                            width: '100%',
+                            height: 6,
+                            borderRadius: 50,
+                            background: 'rgba(247, 247, 247, 1)',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${progress}%`,
+                              height: '100%',
+                              borderRadius: 50,
+                              background: 'rgba(0, 193, 255, 1)',
+                              transition: 'width 300ms ease-out',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={openProgressModal}
+                className="w-[283px] h-[52px] flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
+                style={{
+                  padding: '16px 26px',
+                  background: 'rgba(188, 236, 48, 1)',
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 18,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                  textAlign: 'center',
+                }}
+              >
+                Обновить свой прогресс
+              </button>
+            </div>
+          </section>
+
+          <section
+            className="hidden sm:block w-full rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]"
             style={{
               maxWidth: 1160,
               minHeight: 375,

@@ -117,7 +117,7 @@ export function CoursePage() {
     <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
       <Header />
       {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
+      <div className="relative z-0 max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
         <SkillCourseCard
           imageSrc={course.imageSkillCard}
@@ -226,21 +226,21 @@ export function CoursePage() {
           {/* Frame 2043683031: 1160×146, flex column, gap 10, padding 30, radius 28, один цвет на всех страницах */}
           {/* Frame 2043683031: гибкий блок; на md+ — 2 строки, 158px по горизонтали, 34px между строками */}
           <div
-            className="w-full max-w-[343px] sm:max-w-[1160px] min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-start items-start overflow-hidden"
+            className="w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[336px] sm:h-auto sm:min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-start items-start overflow-hidden"
             style={{
               gap: 10,
               backgroundColor: 'rgba(188, 236, 48, 1)',
             }}
           >
             <div
-              className="w-full min-w-0 flex flex-col gap-y-[34px] lg:grid lg:grid-rows-2 lg:grid-flow-col lg:gap-x-[158px] lg:gap-y-[34px] lg:content-start"
+              className="w-full h-full sm:h-auto min-w-0 flex flex-col justify-between lg:grid lg:grid-rows-2 lg:grid-flow-col lg:gap-x-[158px] lg:gap-y-[34px] lg:content-start"
             >
               {description.directions.map((name) => (
                 <div
                   key={name}
                   className="flex flex-row items-start gap-2 sm:gap-[8px] min-w-0 w-full"
                 >
-                  <StarIcon className="w-5 h-5 sm:w-[26px] sm:h-[26px] shrink-0 flex-shrink-0 mt-0.5" />
+                  <StarIcon className="w-[26px] h-[26px] shrink-0 flex-shrink-0 mt-0.5" />
                   <span
                     className="text-[18px] sm:text-[24px] font-normal leading-[1.1] min-w-0 break-words"
                     style={{ color: 'rgba(0, 0, 0, 1)' }}
@@ -256,41 +256,55 @@ export function CoursePage() {
       </div>
 
       {/* Group 1597880544: 1160×588 — по макету node 31-1394; 102px от верхнего блока */}
-      <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-14 xl:px-[140px] pt-[40px] sm:pt-0 pb-12 sm:pb-[90px]">
-        <div className="md:hidden relative -mt-[40px] w-full max-w-[343px] mx-auto min-h-[560px]">
+      <section className="relative z-[120] max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-14 xl:px-[140px] pt-0 sm:pt-0 pb-0 sm:pb-[90px]">
+        <div className="md:hidden relative mt-[156px] pb-[30px] w-full max-w-[343px] mx-auto">
           <div
-            className="pointer-events-none absolute z-0"
+            className="pointer-events-none absolute z-[70]"
             style={{
-              left: '-84px',
-              top: '-256px',
-              width: '720px',
-              height: '420px',
-              transform: 'rotate(12.38deg)',
-              transformOrigin: 'top left',
-              opacity: 1,
+              left: '-74px',
+              top: '-265px',
+              width: '500px',
+              height: '472px',
             }}
             aria-hidden
           >
             <img
               src="/images/green_line.svg?v=2"
               alt=""
-              className="w-full h-full object-contain"
+              className="absolute object-contain"
+              style={{
+                left: 0,
+                top: '85.92px',
+                width: '492px',
+                height: '386px',
+              }}
+            />
+            <img
+              src="/images/man.png"
+              alt=""
+              className="absolute object-contain"
+              style={{
+                left: '148px',
+                top: '7.93px',
+                width: '343px',
+                height: '378px',
+              }}
+              onError={(e) => {
+                const img = e.currentTarget
+                if (img.getAttribute('data-fallback')) return
+                img.setAttribute('data-fallback', '1')
+                img.src = course.image
+              }}
+            />
+            <img
+              src="/images/black_line.svg?v=4"
+              alt=""
+              className="absolute"
+              style={{ left: '212px', top: '88px', width: '56px', height: '36px', opacity: 1 }}
             />
           </div>
-          <img
-            src="/images/man.png"
-            alt=""
-            className="pointer-events-none absolute right-[-124px] top-[-700px] z-[30] w-[740px] h-[998px] object-contain scale-125"
-            style={{ transformOrigin: 'top right' }}
-            onError={(e) => {
-              const img = e.currentTarget
-              if (img.getAttribute('data-fallback')) return
-              img.setAttribute('data-fallback', '1')
-              img.src = course.image
-            }}
-          />
 
-          <div className="relative z-[60] mt-[196px] w-full rounded-[30px] bg-white px-6 pb-6 pt-[30px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]">
+          <div className="relative z-[90] w-full rounded-[30px] bg-white px-6 pb-6 pt-[30px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]">
             <div className="flex flex-col gap-6">
               <h2
                 className="text-left max-w-[240px]"
@@ -358,13 +372,6 @@ export function CoursePage() {
               </button>
             </div>
           </div>
-          <img
-            src="/images/black_line.svg?v=4"
-            alt=""
-            className="pointer-events-none absolute right-[148px] top-[-218px] z-[25]"
-            style={{ width: '56px', height: '36px', opacity: 1 }}
-            aria-hidden
-          />
         </div>
         <div
           className="hidden md:block"

@@ -69,7 +69,7 @@ function ProfileCourseCard({
           <img src="/images/minus_svg.svg" alt="" className="w-full h-full object-contain pointer-events-none" style={{ filter: 'brightness(0) invert(1)' }} />
         </button>
       </div>
-      <div className="flex flex-col gap-[40px] px-6 w-full items-start">
+      <div className="flex flex-col gap-[20px] sm:gap-[40px] px-6 w-full items-start">
         <div className="flex flex-col w-full max-w-[300px]" style={{ gap: 20 }}>
           <h3
             className="w-full sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]"
@@ -104,7 +104,7 @@ function ProfileCourseCard({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-[6px] w-full max-w-[300px]">
+        <div className="flex flex-col gap-[10px] w-full max-w-[300px]">
           <p className="text-[18px] leading-[1.1] text-black text-left" style={{ fontFamily: 'Roboto, sans-serif' }}>Прогресс {progress}%</p>
           <div className="h-[6px] w-full max-w-[300px] rounded-[50px] bg-[#D9D9D9] overflow-hidden">
             <div
@@ -323,18 +323,18 @@ export function ProfilePage() {
     <div id="top" className="min-h-screen bg-[#FAFAFA] font-sans text-black">
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-12">
-        <div className="flex flex-col gap-[60px] max-w-[1160px]">
+        <div className="flex flex-col gap-[24px] sm:gap-[60px] max-w-[1160px]">
           {/* Блок «Профиль» — плашка по макету 60-1707 */}
-          <section className="flex flex-col gap-[40px]">
+          <section className="flex flex-col gap-[24px] sm:gap-[40px]">
             <h1
               className="text-left font-medium text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
             >
               Профиль
             </h1>
-            <div className="flex flex-col p-[30px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] w-full max-w-[1160px]">
-              <div className="flex flex-row flex-wrap items-center gap-[33px]">
-                <div className="w-[141px] h-[141px] sm:w-[197px] sm:h-[197px] shrink-0 overflow-hidden rounded-[30px] bg-[#D9D9D9]">
+            <div className="flex flex-col items-center gap-[30px] p-[30px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] w-[343px] h-[365px] sm:w-full sm:h-auto max-w-[1160px] mx-auto sm:mx-0">
+              <div className="flex flex-col sm:flex-row flex-wrap items-center gap-0 sm:gap-[33px] w-full">
+                <div className="mx-auto sm:mx-0 w-[141px] h-[141px] sm:w-[197px] sm:h-[197px] shrink-0 overflow-hidden rounded-[30px] bg-[#D9D9D9]">
                   <img
                     src="/images/photo_big.png"
                     alt=""
@@ -343,8 +343,8 @@ export function ProfilePage() {
                     height={197}
                   />
                 </div>
-                <div className="flex flex-col gap-[44px] min-w-0">
-                  <div className="flex flex-col gap-[30px]">
+                <div className="mt-[30px] sm:mt-0 w-full flex flex-col items-start gap-[20px] sm:gap-[44px] min-w-0">
+                  <div className="flex flex-col gap-[20px] w-full items-start">
                     <p
                       className="text-left font-medium text-[24px] sm:text-[32px] leading-[1.1] text-black max-w-[300px]"
                       style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
@@ -352,18 +352,18 @@ export function ProfilePage() {
                       {user.name}
                     </p>
                     <p
-                      className="text-[18px] leading-[1.1] text-black"
+                      className="text-left text-[18px] leading-[1.1] text-black"
                       style={{ fontFamily: 'Roboto, sans-serif' }}
                     >
                       Логин: {user.login}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex w-full items-center justify-center sm:justify-start gap-2.5">
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex justify-center items-center rounded-[46px] border border-black w-[192px] text-[18px] leading-[1.1] text-black font-normal hover:bg-black/5 transition-colors"
-                      style={{ fontFamily: 'Roboto, sans-serif', padding: '16px 26px', borderWidth: 1 }}
+                      className="box-border flex flex-row justify-center items-center gap-[10px] rounded-[46px] border border-black w-[283px] h-[50px] sm:w-[192px] sm:h-[53px] text-[16px] sm:text-[18px] leading-[1.1] text-black font-normal hover:bg-black/5 transition-colors px-[26px] py-[16px]"
+                      style={{ fontFamily: 'Roboto, sans-serif', borderWidth: 1 }}
                     >
                       Выйти
                     </button>
