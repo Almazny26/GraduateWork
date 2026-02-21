@@ -286,10 +286,15 @@ export function LoginModal({ open, onClose }: Props) {
       aria-labelledby="login-title"
     >
       <div
-        className={`relative w-full rounded-[30px] bg-white p-[40px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] transition-all duration-300 ease-out ${
+        className={`relative w-full rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
           isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
         }`}
-        style={{ width: 'min(366px, calc(100vw - 24px))', padding: 'clamp(20px, 4vw, 40px)' }}
+        style={{
+          width: 'min(343px, calc(100vw - 24px))',
+          height: mode === 'register' ? 487 : 425,
+          padding: 40,
+          gap: 48,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <img
@@ -297,11 +302,11 @@ export function LoginModal({ open, onClose }: Props) {
           alt="SkyFitnessPro"
           width={220}
           height={35}
-          className="mx-auto mb-[48px] h-[35px] w-full max-w-[220px] object-contain"
+          className="mx-auto h-[35px] w-full max-w-[220px] object-contain"
         />
 
         {mode === 'login' ? (
-          <form onSubmit={handleLoginSubmit} className="flex flex-col gap-[10px]">
+          <form onSubmit={handleLoginSubmit} className="w-[280px] flex flex-col gap-[10px]">
             <input
               id="login-title"
               type="text"
@@ -328,7 +333,7 @@ export function LoginModal({ open, onClose }: Props) {
               autoComplete: 'current-password',
             })}
 
-            <div className="min-h-[34px] pt-1">
+            <div className="min-h-[14px]">
               {loginError && (
                 <p
                   className="text-center text-[14px] leading-[1.1]"
@@ -365,7 +370,7 @@ export function LoginModal({ open, onClose }: Props) {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-[10px]">
+          <form onSubmit={handleRegisterSubmit} className="w-[280px] flex flex-col gap-[10px]">
             <input
               id="login-title"
               type="email"

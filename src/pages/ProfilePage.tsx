@@ -322,7 +322,7 @@ export function ProfilePage() {
   return (
     <div id="top" className="min-h-screen bg-[#FAFAFA] font-sans text-black">
       <Header />
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-12">
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-0 sm:pb-12">
         <div className="flex flex-col gap-[24px] sm:gap-[60px] max-w-[1160px]">
           {/* Блок «Профиль» — плашка по макету 60-1707 */}
           <section className="flex flex-col gap-[24px] sm:gap-[40px]">
@@ -395,7 +395,7 @@ export function ProfilePage() {
           </section>
         </div>
       </main>
-      <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pb-12 sm:pb-16">
+      <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[24px] sm:pt-0 pb-12 sm:pb-16">
         <div className="w-full max-w-[343px] sm:max-w-none mx-auto flex justify-end sm:justify-center">
           <a
             href="#top"
@@ -439,23 +439,23 @@ export function ProfilePage() {
           onClick={closeLessonPicker}
         >
           <div
-            className={`rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
+            className={`rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-start transition-all duration-300 ease-out ${
               lessonPickerVisible
                 ? 'opacity-100 translate-y-0 scale-100'
                 : 'opacity-0 translate-y-2 scale-95'
             }`}
             style={{
-              width: 'min(460px, calc(100vw - 24px))',
-              height: 'min(609px, calc(100vh - 24px))',
-              gap: 0,
-              padding: 'clamp(20px, 4vw, 40px)',
+              width: 'min(343px, calc(100vw - 24px))',
+              height: 'min(585px, calc(100vh - 24px))',
+              gap: 34,
+              padding: 30,
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
               style={{
                 width: '100%',
-                maxWidth: 346,
+                maxWidth: 303,
                 minHeight: 35,
                 margin: 0,
                 color: 'rgba(0, 0, 0, 1)',
@@ -471,18 +471,30 @@ export function ProfilePage() {
               Выберите тренировку
             </h3>
 
-            <div className="relative w-full" style={{ flex: 1, minHeight: 0, marginTop: 28 }}>
+            <div className="relative w-[283px] h-[335px]">
               <div
                 ref={lessonListRef}
                 onScroll={updateCustomScrollbar}
                 className="lesson-picker-scroll-hide flex flex-col items-start overflow-y-scroll overflow-x-hidden"
-                style={{ width: '100%', height: '100%', paddingRight: 24 }}
+                style={{ width: 283, height: 335, paddingRight: 26 }}
               >
                 {pickerLessons.map((lesson, index) => (
-                  <div key={lesson.id} className="flex flex-col items-start w-full" style={{ maxWidth: 354 }}>
+                  <div
+                    key={lesson.id}
+                    className="flex flex-col items-start w-full"
+                    style={{ maxWidth: 303, marginTop: index === 0 ? 0 : 10 }}
+                  >
                     <label
-                      className="flex items-start gap-3 cursor-pointer"
-                      style={{ width: '100%', padding: index === 0 ? '0 0 10px 0' : '10px 0' }}
+                      className="flex items-start gap-3 cursor-pointer overflow-hidden"
+                      style={{
+                        width: '100%',
+                        padding: '0 0 9.5px 0',
+                        borderBottom:
+                          index < pickerLessons.length - 1
+                            ? '1px solid rgba(196, 196, 196, 1)'
+                            : 'none',
+                        boxSizing: 'border-box',
+                      }}
                     >
                       <input
                         type="checkbox"
@@ -498,7 +510,7 @@ export function ProfilePage() {
                           alt=""
                           width={24}
                           height={24}
-                          className="mt-1 shrink-0"
+                          className="mt-[10.5px] shrink-0"
                           aria-hidden
                         />
                       ) : (
@@ -507,11 +519,11 @@ export function ProfilePage() {
                           alt=""
                           width={24}
                           height={24}
-                          className="mt-1 shrink-0"
+                          className="mt-[10.5px] shrink-0"
                           aria-hidden
                         />
                       )}
-                      <span className="flex flex-col" style={{ gap: 10 }}>
+                      <span className="flex flex-col gap-[10px]">
                         <span
                           style={{
                             width: '100%',
@@ -548,17 +560,6 @@ export function ProfilePage() {
                         </span>
                       </span>
                     </label>
-                    {index < pickerLessons.length - 1 && (
-                      <div
-                        style={{
-                          width: '100%',
-                          minWidth: '100%',
-                          maxWidth: 354,
-                          height: 0,
-                          border: '1px solid rgba(196, 196, 196, 1)',
-                        }}
-                      />
-                    )}
                   </div>
                 ))}
               </div>
@@ -595,15 +596,13 @@ export function ProfilePage() {
 
             <div
               className="w-full flex items-center justify-center"
-              style={{ marginTop: 2 }}
             >
               <button
                 type="button"
                 onClick={startSelectedLesson}
                 className="rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
                 style={{
-                  width: '100%',
-                  maxWidth: 424,
+                  width: 303,
                   height: 52,
                   fontFamily: 'Roboto, sans-serif',
                 }}

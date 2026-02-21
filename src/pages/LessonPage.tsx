@@ -62,6 +62,7 @@ export function LessonPage() {
   const lesson = slug && lessonId ? getLessonByCourseAndLessonId(slug, lessonId) : undefined
   const initialCourseProgress = slug ? getCourseProgressBySlug(slug) : 0
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
   const [progressModalOpen, setProgressModalOpen] = useState(false)
   const [progressModalVisible, setProgressModalVisible] = useState(false)
   const [progressSavedModalOpen, setProgressSavedModalOpen] = useState(false)
@@ -198,6 +199,8 @@ export function LessonPage() {
     const courseProgress = getCourseProgressBySlug(slug)
     setExerciseProgress(createExerciseProgress(courseProgress))
     setDraftProgress(createDraftProgress())
+    setShowVideo(false)
+    setVideoLoaded(false)
   }, [slug])
 
   useEffect(() => {
@@ -290,42 +293,66 @@ export function LessonPage() {
 
           <section className="flex flex-col gap-5">
             <div
-              className="relative w-full max-w-[343px] sm:max-w-[1160px] h-[189px] sm:h-auto lg:h-[639px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
+              className="relative w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[189px] sm:h-auto lg:h-[639px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
               style={{ minHeight: 189 }}
             >
-              {!videoLoaded && (
+              {(!showVideo || !videoLoaded) && (
                 <div className="absolute inset-0 z-[5]">
                   <img
-                    src="/images/ph.png"
+                    src="/images/Снимок экрана 2022-09-13 в 13.57 1.png"
                     alt=""
                     className="w-full h-full object-cover"
                     style={{ filter: 'brightness(0.96)' }}
+                    onError={(e) => {
+                      e.currentTarget.src = course.image
+                    }}
                   />
                   <div className="absolute inset-0 bg-white/12" />
                 </div>
               )}
-              <iframe
-                className="relative z-0 w-full h-full min-h-[189px] sm:min-h-[260px]"
-                src={lesson.youtubeEmbedUrl}
-                title={lesson.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                onLoad={() => setVideoLoaded(true)}
-              />
-              {/* Центральный знак воспроизведения по макету */}
-              <div
-                className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
-                aria-hidden
-              >
-                <img
-                  src="/images/play.svg"
-                  alt=""
-                  width={156}
-                  height={156}
-                  className="w-[156px] h-[156px] object-contain"
+              {showVideo && (
+                <iframe
+                  className="relative z-0 w-full h-full min-h-[189px] sm:min-h-[260px]"
+                  src={lesson.youtubeEmbedUrl}
+                  title={lesson.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  onLoad={() => setVideoLoaded(true)}
                 />
-              </div>
+              )}
+              {/* Центральный знак воспроизведения: запускаем iframe по клику */}
+              {!showVideo ? (
+                <button
+                  type="button"
+                  onClick={() => setShowVideo(true)}
+                  className="absolute inset-0 z-10 flex items-center justify-center"
+                  aria-label="Запустить видео"
+                >
+                  <img
+                    src="/images/play.svg"
+                    alt=""
+                    width={46}
+                    height={46}
+                    className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain"
+                  />
+                </button>
+              ) : (
+                <div
+                  className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                  aria-hidden
+                >
+                  <img
+                    src="/images/play.svg"
+                    alt=""
+                    width={46}
+                    height={46}
+                    className={`w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain transition-opacity duration-200 ${
+                      videoLoaded ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  />
+                </div>
+              )}
             </div>
           </section>
 
@@ -546,112 +573,117 @@ export function LessonPage() {
           onClick={closeProgressModal}
         >
           <div
-            className={`bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col transition-all duration-300 ease-out ${
+            className={`bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
               progressModalVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
             }`}
             style={{
-              width: 'min(460px, calc(100vw - 24px))',
-              height: 'min(609px, calc(100vh - 24px))',
-              padding: 'clamp(20px, 4vw, 40px)',
-              gap: 0,
+              width: 'min(343px, calc(100vw - 24px))',
+              height: 'min(572px, calc(100vh - 24px))',
+              padding: 40,
+              gap: 34,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3
-              style={{
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'StratosSkyeng, Roboto, sans-serif',
-                fontWeight: 400,
-                fontSize: 'clamp(32px, 6vw, 48px)',
-                lineHeight: '110%',
-                letterSpacing: 0,
-                textAlign: 'left',
-                marginBottom: 48,
-              }}
-            >
-              Мой прогресс
-            </h3>
-
-            <div className="relative" style={{ flex: 1, minHeight: 0 }}>
-              <div
-                ref={progressListRef}
-                className="lesson-picker-scroll-hide overflow-y-auto overflow-x-hidden"
-                style={{ height: '100%', minHeight: 0, paddingRight: 24 }}
+            <div className="w-full flex flex-col" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+              <h3
+                style={{
+                  width: '100%',
+                  maxWidth: 263,
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'StratosSkyeng, Roboto, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 32,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                  textAlign: 'left',
+                  margin: 0,
+                }}
               >
-                <div className="flex flex-col" style={{ gap: 20 }}>
-                  {EXERCISE_ITEMS.map((item) => (
-                    <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
-                      <label
-                        style={{
-                          color: 'rgba(0, 0, 0, 1)',
-                          fontFamily: 'Roboto, sans-serif',
-                          fontWeight: 400,
-                          fontSize: 18,
-                          lineHeight: '110%',
-                          letterSpacing: 0,
-                          textAlign: 'left',
-                        }}
-                      >
-                        {item.question}
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        placeholder="0"
-                        value={draftProgress[item.id] ?? ''}
-                        onChange={(e) =>
-                          setDraftProgress((prev) => ({
-                            ...prev,
-                            [item.id]: e.target.value.replace(/[^\d]/g, ''),
-                          }))
-                        }
-                        className="w-full rounded-[10px] border border-[#C4C4C4] bg-white px-5"
-                        style={{
-                          height: 52,
-                          color: 'rgba(0, 0, 0, 1)',
-                          fontFamily: 'Roboto, sans-serif',
-                          fontWeight: 400,
-                          fontSize: 30 - 10,
-                          lineHeight: '110%',
-                          letterSpacing: 0,
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+                Мой прогресс
+              </h3>
 
-              {progressScroll.hasOverflow && (
-                <>
-                  <div
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      width: 6,
-                      height: '100%',
-                      borderRadius: 10,
-                      background: 'rgba(247, 247, 247, 1)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  <div
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: progressScroll.thumbTop,
-                      right: 0,
-                      width: 6,
-                      height: progressScroll.thumbHeight,
-                      borderRadius: 10,
-                      background: 'rgba(0, 0, 0, 1)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                </>
-              )}
+              <div className="relative" style={{ flex: 1, minHeight: 0 }}>
+                <div
+                  ref={progressListRef}
+                  className="lesson-picker-scroll-hide overflow-y-auto overflow-x-hidden"
+                  style={{ height: 'calc(100% - 12px)', minHeight: 0, paddingRight: 20 }}
+                >
+                  <div className="flex flex-col" style={{ gap: 20 }}>
+                    {EXERCISE_ITEMS.map((item) => (
+                      <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
+                        <label
+                          style={{
+                            color: 'rgba(0, 0, 0, 1)',
+                            fontFamily: 'Roboto, sans-serif',
+                            fontStyle: 'normal',
+                            fontWeight: 400,
+                            fontSize: 16,
+                            lineHeight: '110%',
+                            letterSpacing: 0,
+                            textAlign: 'left',
+                          }}
+                        >
+                          {item.question}
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="0"
+                          value={draftProgress[item.id] ?? ''}
+                          onChange={(e) =>
+                            setDraftProgress((prev) => ({
+                              ...prev,
+                              [item.id]: e.target.value.replace(/[^\d]/g, ''),
+                            }))
+                          }
+                          className="w-full rounded-[10px] border border-[#C4C4C4] bg-white px-[18px]"
+                          style={{
+                            height: 47,
+                            color: 'rgba(0, 0, 0, 1)',
+                            fontFamily: 'Roboto, sans-serif',
+                            fontWeight: 400,
+                            fontSize: 20,
+                            lineHeight: '110%',
+                            letterSpacing: 0,
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {progressScroll.hasOverflow && (
+                  <>
+                    <div
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: 6,
+                        height: '100%',
+                        borderRadius: 10,
+                        background: 'rgba(247, 247, 247, 1)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        top: progressScroll.thumbTop,
+                        right: 0,
+                        width: 6,
+                        height: progressScroll.thumbHeight,
+                        borderRadius: 10,
+                        background: 'rgba(0, 0, 0, 1)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             <button
@@ -659,11 +691,11 @@ export function LessonPage() {
               onClick={saveProgress}
               className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
               style={{
-                width: '100%',
-                maxWidth: 380,
+                width: 263,
                 height: 52,
                 alignSelf: 'center',
-                marginTop: 34,
+                gap: 10,
+                padding: '16px 26px',
                 background: 'rgba(188, 236, 48, 1)',
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'Roboto, sans-serif',
@@ -690,15 +722,9 @@ export function LessonPage() {
           onClick={closeProgressSavedModal}
         >
           <div
-            className={`rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-200 ease-out ${
+            className={`w-full max-w-[343px] h-[252px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center gap-[34px] p-[40px] transition-all duration-200 ease-out ${
               progressSavedModalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
-            style={{
-              width: 'min(426px, calc(100vw - 24px))',
-              minHeight: 270,
-              gap: 34,
-              padding: 'clamp(20px, 4vw, 40px)',
-            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
@@ -707,8 +733,8 @@ export function LessonPage() {
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'Roboto, sans-serif',
                 fontStyle: 'normal',
-                fontWeight: 600,
-                fontSize: 'clamp(30px, 6vw, 40px)',
+                fontWeight: 400,
+                fontSize: 32,
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'center',
