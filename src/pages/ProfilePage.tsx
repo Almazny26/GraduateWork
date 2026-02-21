@@ -1,23 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
-import { getCourseBySlug, type Course } from '@/data/courses'
-import { getCourseProgressMap } from '@/data/courseProgress'
-import { getLessonsByCourseSlug } from '@/data/lessons'
+import { fitnessApi, type ApiCourse, type ApiWorkout } from '@/api/fitness'
+import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
+import { logError, logInfo } from '@/utils/logger'
 
-const PURCHASED_COURSE_SLUGS = ['yoga', 'stretching', 'fitness'] as const
+type ProfileCourse = AppCourseRef
+type PickerLesson = { id: string; title: string }
 
 function ProfileCourseCard({
   course,
   progress,
   onRemove,
+  removeDisabled = false,
   onOpenLessonPicker,
+  onResetProgress,
 }: {
-  course: Course
+  course: ProfileCourse
   progress: number
   onRemove?: () => void
-  onOpenLessonPicker?: (course: Course) => void
+  removeDisabled?: boolean
+  onOpenLessonPicker?: (course: ProfileCourse) => void
+  onResetProgress?: (course: ProfileCourse) => Promise<void> | void
 }) {
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
@@ -45,6 +51,7 @@ function ProfileCourseCard({
         />
         <button
           type="button"
+          disabled={removeDisabled}
           className="absolute rounded-full flex items-center justify-center sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110 shrink-0"
           style={{
             top: 20,
@@ -53,6 +60,7 @@ function ProfileCourseCard({
             height: 32,
             background: 'transparent',
             cursor: "url('/images/cursor.svg') 0 0, auto",
+            opacity: removeDisabled ? 0.6 : 1,
           }}
           onClick={(e) => {
             e.stopPropagation()
@@ -118,7 +126,12 @@ function ProfileCourseCard({
         </div>
         <button
           type="button"
-          onClick={() => onOpenLessonPicker?.(course)}
+          onClick={async () => {
+            if (progress >= 100) {
+              await onResetProgress?.(course)
+            }
+            onOpenLessonPicker?.(course)
+          }}
           className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-[1.03]"
           style={{
             backgroundColor: '#BCEC30',
@@ -162,11 +175,16 @@ function ProfileCourseCard({
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { user, logout, openLoginModal } = useAuth()
-  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>(
-    () => getCourseProgressMap(),
-  )
-  const [lessonPickerCourse, setLessonPickerCourse] = useState<Course | null>(null)
+  const { user, token, logout, openLoginModal, refreshMe } = useAuth()
+  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>({})
+  const [apiCourses, setApiCourses] = useState<ApiCourse[]>([])
+  const [coursesById, setCoursesById] = useState<Record<string, ApiCourse>>({})
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null)
+  const [removingCourseId, setRemovingCourseId] = useState<string | null>(null)
+  const [removedCourseIds, setRemovedCourseIds] = useState<string[]>([])
+  const [courseWorkoutsMap, setCourseWorkoutsMap] = useState<Record<string, PickerLesson[]>>({})
+  const [lessonPickerCourse, setLessonPickerCourse] = useState<ProfileCourse | null>(null)
   const [lessonPickerVisible, setLessonPickerVisible] = useState(false)
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
   const lessonListRef = useRef<HTMLDivElement>(null)
@@ -187,16 +205,73 @@ export function ProfilePage() {
     navigate('/')
   }
 
-  const openLessonPicker = (course: Course) => {
+  const openLessonPicker = async (course: ProfileCourse) => {
     if (lessonPickerCloseTimerRef.current) {
       window.clearTimeout(lessonPickerCloseTimerRef.current)
       lessonPickerCloseTimerRef.current = null
     }
-    const lessons = getLessonsByCourseSlug(course.slug)
+    if (!token) return
+    let lessons = courseWorkoutsMap[course.courseId] ?? []
+    if (lessons.length === 0) {
+      try {
+        const workouts = await fitnessApi.getCourseWorkouts(course.courseId, token)
+        lessons = workouts.map((item: ApiWorkout) => ({ id: item._id, title: item.name }))
+        setCourseWorkoutsMap((prev) => ({ ...prev, [course.courseId]: lessons }))
+      } catch {
+        lessons = []
+      }
+    }
     setLessonPickerCourse(course)
     setSelectedLessonIds(lessons[0]?.id ? [lessons[0].id] : [])
     requestAnimationFrame(() => setLessonPickerVisible(true))
   }
+
+  const resetCourseProgress = async (course: ProfileCourse) => {
+    if (!token) return
+    try {
+      await fitnessApi.resetCourseProgress(course.courseId, token)
+      setCourseProgressMap((prev) => ({ ...prev, [course.slug]: 0 }))
+      logInfo('ProfilePage', 'reset course progress success', { courseId: course.courseId })
+    } catch {
+      logError('ProfilePage', 'reset course progress failed', { courseId: course.courseId })
+    }
+  }
+
+  const removeCourse = async (course: ProfileCourse) => {
+    if (!token) return
+    if (removingCourseId === course.courseId) return
+    setRemovingCourseId(course.courseId)
+    try {
+      await fitnessApi.deleteCourseFromUser(course.courseId, token)
+      setRemovedCourseIds((prev) => [...prev, course.courseId])
+      toast.success('Курс удален из профиля')
+      logInfo('ProfilePage', 'remove course success', { courseId: course.courseId })
+      refreshMe()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось удалить курс'
+      if (
+        message.toLowerCase().includes('не был добавлен') ||
+        message.toLowerCase().includes('уже удал')
+      ) {
+        setRemovedCourseIds((prev) => [...prev, course.courseId])
+        refreshMe()
+        toast('Курс уже отсутствует в профиле')
+      } else {
+        toast.error(message)
+      }
+      logError('ProfilePage', 'remove course failed', {
+        courseId: course.courseId,
+        message,
+      })
+    } finally {
+      setRemovingCourseId(null)
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return
+    setRemovedCourseIds((prev) => prev.filter((id) => user.selectedCourses.includes(id)))
+  }, [user?.selectedCourses])
 
   const closeLessonPicker = () => {
     setLessonPickerVisible(false)
@@ -273,18 +348,40 @@ export function ProfilePage() {
     setThumbTop(nextTop)
   }
 
-  const purchasedWithCourse = PURCHASED_COURSE_SLUGS.map((slug) => {
-    const course = getCourseBySlug(slug)
-    const progress = courseProgressMap[slug] ?? 0
-    return course ? { course, progress } : null
-  }).filter(Boolean) as { course: Course; progress: number }[]
-  const pickerLessons = lessonPickerCourse
-    ? getLessonsByCourseSlug(lessonPickerCourse.slug)
+  const allKnownCourses = useMemo(
+    () => [
+      ...apiCourses,
+      ...Object.values(coursesById).filter(
+        (courseFromMap) => !apiCourses.some((course) => course._id === courseFromMap._id),
+      ),
+    ],
+    [apiCourses, coursesById],
+  )
+
+  const effectiveSelectedCourses = user
+    ? user.selectedCourses.filter((id) => !removedCourseIds.includes(id))
     : []
-  const lessonSeriesTitle =
-    lessonPickerCourse?.slug === 'yoga'
-      ? 'Йога на каждый день'
-      : `${lessonPickerCourse?.title ?? ''} на каждый день`
+
+  const purchasedWithCourse = user
+    ? effectiveSelectedCourses
+        .map((courseId) => {
+          const normalizedCourseId = courseId.trim().toLowerCase()
+          const apiCourse =
+            allKnownCourses.find((item) => item._id === courseId) ??
+            allKnownCourses.find(
+              (item) => mapApiCourseToAppCourseRef(item).slug === normalizedCourseId,
+            )
+          if (!apiCourse) return null
+          const mappedCourse = mapApiCourseToAppCourseRef(apiCourse)
+          const progress = courseProgressMap[mappedCourse.slug] ?? 0
+          return { course: mappedCourse, progress }
+        })
+        .filter(Boolean) as { course: ProfileCourse; progress: number }[]
+    : []
+  const pickerLessons = lessonPickerCourse
+    ? courseWorkoutsMap[lessonPickerCourse.courseId] ?? []
+    : []
+  const lessonSeriesTitle = `${lessonPickerCourse?.title ?? ''} на каждый день`
 
   useEffect(() => {
     const raf = requestAnimationFrame(updateCustomScrollbar)
@@ -306,16 +403,122 @@ export function ProfilePage() {
   }, [])
 
   useEffect(() => {
-    const syncProgress = () => setCourseProgressMap(getCourseProgressMap())
-    const onStorage = () => syncProgress()
-    const onFocus = () => syncProgress()
-    window.addEventListener('storage', onStorage)
-    window.addEventListener('focus', onFocus)
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener('focus', onFocus)
-    }
+    setIsLoadingCourses(true)
+    setProfileLoadError(null)
+    logInfo('ProfilePage', 'load profile courses started')
+    fitnessApi
+      .getCourses()
+      .then((courses) => {
+        setApiCourses(courses)
+        logInfo('ProfilePage', 'load profile courses success', { count: courses.length })
+      })
+      .catch((error) => {
+        setApiCourses([])
+        setProfileLoadError('Не удалось загрузить курсы профиля')
+        logError('ProfilePage', 'load profile courses failed', {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
+      .finally(() => setIsLoadingCourses(false))
   }, [])
+
+  useEffect(() => {
+    if (!user || user.selectedCourses.length === 0) return
+    if (typeof fitnessApi.getCourseById !== 'function') return
+
+    const knownIds = new Set([
+      ...apiCourses.map((course) => course._id),
+      ...Object.keys(coursesById),
+    ])
+    const missingIds = user.selectedCourses.filter(
+      (courseId) => courseId && !knownIds.has(courseId),
+    )
+    if (missingIds.length === 0) return
+
+    Promise.allSettled(missingIds.map((courseId) => fitnessApi.getCourseById(courseId))).then(
+      (results) => {
+        const loaded = results
+          .filter(
+            (result): result is PromiseFulfilledResult<ApiCourse> =>
+              result.status === 'fulfilled',
+          )
+          .map((result) => result.value)
+        if (loaded.length === 0) return
+
+        setCoursesById((prev) => {
+          const next = { ...prev }
+          loaded.forEach((course) => {
+            next[course._id] = course
+          })
+          return next
+        })
+      },
+    )
+  }, [user, apiCourses, coursesById])
+
+  useEffect(() => {
+    const courseIds = user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
+    if (!user || !token || allKnownCourses.length === 0 || courseIds.length === 0) return
+    let cancelled = false
+    Promise.all(
+      courseIds.map(async (courseId) => {
+        const apiCourse = allKnownCourses.find((item) => item._id === courseId)
+        if (!apiCourse) return null
+        const mapped = mapApiCourseToAppCourseRef(apiCourse)
+        try {
+          const [progress, workouts] = await Promise.all([
+            fitnessApi.getCourseProgress(courseId, token),
+            fitnessApi.getCourseWorkouts(courseId, token),
+          ])
+
+          const workoutsById = new Map(workouts.map((workout) => [workout._id, workout]))
+          const values = progress.workoutsProgress.map((workoutProgress) => {
+            if (workoutProgress.workoutCompleted) return 100
+
+            const workout = workoutsById.get(workoutProgress.workoutId)
+            if (!workout || workout.exercises.length === 0) {
+              // Fallback для нестабильного API: если есть хоть какие-то повторы, показываем старт прогресса.
+              const hasAnyProgress = workoutProgress.progressData.some((value) => value > 0)
+              return hasAnyProgress ? 1 : 0
+            }
+
+            const exercisePercents = workout.exercises.map((exercise, index) => {
+              const reps = workoutProgress.progressData[index] ?? 0
+              const target = Math.max(1, exercise.quantity)
+              const percent = Math.round((reps / target) * 100)
+              return Math.min(100, Math.max(0, percent))
+            })
+
+            if (exercisePercents.length === 0) return 0
+            return Math.round(
+              exercisePercents.reduce((sum, value) => sum + value, 0) /
+                exercisePercents.length,
+            )
+          })
+          const avg =
+            values.length > 0
+              ? Math.round(values.reduce((s, v) => s + v, 0) / values.length)
+              : 0
+          return [mapped.slug, avg] as const
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : ''
+          if (msg.includes('не был добавлен') || msg.includes('не был добавлен этот курс')) {
+            return [mapped.slug, 0] as const
+          }
+          logError('ProfilePage', 'load course progress failed', { courseId })
+          return null
+        }
+      }),
+    ).then((pairs) => {
+      if (cancelled) return
+      const next = pairs.filter(Boolean) as ReadonlyArray<readonly [string, number]>
+      if (next.length === 0) return
+      setCourseProgressMap((prev) => ({ ...prev, ...Object.fromEntries(next) }))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user, token, allKnownCourses, removedCourseIds])
 
   if (!user) return null
 
@@ -382,15 +585,30 @@ export function ProfilePage() {
               Мои курсы
             </h2>
             <div className="flex flex-row flex-wrap gap-6 sm:gap-[40px] overflow-visible">
+              {isLoadingCourses && (
+                <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем курсы профиля...</p>
+              )}
+              {!isLoadingCourses && profileLoadError && (
+                <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
+                  {profileLoadError}
+                </p>
+              )}
               {purchasedWithCourse.map(({ course, progress }) => (
                 <ProfileCourseCard
                   key={course.slug}
                   course={course}
                   progress={progress}
-                  onRemove={() => {}}
+                  onRemove={() => removeCourse(course)}
+                  removeDisabled={removingCourseId === course.courseId}
                   onOpenLessonPicker={openLessonPicker}
+                  onResetProgress={resetCourseProgress}
                 />
               ))}
+              {!isLoadingCourses && !profileLoadError && purchasedWithCourse.length === 0 && (
+                <p style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  Курсы пока не добавлены.
+                </p>
+              )}
             </div>
           </section>
         </div>

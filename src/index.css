@@ -128,3 +128,23 @@ body {
 .group:hover .skillcard-title--yoga {
   animation: skillcard-float 2s ease-in-out infinite;
 }
+
+@keyframes sfp-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.sfp-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 245, 245, 1) 0%,
+    rgba(233, 233, 233, 1) 30%,
+    rgba(245, 245, 245, 1) 60%
+  );
+  background-size: 200% 100%;
+  animation: sfp-shimmer 1.35s linear infinite;
+}

@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { getCourseBySlug } from '@/data/courses'
-import { getCourseProgressBySlug, setCourseProgressBySlug } from '@/data/courseProgress'
-import { getLessonByCourseAndLessonId } from '@/data/lessons'
+import { useAuth } from '@/contexts/AuthContext'
+import { fitnessApi } from '@/api/fitness'
+import { mapApiCourseToAppCourseRef } from '@/api/mappers'
+import { percentToReps, repsToPercent } from '@/utils/progress'
+import { logError, logInfo } from '@/utils/logger'
 
 type ExerciseDef = {
   key: 'forward' | 'backward' | 'knees'
@@ -16,6 +19,7 @@ type ExerciseItem = {
   key: ExerciseDef['key']
   label: string
   question: string
+  quantity: number
 }
 
 const BASE_EXERCISES: ExerciseDef[] = [
@@ -44,34 +48,43 @@ const EXERCISE_ITEMS: ExerciseItem[] = Array.from({ length: 9 }, (_, idx) => {
     key: base.key,
     label: base.label,
     question: base.question,
+    quantity: 20,
   }
 })
 
-function createExerciseProgress(value: number): Record<string, number> {
-  return Object.fromEntries(EXERCISE_ITEMS.map((item) => [item.id, value]))
+function createExerciseProgress(
+  items: ExerciseItem[],
+  value: number,
+): Record<string, number> {
+  return Object.fromEntries(items.map((item) => [item.id, value]))
 }
 
-function createDraftProgress(): Record<string, string> {
-  return Object.fromEntries(EXERCISE_ITEMS.map((item) => [item.id, '']))
+function createDraftProgress(items: ExerciseItem[]): Record<string, string> {
+  return Object.fromEntries(items.map((item) => [item.id, '']))
 }
 
 export function LessonPage() {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>()
+  const { token, openLoginModal } = useAuth()
 
   const course = slug ? getCourseBySlug(slug) : undefined
-  const lesson = slug && lessonId ? getLessonByCourseAndLessonId(slug, lessonId) : undefined
-  const initialCourseProgress = slug ? getCourseProgressBySlug(slug) : 0
+  const [courseId, setCourseId] = useState<string | null>(null)
+  const [lessonTitle, setLessonTitle] = useState('Тренировка')
+  const [lessonVideoUrl, setLessonVideoUrl] = useState('')
+  const [exerciseItems, setExerciseItems] = useState<ExerciseItem[]>(EXERCISE_ITEMS)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const [progressModalOpen, setProgressModalOpen] = useState(false)
   const [progressModalVisible, setProgressModalVisible] = useState(false)
   const [progressSavedModalOpen, setProgressSavedModalOpen] = useState(false)
   const [progressSavedModalVisible, setProgressSavedModalVisible] = useState(false)
+  const [isLessonLoading, setIsLessonLoading] = useState(true)
+  const [lessonLoadError, setLessonLoadError] = useState<string | null>(null)
   const [exerciseProgress, setExerciseProgress] = useState<Record<string, number>>(
-    () => createExerciseProgress(initialCourseProgress),
+    () => createExerciseProgress(EXERCISE_ITEMS, 0),
   )
   const [draftProgress, setDraftProgress] = useState<Record<string, string>>(
-    () => createDraftProgress(),
+    () => createDraftProgress(EXERCISE_ITEMS),
   )
   const progressListRef = useRef<HTMLDivElement>(null)
   const [progressScroll, setProgressScroll] = useState({
@@ -83,10 +96,6 @@ export function LessonPage() {
   const progressSavedUnmountTimerRef = useRef<number | null>(null)
   const progressModalUnmountTimerRef = useRef<number | null>(null)
 
-  if (!course || !lesson) {
-    return <Navigate to="/profile" replace />
-  }
-
   const openProgressModal = () => {
     if (progressModalUnmountTimerRef.current) {
       window.clearTimeout(progressModalUnmountTimerRef.current)
@@ -94,9 +103,9 @@ export function LessonPage() {
     }
     setDraftProgress(
       Object.fromEntries(
-        EXERCISE_ITEMS.map((item) => {
+        exerciseItems.map((item) => {
           const percent = exerciseProgress[item.id] ?? 0
-          const reps = Math.round((percent / 100) * 20)
+          const reps = percentToReps(percent, item.quantity)
           return [item.id, reps === 0 ? '' : String(reps)]
         }),
       ),
@@ -115,7 +124,7 @@ export function LessonPage() {
     }, 240)
   }
 
-  const saveProgress = () => {
+  const saveProgress = async () => {
     const normalizeReps = (value: string) => {
       const digits = value.replace(/[^\d]/g, '')
       if (!digits) return 0
@@ -123,22 +132,34 @@ export function LessonPage() {
       if (!Number.isFinite(num)) return 0
       return Math.max(0, num)
     }
-    const repsToPercent = (reps: number) =>
-      Math.min(100, Math.max(0, Math.round((reps / 20) * 100)))
-
+    const progressData = exerciseItems.map((item) =>
+      normalizeReps(draftProgress[item.id] ?? ''),
+    )
     const nextExerciseProgress = Object.fromEntries(
-      EXERCISE_ITEMS.map((item) => [
+      exerciseItems.map((item, index) => [
         item.id,
-        repsToPercent(normalizeReps(draftProgress[item.id] ?? '')),
+        repsToPercent(progressData[index] ?? 0, item.quantity),
       ]),
     ) as Record<string, number>
     setExerciseProgress(nextExerciseProgress)
-    if (slug) {
-      const overallProgress = Math.round(
-        Object.values(nextExerciseProgress).reduce((sum, value) => sum + value, 0) /
-          EXERCISE_ITEMS.length,
-      )
-      setCourseProgressBySlug(slug, overallProgress)
+    logInfo('LessonPage', 'save progress started', {
+      slug,
+      lessonId,
+      exercises: progressData.length,
+    })
+
+    if (courseId && lessonId && token) {
+      try {
+        await fitnessApi.saveWorkoutProgress(courseId, lessonId, progressData, token)
+        logInfo('LessonPage', 'save progress success', { slug, lessonId, courseId })
+      } catch (error) {
+        logError('LessonPage', 'save progress failed', {
+          slug,
+          lessonId,
+          courseId,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
     }
     setProgressModalVisible(false)
     if (progressModalUnmountTimerRef.current) {
@@ -165,6 +186,10 @@ export function LessonPage() {
       progressSavedUnmountTimerRef.current = null
     }, 220)
   }
+
+  useEffect(() => {
+    if (!token) openLoginModal()
+  }, [token, openLoginModal])
 
   useEffect(() => {
     if (!progressModalOpen && !progressSavedModalOpen) return
@@ -195,13 +220,80 @@ export function LessonPage() {
   }, [progressModalOpen])
 
   useEffect(() => {
-    if (!slug) return
-    const courseProgress = getCourseProgressBySlug(slug)
-    setExerciseProgress(createExerciseProgress(courseProgress))
-    setDraftProgress(createDraftProgress())
+    if (!slug || !lessonId || !token) return
+    setIsLessonLoading(true)
+    setLessonLoadError(null)
+    logInfo('LessonPage', 'load lesson started', { slug, lessonId })
     setShowVideo(false)
     setVideoLoaded(false)
-  }, [slug])
+    fitnessApi
+      .getCourses()
+      .then(async (courses) => {
+        const matchedCourse = courses.find(
+          (apiCourse) => mapApiCourseToAppCourseRef(apiCourse).slug === slug,
+        )
+        if (!matchedCourse) {
+          setLessonLoadError('Курс не найден в API')
+          logError('LessonPage', 'course not found by slug', { slug, lessonId })
+          return
+        }
+        setCourseId(matchedCourse._id)
+        const workout = await fitnessApi.getWorkoutById(lessonId, token)
+        const mappedItems: ExerciseItem[] =
+          workout.exercises.length > 0
+            ? workout.exercises.map((exercise) => ({
+                id: exercise._id,
+                key: 'forward',
+                label: exercise.name,
+                question: `Сколько раз вы сделали "${exercise.name}"?`,
+                quantity: exercise.quantity,
+              }))
+            : EXERCISE_ITEMS
+        setExerciseItems(mappedItems)
+        setLessonTitle(workout.name)
+        setLessonVideoUrl(workout.video)
+
+        try {
+          const workoutProgress = await fitnessApi.getWorkoutProgress(
+            matchedCourse._id,
+            lessonId,
+            token,
+          )
+          const progressByItem = Object.fromEntries(
+            mappedItems.map((item, index) => {
+              const reps = workoutProgress.progressData[index] ?? 0
+              const percent = Math.min(
+                100,
+                Math.max(0, repsToPercent(reps, item.quantity)),
+              )
+              return [item.id, percent]
+            }),
+          ) as Record<string, number>
+          setExerciseProgress(progressByItem)
+        } catch {
+          setExerciseProgress(createExerciseProgress(mappedItems, 0))
+        }
+        setDraftProgress(createDraftProgress(mappedItems))
+        logInfo('LessonPage', 'load lesson success', {
+          slug,
+          lessonId,
+          courseId: matchedCourse._id,
+          exerciseCount: mappedItems.length,
+        })
+      })
+      .catch((error) => {
+        setExerciseItems(EXERCISE_ITEMS)
+        setExerciseProgress(createExerciseProgress(EXERCISE_ITEMS, 0))
+        setDraftProgress(createDraftProgress(EXERCISE_ITEMS))
+        setLessonLoadError('Не удалось загрузить данные тренировки')
+        logError('LessonPage', 'load lesson failed', {
+          slug,
+          lessonId,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
+      .finally(() => setIsLessonLoading(false))
+  }, [slug, lessonId, token])
 
   useEffect(() => {
     if (!progressSavedModalOpen) return
@@ -260,10 +352,13 @@ export function LessonPage() {
     const onScroll = () => update()
     el.addEventListener('scroll', onScroll, { passive: true })
 
-    const ro = new ResizeObserver(() => update())
-    ro.observe(el)
-    if (el.firstElementChild) {
-      ro.observe(el.firstElementChild)
+    const hasResizeObserver = typeof ResizeObserver !== 'undefined'
+    const ro = hasResizeObserver ? new ResizeObserver(() => update()) : null
+    if (ro) {
+      ro.observe(el)
+      if (el.firstElementChild) {
+        ro.observe(el.firstElementChild)
+      }
     }
     window.addEventListener('resize', update)
 
@@ -271,17 +366,35 @@ export function LessonPage() {
     return () => {
       el.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', update)
-      ro.disconnect()
+      ro?.disconnect()
     }
   }, [progressModalOpen])
 
   const hasExistingProgress = Object.values(exerciseProgress).some((value) => value > 0)
+  const desktopColumns = [0, 1, 2].map((colIndex) =>
+    exerciseItems.filter((_, index) => index % 3 === colIndex),
+  )
+
+  if (!course) {
+    return <Navigate to="/profile" replace />
+  }
+  if (!token) {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <div className="min-h-screen bg-page font-sans text-text">
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[35px] sm:pt-[49px] pb-12">
         <div className="max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px]">
+          {isLessonLoading && (
+            <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем тренировку...</p>
+          )}
+          {!isLessonLoading && lessonLoadError && (
+            <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
+              {lessonLoadError}
+            </p>
+          )}
           <div className="flex items-center gap-4 flex-wrap">
             <h1
               className="text-left text-[32px] sm:text-[40px] leading-[1.1] text-black"
@@ -313,8 +426,8 @@ export function LessonPage() {
               {showVideo && (
                 <iframe
                   className="relative z-0 w-full h-full min-h-[189px] sm:min-h-[260px]"
-                  src={lesson.youtubeEmbedUrl}
-                  title={lesson.title}
+                  src={lessonVideoUrl}
+                  title={lessonTitle}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
@@ -325,7 +438,9 @@ export function LessonPage() {
               {!showVideo ? (
                 <button
                   type="button"
-                  onClick={() => setShowVideo(true)}
+                  onClick={() => {
+                    if (lessonVideoUrl) setShowVideo(true)
+                  }}
                   className="absolute inset-0 z-10 flex items-center justify-center"
                   aria-label="Запустить видео"
                 >
@@ -376,11 +491,11 @@ export function LessonPage() {
                     textAlign: 'left',
                   }}
                 >
-                  Упражнения тренировки 2
+                  {`Упражнения ${lessonTitle}`}
                 </h2>
 
                 <div className="flex flex-col gap-[24px] w-full max-w-[283px]">
-                  {EXERCISE_ITEMS.map((item) => {
+                  {exerciseItems.map((item) => {
                     const progress = exerciseProgress[item.id] ?? 0
                     return (
                       <div key={item.id} className="flex flex-col gap-[10px]">
@@ -479,20 +594,20 @@ export function LessonPage() {
                     textAlign: 'left',
                   }}
                 >
-                  Упражнения тренировки 2
+                  {`Упражнения ${lessonTitle}`}
                 </h2>
 
                 <div
                   className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-start"
                   style={{ gap: 40 }}
                 >
-                  {[0, 1, 2].map((col) => (
+                  {desktopColumns.map((columnItems, col) => (
                     <div
                       key={col}
                       className="flex flex-col w-full max-w-[283px] sm:max-w-[333px]"
                       style={{ gap: 20 }}
                     >
-                      {EXERCISE_ITEMS.slice(col * 3, col * 3 + 3).map((item) => {
+                      {columnItems.map((item) => {
                         const progress = exerciseProgress[item.id] ?? 0
                         return (
                           <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
@@ -609,7 +724,7 @@ export function LessonPage() {
                   style={{ height: 'calc(100% - 12px)', minHeight: 0, paddingRight: 20 }}
                 >
                   <div className="flex flex-col" style={{ gap: 20 }}>
-                    {EXERCISE_ITEMS.map((item) => (
+                    {exerciseItems.map((item) => (
                       <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
                         <label
                           style={{

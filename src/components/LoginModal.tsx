@@ -1,17 +1,97 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { fitnessApi } from '@/api/fitness'
 
 import photoMiniImg from '@/assets/photo_mini.png'
 
 type Props = { open: boolean; onClose: () => void }
 type AuthMode = 'login' | 'register'
 
-const DEFAULT_USER = {
-  name: 'Сергей',
-  login: 'admin',
-  email: 'sergey.petrov96@mail.ru',
-  password: 'admin',
+function toRecord(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== 'object' || value === null) return null
+  return value as Record<string, unknown>
+}
+
+function collectNestedRecords(root: unknown): Record<string, unknown>[] {
+  const first = toRecord(root)
+  if (!first) return []
+
+  const keysToDive = ['user', 'data', 'result', 'payload']
+  const queue: Record<string, unknown>[] = [first]
+  const result: Record<string, unknown>[] = []
+  const seen = new Set<Record<string, unknown>>()
+
+  while (queue.length > 0) {
+    const current = queue.shift()
+    if (!current || seen.has(current)) continue
+    seen.add(current)
+    result.push(current)
+
+    keysToDive.forEach((key) => {
+      const nested = toRecord(current[key])
+      if (nested) queue.push(nested)
+    })
+  }
+
+  return result
+}
+
+function extractApiEmail(payload: unknown): string {
+  const records = collectNestedRecords(payload)
+  for (const record of records) {
+    if (typeof record.email === 'string') return record.email
+  }
+  return ''
+}
+
+function parseAuthIdentity(email: unknown) {
+  if (typeof email !== 'string') {
+    return { email: '', login: 'user' }
+  }
+
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    return { email: '', login: 'user' }
+  }
+
+  const loginFromEmail = normalizedEmail.split('@')[0] || 'user'
+  return { email: normalizedEmail, login: loginFromEmail }
+}
+
+function normalizeSelectedCourseIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+
+  const ids = raw
+    .map((item) => {
+      if (typeof item === 'string') return item.trim()
+      if (typeof item !== 'object' || item === null) return ''
+
+      const record = item as Record<string, unknown>
+      const candidate =
+        (typeof record._id === 'string' && record._id) ||
+        (typeof record.courseId === 'string' && record.courseId) ||
+        (typeof record.id === 'string' && record.id) ||
+        ''
+
+      return candidate.trim()
+    })
+    .filter(Boolean)
+
+  return Array.from(new Set(ids))
+}
+
+function extractSelectedCourses(payload: unknown): string[] {
+  const records = collectNestedRecords(payload)
+  for (const record of records) {
+    const fromSelectedCourses = normalizeSelectedCourseIds(record.selectedCourses)
+    if (fromSelectedCourses.length > 0) return fromSelectedCourses
+  }
+  for (const record of records) {
+    const fromCourses = normalizeSelectedCourseIds(record.courses)
+    if (fromCourses.length > 0) return fromCourses
+  }
+  return []
 }
 
 export function LoginModal({ open, onClose }: Props) {
@@ -105,39 +185,46 @@ export function LoginModal({ open, onClose }: Props) {
     if (e.target === overlayRef.current) onClose()
   }
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoginError('')
-    const loginName = loginValue.trim()
+    const email = loginValue.trim().toLowerCase()
     const pass = password.trim()
 
-    if (loginName !== DEFAULT_USER.login || pass !== DEFAULT_USER.password) {
-      setLoginError('Пароль введен неверно, попробуйте еще раз.')
+    if (!email || !pass) {
+      setLoginError('Заполните все поля.')
       return
     }
 
-    login({
-      name: DEFAULT_USER.name,
-      login: DEFAULT_USER.login,
-      email: DEFAULT_USER.email,
-      avatarUrl: photoMiniImg,
-    })
-    clearFormState()
-    onClose()
-    navigate('/profile')
+    try {
+      const { token } = await fitnessApi.login(email, pass)
+      const me = await fitnessApi.me(token)
+      const identity = parseAuthIdentity(extractApiEmail(me))
+      login(
+        {
+          name: identity.login,
+          login: identity.login,
+          email: identity.email,
+          selectedCourses: extractSelectedCourses(me),
+          avatarUrl: photoMiniImg,
+        },
+        token,
+      )
+      clearFormState()
+      onClose()
+      navigate('/profile')
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'Ошибка авторизации')
+    }
   }
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setRegisterError('')
     const email = emailValue.trim().toLowerCase()
     const pass = password.trim()
     const passRepeat = repeatPassword.trim()
 
-    if (email === DEFAULT_USER.email) {
-      setRegisterError('Данная почта уже используется. Попробуйте войти.')
-      return
-    }
     if (!email || !pass || !passRepeat) {
       setRegisterError('Заполните все поля.')
       return
@@ -147,16 +234,27 @@ export function LoginModal({ open, onClose }: Props) {
       return
     }
 
-    const loginFromEmail = email.split('@')[0] || 'new.user'
-    login({
-      name: 'Пользователь',
-      login: loginFromEmail,
-      email,
-      avatarUrl: photoMiniImg,
-    })
-    clearFormState()
-    onClose()
-    navigate('/profile')
+    try {
+      await fitnessApi.register(email, pass)
+      const { token } = await fitnessApi.login(email, pass)
+      const me = await fitnessApi.me(token)
+      const identity = parseAuthIdentity(extractApiEmail(me))
+      login(
+        {
+          name: identity.login,
+          login: identity.login,
+          email: identity.email,
+          selectedCourses: extractSelectedCourses(me),
+          avatarUrl: photoMiniImg,
+        },
+        token,
+      )
+      clearFormState()
+      onClose()
+      navigate('/profile')
+    } catch (error) {
+      setRegisterError(error instanceof Error ? error.message : 'Ошибка регистрации')
+    }
   }
 
   const inputClassName = (hasError: boolean) =>
@@ -276,7 +374,7 @@ export function LoginModal({ open, onClose }: Props) {
   return (
     <div
       ref={overlayRef}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[1000] flex items-center justify-center p-4 transition-opacity duration-300 ${
         isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}
       style={{ background: 'rgba(0, 0, 0, 0.5)' }}
@@ -309,16 +407,16 @@ export function LoginModal({ open, onClose }: Props) {
           <form onSubmit={handleLoginSubmit} className="w-[280px] flex flex-col gap-[10px]">
             <input
               id="login-title"
-              type="text"
+              type="email"
               value={loginValue}
               onChange={(e) => {
                 setLoginValue(e.target.value)
                 if (loginError) setLoginError('')
               }}
-              placeholder="Логин"
+              placeholder="Эл. почта"
               className={inputClassName(false)}
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
-              autoComplete="username"
+              autoComplete="email"
             />
             {renderPasswordInput({
               value: password,
@@ -346,9 +444,7 @@ export function LoginModal({ open, onClose }: Props) {
                     textAlign: 'center',
                   }}
                 >
-                  Пароль введен неверно,
-                  <br />
-                  попробуйте еще раз.
+                  {loginError}
                 </p>
               )}
             </div>
@@ -408,6 +504,13 @@ export function LoginModal({ open, onClose }: Props) {
               onToggleShow: () => setShowRegisterRepeatPassword((prev) => !prev),
               autoComplete: 'new-password',
             })}
+
+            <p
+              className="text-[12px] leading-[1.2] text-black/60"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
+            >
+              Пароль: минимум 6 символов, минимум 2 спецсимвола и минимум 1 заглавная буква.
+            </p>
 
             <div className="min-h-[34px] pt-1">
               {registerError && (

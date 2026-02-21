@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { SkillCourseCard } from '@/components/SkillCourseCard'
 import { getCourseBySlug } from '@/data/courses'
 import { useAuth } from '@/contexts/AuthContext'
+import { fitnessApi, type ApiCourse } from '@/api/fitness'
+import { mapApiCourseToAppCourseRef } from '@/api/mappers'
+import { logError, logInfo } from '@/utils/logger'
 
 const COMMON_DIRECTIONS = [
   'Йога для новичков',
@@ -102,20 +106,158 @@ function StarIcon({ className }: { className?: string }) {
   )
 }
 
+function splitDescriptionToBullets(description?: string): string[] {
+  if (!description) return []
+  return description
+    .split(/[.!?]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
 export function CoursePage() {
   const { slug } = useParams<{ slug: string }>()
-  const { user, openLoginModal } = useAuth()
+  const { user, token, openLoginModal, refreshMe } = useAuth()
   const [showcaseHovered, setShowcaseHovered] = useState(false)
+  const [apiCourses, setApiCourses] = useState<ApiCourse[] | null>(null)
+  const [apiLoading, setApiLoading] = useState(true)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const [pendingAddCourse, setPendingAddCourse] = useState(false)
+  const [addCourseLoading, setAddCourseLoading] = useState(false)
   const course = slug ? getCourseBySlug(slug) : undefined
   const description = slug ? COURSE_DESCRIPTIONS[slug] : undefined
 
-  if (!course || !description) {
+  useEffect(() => {
+    setApiLoading(true)
+    setApiError(null)
+    logInfo('CoursePage', 'load course list started', { slug })
+    fitnessApi
+      .getCourses()
+      .then((data) => {
+        setApiCourses(data)
+        logInfo('CoursePage', 'load course list success', { count: data.length, slug })
+      })
+      .catch((error) => {
+        setApiCourses(null)
+        setApiError('Не удалось загрузить список курсов.')
+        logError('CoursePage', 'load course list failed', {
+          slug,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
+      .finally(() => setApiLoading(false))
+  }, [])
+
+  const apiCourse = useMemo(() => {
+    if (!slug || !apiCourses) return null
+    return apiCourses.find((item) => mapApiCourseToAppCourseRef(item).slug === slug) ?? null
+  }, [slug, apiCourses])
+
+  useEffect(() => {
+    if (apiLoading) return
+    if (!slug || !apiCourses) return
+    if (!apiCourse) {
+      setApiError('Курс не найден в API.')
+    }
+  }, [apiLoading, slug, apiCourses, apiCourse])
+
+  const courseContent = useMemo(() => {
+    const bullets = splitDescriptionToBullets(apiCourse?.description)
+    return {
+      suits:
+        apiCourse?.fitting && apiCourse.fitting.length > 0
+          ? apiCourse.fitting
+          : description?.suits ?? [],
+      directions:
+        apiCourse?.directions && apiCourse.directions.length > 0
+          ? apiCourse.directions
+          : description?.directions ?? COMMON_DIRECTIONS,
+      heroTitle:
+        bullets[0] ??
+        description?.heroTitle ??
+        (apiCourse?.nameRU ? `Курс ${apiCourse.nameRU}` : 'Курс'),
+      heroBullets:
+        bullets.length > 1
+          ? bullets.slice(1)
+          : description?.heroBullets ?? [],
+    }
+  }, [apiCourse, description])
+
+  const isSelectedByUser = !!(user && apiCourse && user.selectedCourses.includes(apiCourse._id))
+
+  if (!course) {
     return <Navigate to="/" replace />
   }
+
+  const handleAddCourse = async () => {
+    if (!user || !token) {
+      setPendingAddCourse(true)
+      toast('Войдите, чтобы добавить курс')
+      openLoginModal()
+      return
+    }
+    if (!apiCourse?._id) {
+      toast.error('Курс не найден в API')
+      return
+    }
+    if (isSelectedByUser) {
+      toast('Курс уже добавлен')
+      return
+    }
+    if (addCourseLoading) return
+
+    setAddCourseLoading(true)
+    logInfo('CoursePage', 'add course started', { slug, courseId: apiCourse._id })
+    try {
+      await fitnessApi.addCourseToUser(apiCourse._id, token)
+      await refreshMe()
+      setPendingAddCourse(false)
+      toast.success('Курс добавлен в ваш кабинет')
+      logInfo('CoursePage', 'add course success', { slug, courseId: apiCourse._id })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось добавить курс'
+      if (message.toLowerCase().includes('уже')) {
+        await refreshMe()
+        setPendingAddCourse(false)
+        toast('Курс уже был добавлен')
+        logInfo('CoursePage', 'add course already added', { slug, courseId: apiCourse._id })
+      } else {
+        toast.error(message)
+        logError('CoursePage', 'add course failed', {
+          slug,
+          courseId: apiCourse._id,
+          message,
+        })
+      }
+    } finally {
+      setAddCourseLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!pendingAddCourse || !user || !token) return
+    if (!apiCourse?._id || isSelectedByUser) {
+      setPendingAddCourse(false)
+      return
+    }
+    fitnessApi
+      .addCourseToUser(apiCourse._id, token)
+      .then(() => refreshMe())
+      .finally(() => setPendingAddCourse(false))
+  }, [pendingAddCourse, user, token, apiCourse?._id, isSelectedByUser, refreshMe])
 
   return (
     <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
       <Header />
+      {apiLoading && (
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-4">
+          <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем данные курса...</p>
+        </div>
+      )}
+      {apiError && (
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-4">
+          <p style={{ fontFamily: 'Roboto, sans-serif' }}>{apiError}</p>
+        </div>
+      )}
       {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
       <div className="relative z-0 max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
@@ -153,7 +295,7 @@ export function CoursePage() {
             className="flex flex-col sm:flex-row sm:flex-wrap items-stretch"
             style={{ gap: 17 }}
           >
-            {description.suits.map((text, i) => (
+            {courseContent.suits.map((text, i) => (
               <div
                 key={i}
                 className="rounded-[28px] flex flex-col justify-start items-start min-w-0 flex-1 basis-full sm:basis-[280px] max-w-[343px] sm:max-w-full box-border overflow-hidden"
@@ -235,7 +377,7 @@ export function CoursePage() {
             <div
               className="w-full h-full sm:h-auto min-w-0 flex flex-col justify-between lg:grid lg:grid-rows-2 lg:grid-flow-col lg:gap-x-[158px] lg:gap-y-[34px] lg:content-start"
             >
-              {description.directions.map((name) => (
+              {courseContent.directions.map((name) => (
                 <div
                   key={name}
                   className="flex flex-row items-start gap-2 sm:gap-[8px] min-w-0 w-full"
@@ -319,7 +461,7 @@ export function CoursePage() {
                   textAlign: 'left',
                 }}
               >
-                {description.heroTitle}
+                {courseContent.heroTitle}
               </h2>
               <div
                 className="flex flex-col gap-[8px]"
@@ -333,7 +475,7 @@ export function CoursePage() {
                   letterSpacing: 0,
                 }}
               >
-                {description.heroBullets.map((line) => (
+                {courseContent.heroBullets.map((line) => (
                   <div key={line} className="flex items-start gap-3">
                     <span
                       className="rounded-full shrink-0 w-[4px] h-[4px] mt-[8px]"
@@ -346,7 +488,8 @@ export function CoursePage() {
               </div>
               <button
                 type="button"
-                onClick={openLoginModal}
+                onClick={handleAddCourse}
+                disabled={addCourseLoading}
                 className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity flex items-center justify-center"
                 style={{
                   backgroundColor: 'rgba(188, 236, 48, 1)',
@@ -367,7 +510,13 @@ export function CoursePage() {
                     display: 'inline-block',
                   }}
                 >
-                  {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
+                  {!user
+                    ? 'Войдите, чтобы добавить курс'
+                    : isSelectedByUser
+                      ? 'Курс уже добавлен'
+                      : addCourseLoading
+                        ? 'Добавляем...'
+                        : 'Добавить курс'}
                 </span>
               </button>
             </div>
@@ -420,7 +569,7 @@ export function CoursePage() {
                 letterSpacing: 0,
               }}
             >
-              {description.heroTitle}
+              {courseContent.heroTitle}
             </h2>
             {/* Список: 437×178, flex row, Roboto Regular 24px, 110%, по макету */}
             <div
@@ -440,7 +589,7 @@ export function CoursePage() {
                 textAlign: 'left',
               }}
             >
-              {description.heroBullets.map((line) => (
+              {courseContent.heroBullets.map((line) => (
                 <div key={line} className="flex flex-row items-center shrink-0" style={{ gap: 20 }}>
                   <span
                     className="rounded-full shrink-0 w-[6px] h-[6px]"
@@ -454,7 +603,8 @@ export function CoursePage() {
             {/* Frame 2043683033: кнопка 437×52, padding 16px 26px, radius 46px */}
             <button
               type="button"
-              onClick={openLoginModal}
+              onClick={handleAddCourse}
+              disabled={addCourseLoading}
               className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)]"
               style={{
                 width: 437,
@@ -469,7 +619,13 @@ export function CoursePage() {
                 fontSize: 18,
               }}
             >
-              {user ? 'Добавить курс' : 'Войдите, чтобы добавить курс'}
+              {!user
+                ? 'Войдите, чтобы добавить курс'
+                : isSelectedByUser
+                  ? 'Курс уже добавлен'
+                  : addCourseLoading
+                    ? 'Добавляем...'
+                    : 'Добавить курс'}
             </button>
           </div>
 

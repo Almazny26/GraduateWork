@@ -78,65 +78,62 @@ export function Header() {
                 className="w-[14px] h-[10px] sm:w-3 sm:h-3 shrink-0 sm:ml-[-4px]"
               />
             </button>
-            <div
-              aria-hidden={!dropdownOpen}
-              className={`absolute right-0 top-full mt-2 z-50 flex flex-col items-center rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-visible transition-all duration-300 ease-out origin-top ${
-                dropdownOpen
-                  ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
-                  : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
-              }`}
-              style={{
-                width: 320,
-                minHeight: 258,
-                gap: 34,
-                padding: 30,
-              }}
-            >
-              <div className="flex flex-col items-center w-full min-w-0" style={{ gap: 10 }}>
-                <span
-                  className="text-[18px] leading-[1.1] text-black"
-                  style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
-                >
-                  {user.name}
-                </span>
-                <span
-                  className="text-[18px] leading-[1.1] text-[#999999]"
-                  style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
-                >
-                  {user.email || user.login}
-                </span>
+            {dropdownOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 z-50 flex flex-col items-center rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-visible transition-all duration-300 ease-out origin-top opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                style={{
+                  width: 320,
+                  minHeight: 258,
+                  gap: 34,
+                  padding: 30,
+                }}
+              >
+                <div className="flex flex-col items-center w-full min-w-0" style={{ gap: 10 }}>
+                  <span
+                    className="text-[18px] leading-[1.1] text-black"
+                    style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
+                  >
+                    {user.name}
+                  </span>
+                  <span
+                    className="text-[18px] leading-[1.1] text-[#999999]"
+                    style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
+                  >
+                    {user.email || user.login}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center" style={{ gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={handleProfileClick}
+                    className="flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black"
+                    style={{
+                      width: 206,
+                      height: 52,
+                      padding: '16px 26px',
+                      backgroundColor: 'rgba(188, 236, 48, 1)',
+                      fontFamily: 'Roboto, sans-serif',
+                    }}
+                  >
+                    Мой профиль
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex justify-center items-center rounded-[46px] border text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors"
+                    style={{
+                      width: 206,
+                      height: 52,
+                      padding: '16px 26px',
+                      border: '1px solid rgba(0, 0, 0, 1)',
+                      fontFamily: 'Roboto, sans-serif',
+                    }}
+                  >
+                    Выйти
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-col items-center" style={{ gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={handleProfileClick}
-                  className="flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black"
-                  style={{
-                    width: 206,
-                    height: 52,
-                    padding: '16px 26px',
-                    backgroundColor: 'rgba(188, 236, 48, 1)',
-                    fontFamily: 'Roboto, sans-serif',
-                  }}
-                >
-                  Мой профиль
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex justify-center items-center rounded-[46px] border text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors"
-                  style={{
-                    width: 206,
-                    height: 52,
-                    padding: '16px 26px',
-                    border: '1px solid rgba(0, 0, 0, 1)',
-                    fontFamily: 'Roboto, sans-serif',
-                  }}
-                >
-                  Выйти
-                </button>
-              </div>
-            </div>
+            )}
           </>
         ) : (
           <button

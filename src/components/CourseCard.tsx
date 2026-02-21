@@ -5,6 +5,8 @@ type CourseCardProps = {
   title: string
   imageSrc: string
   slug: string
+  onAddCourse?: () => void | Promise<void>
+  addDisabled?: boolean
 }
 
 /**
@@ -12,7 +14,13 @@ type CourseCardProps = {
  * Шрифты: заголовок 32px medium, чипы 16px normal; отступы: gap 24px, блок текста gap 20px, чипы gap 6px; тень и скругление по макету.
  * Гибкая: ширина подстраивается под сетку, не накладывается при уменьшении экрана.
  */
-export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
+export function CourseCard({
+  title,
+  imageSrc,
+  slug,
+  onAddCourse,
+  addDisabled = false,
+}: CourseCardProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
@@ -36,11 +44,15 @@ export function CourseCard({ title, imageSrc, slug }: CourseCardProps) {
             {/* Кнопка добавления — внутри карточки, чтобы масштабировалась вместе с ней */}
             <button
               type="button"
+              disabled={addDisabled}
               className="absolute top-5 right-5 z-30 w-8 h-8 flex items-center justify-center shrink-0 p-0 border-0 bg-transparent pointer-events-auto sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110"
               style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
+                if (!addDisabled) {
+                  void onAddCourse?.()
+                }
               }}
               onMouseEnter={(e) => {
                 setTooltipPos({ x: e.clientX, y: e.clientY })
