@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
-import { getCourseBySlug } from '@/data/courses'
+import { ProfileCoursesLoading } from '@/components/Loading'
 import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi } from '@/api/fitness'
-import { mapApiCourseToAppCourseRef } from '@/api/mappers'
+import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
 import { percentToReps, repsToPercent } from '@/utils/progress'
 import { logError, logInfo } from '@/utils/logger'
 
@@ -22,35 +23,10 @@ type ExerciseItem = {
   quantity: number
 }
 
-const BASE_EXERCISES: ExerciseDef[] = [
-  {
-    key: 'forward',
-    label: 'Наклоны вперед',
-    question: 'Сколько раз вы сделали наклоны вперед?',
-  },
-  {
-    key: 'backward',
-    label: 'Наклоны назад',
-    question: 'Сколько раз вы сделали наклоны назад?',
-  },
-  {
-    key: 'knees',
-    label: 'Поднятие ног, согнутых в коленях',
-    question: 'Сколько раз вы сделали поднятие ног, согнутых в коленях?',
-  },
-]
-
-const EXERCISE_ITEMS: ExerciseItem[] = Array.from({ length: 9 }, (_, idx) => {
-  const base = BASE_EXERCISES[idx % BASE_EXERCISES.length]
-  const blockIndex = Math.floor(idx / BASE_EXERCISES.length) + 1
-  return {
-    id: `${base.key}-${blockIndex}`,
-    key: base.key,
-    label: base.label,
-    question: base.question,
-    quantity: 20,
-  }
-})
+type SelectedLessonItem = {
+  id: string
+  title: string
+}
 
 function createExerciseProgress(
   items: ExerciseItem[],
@@ -65,13 +41,14 @@ function createDraftProgress(items: ExerciseItem[]): Record<string, string> {
 
 export function LessonPage() {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>()
+  const location = useLocation()
   const { token, openLoginModal } = useAuth()
 
-  const course = slug ? getCourseBySlug(slug) : undefined
+  const [courseRef, setCourseRef] = useState<AppCourseRef | null>(null)
   const [courseId, setCourseId] = useState<string | null>(null)
-  const [lessonTitle, setLessonTitle] = useState('Тренировка')
+  const [lessonTitle, setLessonTitle] = useState('')
   const [lessonVideoUrl, setLessonVideoUrl] = useState('')
-  const [exerciseItems, setExerciseItems] = useState<ExerciseItem[]>(EXERCISE_ITEMS)
+  const [exerciseItems, setExerciseItems] = useState<ExerciseItem[]>([])
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const [progressModalOpen, setProgressModalOpen] = useState(false)
@@ -80,12 +57,10 @@ export function LessonPage() {
   const [progressSavedModalVisible, setProgressSavedModalVisible] = useState(false)
   const [isLessonLoading, setIsLessonLoading] = useState(true)
   const [lessonLoadError, setLessonLoadError] = useState<string | null>(null)
-  const [exerciseProgress, setExerciseProgress] = useState<Record<string, number>>(
-    () => createExerciseProgress(EXERCISE_ITEMS, 0),
-  )
-  const [draftProgress, setDraftProgress] = useState<Record<string, string>>(
-    () => createDraftProgress(EXERCISE_ITEMS),
-  )
+  const [exerciseProgress, setExerciseProgress] = useState<Record<string, number>>({})
+  const [draftProgress, setDraftProgress] = useState<Record<string, string>>({})
+  const [isSavingProgress, setIsSavingProgress] = useState(false)
+  const [selectedLessons, setSelectedLessons] = useState<SelectedLessonItem[]>([])
   const progressListRef = useRef<HTMLDivElement>(null)
   const [progressScroll, setProgressScroll] = useState({
     hasOverflow: false,
@@ -95,8 +70,18 @@ export function LessonPage() {
   const progressSavedCloseTimerRef = useRef<number | null>(null)
   const progressSavedUnmountTimerRef = useRef<number | null>(null)
   const progressModalUnmountTimerRef = useRef<number | null>(null)
+  const selectedLessonIdsFromQuery = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    const raw = params.get('lessonIds') ?? ''
+    if (!raw) return []
+    return raw
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean)
+  }, [location.search])
 
   const openProgressModal = () => {
+    if (isLessonLoading || exerciseItems.length === 0 || isSavingProgress) return
     if (progressModalUnmountTimerRef.current) {
       window.clearTimeout(progressModalUnmountTimerRef.current)
       progressModalUnmountTimerRef.current = null
@@ -125,6 +110,7 @@ export function LessonPage() {
   }
 
   const saveProgress = async () => {
+    if (isSavingProgress) return
     const normalizeReps = (value: string) => {
       const digits = value.replace(/[^\d]/g, '')
       if (!digits) return 0
@@ -132,9 +118,11 @@ export function LessonPage() {
       if (!Number.isFinite(num)) return 0
       return Math.max(0, num)
     }
-    const progressData = exerciseItems.map((item) =>
-      normalizeReps(draftProgress[item.id] ?? ''),
-    )
+    const progressData = exerciseItems.map((item) => {
+      const reps = normalizeReps(draftProgress[item.id] ?? '')
+      const target = Math.max(1, item.quantity)
+      return Math.min(reps, target)
+    })
     const nextExerciseProgress = Object.fromEntries(
       exerciseItems.map((item, index) => [
         item.id,
@@ -147,20 +135,29 @@ export function LessonPage() {
       lessonId,
       exercises: progressData.length,
     })
+    setIsSavingProgress(true)
+    let saveSucceeded = false
 
-    if (courseId && lessonId && token) {
-      try {
+    try {
+      if (courseId && lessonId && token) {
         await fitnessApi.saveWorkoutProgress(courseId, lessonId, progressData, token)
         logInfo('LessonPage', 'save progress success', { slug, lessonId, courseId })
-      } catch (error) {
-        logError('LessonPage', 'save progress failed', {
-          slug,
-          lessonId,
-          courseId,
-          error: error instanceof Error ? error.message : String(error),
-        })
+        saveSucceeded = true
       }
+    } catch (error) {
+      logError('LessonPage', 'save progress failed', {
+        slug,
+        lessonId,
+        courseId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      toast.error('Не удалось сохранить прогресс. Проверьте интернет и попробуйте снова.')
+    } finally {
+      setIsSavingProgress(false)
     }
+
+    if (!saveSucceeded) return
+
     setProgressModalVisible(false)
     if (progressModalUnmountTimerRef.current) {
       window.clearTimeout(progressModalUnmountTimerRef.current)
@@ -221,37 +218,65 @@ export function LessonPage() {
 
   useEffect(() => {
     if (!slug || !lessonId || !token) return
+    let cancelled = false
     setIsLessonLoading(true)
     setLessonLoadError(null)
+    setCourseRef(null)
+    setCourseId(null)
+    setLessonTitle('')
+    setLessonVideoUrl('')
+    setExerciseItems([])
+    setExerciseProgress({})
+    setDraftProgress({})
+    setSelectedLessons([])
     logInfo('LessonPage', 'load lesson started', { slug, lessonId })
     setShowVideo(false)
     setVideoLoaded(false)
     fitnessApi
       .getCourses()
       .then(async (courses) => {
+        if (cancelled) return
         const matchedCourse = courses.find(
           (apiCourse) => mapApiCourseToAppCourseRef(apiCourse).slug === slug,
         )
         if (!matchedCourse) {
+          if (cancelled) return
           setLessonLoadError('Курс не найден в API')
           logError('LessonPage', 'course not found by slug', { slug, lessonId })
           return
         }
+        const mappedCourseRef = mapApiCourseToAppCourseRef(matchedCourse)
+        if (cancelled) return
+        setCourseRef(mappedCourseRef)
         setCourseId(matchedCourse._id)
-        const workout = await fitnessApi.getWorkoutById(lessonId, token)
-        const mappedItems: ExerciseItem[] =
-          workout.exercises.length > 0
-            ? workout.exercises.map((exercise) => ({
-                id: exercise._id,
-                key: 'forward',
-                label: exercise.name,
-                question: `Сколько раз вы сделали "${exercise.name}"?`,
-                quantity: exercise.quantity,
-              }))
-            : EXERCISE_ITEMS
+        const [workout, courseWorkouts] = await Promise.all([
+          fitnessApi.getWorkoutById(lessonId, token),
+          fitnessApi.getCourseWorkouts(matchedCourse._id, token).catch(() => []),
+        ])
+        if (cancelled) return
+        const queueSource =
+          selectedLessonIdsFromQuery.length > 0
+            ? courseWorkouts.filter((item) => selectedLessonIdsFromQuery.includes(item._id))
+            : [workout]
+        const queue = queueSource.map((item) => ({ id: item._id, title: item.name }))
+        setSelectedLessons(queue.length > 0 ? queue : [{ id: workout._id, title: workout.name }])
+        const mappedItems: ExerciseItem[] = workout.exercises.map((exercise, index) => {
+          const target = Math.max(1, exercise.quantity)
+          return {
+            id: exercise._id,
+            key: (['forward', 'backward', 'knees'][index % 3] ?? 'forward') as ExerciseDef['key'],
+            label: exercise.name,
+            question: `Сколько раз вы сделали "${exercise.name}"? Цель: ${target}.`,
+            quantity: target,
+          }
+        })
         setExerciseItems(mappedItems)
         setLessonTitle(workout.name)
         setLessonVideoUrl(workout.video)
+        if (mappedItems.length === 0) {
+          setLessonLoadError('В тренировке пока нет упражнений')
+          return
+        }
 
         try {
           const workoutProgress = await fitnessApi.getWorkoutProgress(
@@ -259,6 +284,7 @@ export function LessonPage() {
             lessonId,
             token,
           )
+          if (cancelled) return
           const progressByItem = Object.fromEntries(
             mappedItems.map((item, index) => {
               const reps = workoutProgress.progressData[index] ?? 0
@@ -271,6 +297,7 @@ export function LessonPage() {
           ) as Record<string, number>
           setExerciseProgress(progressByItem)
         } catch {
+          if (cancelled) return
           setExerciseProgress(createExerciseProgress(mappedItems, 0))
         }
         setDraftProgress(createDraftProgress(mappedItems))
@@ -282,9 +309,7 @@ export function LessonPage() {
         })
       })
       .catch((error) => {
-        setExerciseItems(EXERCISE_ITEMS)
-        setExerciseProgress(createExerciseProgress(EXERCISE_ITEMS, 0))
-        setDraftProgress(createDraftProgress(EXERCISE_ITEMS))
+        if (cancelled) return
         setLessonLoadError('Не удалось загрузить данные тренировки')
         logError('LessonPage', 'load lesson failed', {
           slug,
@@ -292,8 +317,14 @@ export function LessonPage() {
           error: error instanceof Error ? error.message : String(error),
         })
       })
-      .finally(() => setIsLessonLoading(false))
-  }, [slug, lessonId, token])
+      .finally(() => {
+        if (!cancelled) setIsLessonLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [slug, lessonId, token, selectedLessonIdsFromQuery])
 
   useEffect(() => {
     if (!progressSavedModalOpen) return
@@ -374,10 +405,14 @@ export function LessonPage() {
   const desktopColumns = [0, 1, 2].map((colIndex) =>
     exerciseItems.filter((_, index) => index % 3 === colIndex),
   )
+  const isProgressActionDisabled =
+    isLessonLoading || isSavingProgress || exerciseItems.length === 0
+  const lessonHeading = courseRef?.title ?? 'Тренировка'
+  const lessonQueueParam = useMemo(
+    () => selectedLessons.map((lesson) => lesson.id).join(','),
+    [selectedLessons],
+  )
 
-  if (!course) {
-    return <Navigate to="/profile" replace />
-  }
   if (!token) {
     return <Navigate to="/" replace />
   }
@@ -387,9 +422,7 @@ export function LessonPage() {
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[35px] sm:pt-[49px] pb-12">
         <div className="max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px]">
-          {isLessonLoading && (
-            <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем тренировку...</p>
-          )}
+          {isLessonLoading && <ProfileCoursesLoading label="Загружаем тренировку" />}
           {!isLessonLoading && lessonLoadError && (
             <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
               {lessonLoadError}
@@ -400,9 +433,39 @@ export function LessonPage() {
               className="text-left text-[32px] sm:text-[40px] leading-[1.1] text-black"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 600 }}
             >
-              {course.title}
+              {lessonHeading}
             </h1>
           </div>
+          {selectedLessons.length > 1 && (
+            <section className="w-full max-w-[1160px] rounded-[20px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] p-5 flex flex-col gap-3">
+              <h2
+                className="text-[20px] sm:text-[24px] leading-[1.1] text-black"
+                style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
+              >
+                Выбранные тренировки
+              </h2>
+              <div className="flex flex-col gap-2">
+                {selectedLessons.map((lesson, index) => {
+                  const to = `/course/${slug}/lesson/${lesson.id}?lessonIds=${encodeURIComponent(lessonQueueParam)}`
+                  const isCurrent = lesson.id === lessonId
+                  return (
+                    <Link
+                      key={lesson.id}
+                      to={to}
+                      className={`rounded-[14px] border px-4 py-3 text-[16px] leading-[1.1] transition-colors ${
+                        isCurrent
+                          ? 'border-[#BCEC30] bg-[#F6FFD8]'
+                          : 'border-black/10 bg-white hover:bg-black/5'
+                      }`}
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    >
+                      {`${index + 1}. ${lesson.title}`}
+                    </Link>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           <section className="flex flex-col gap-5">
             <div
@@ -410,17 +473,13 @@ export function LessonPage() {
               style={{ minHeight: 189 }}
             >
               {(!showVideo || !videoLoaded) && (
-                <div className="absolute inset-0 z-[5]">
-                  <img
-                    src="/images/Снимок экрана 2022-09-13 в 13.57 1.png"
-                    alt=""
-                    className="w-full h-full object-cover"
-                    style={{ filter: 'brightness(0.96)' }}
-                    onError={(e) => {
-                      e.currentTarget.src = course.image
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-white/12" />
+                <div className="absolute inset-0 z-[5] bg-[#1E1E1E] flex items-center justify-center">
+                  <p
+                    className="text-[16px] text-white/80"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    {isLessonLoading ? 'Загружаем видео...' : 'Нажмите, чтобы запустить видео'}
+                  </p>
                 </div>
               )}
               {showVideo && (
@@ -441,7 +500,8 @@ export function LessonPage() {
                   onClick={() => {
                     if (lessonVideoUrl) setShowVideo(true)
                   }}
-                  className="absolute inset-0 z-10 flex items-center justify-center"
+                  disabled={!lessonVideoUrl || isLessonLoading}
+                  className="absolute inset-0 z-10 flex items-center justify-center disabled:opacity-60"
                   aria-label="Запустить видео"
                 >
                   <img
@@ -542,6 +602,7 @@ export function LessonPage() {
               <button
                 type="button"
                 onClick={openProgressModal}
+                disabled={isProgressActionDisabled}
                 className="w-[283px] h-[52px] flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
                 style={{
                   padding: '16px 26px',
@@ -553,6 +614,7 @@ export function LessonPage() {
                   lineHeight: '110%',
                   letterSpacing: 0,
                   textAlign: 'center',
+                  opacity: isProgressActionDisabled ? 0.65 : 1,
                 }}
               >
                 Обновить свой прогресс
@@ -657,6 +719,7 @@ export function LessonPage() {
               <button
                 type="button"
                 onClick={openProgressModal}
+                disabled={isProgressActionDisabled}
                 className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity max-w-[283px] sm:max-w-[274px]"
                 style={{
                   width: '100%',
@@ -670,6 +733,7 @@ export function LessonPage() {
                   lineHeight: '110%',
                   letterSpacing: 0,
                   textAlign: 'center',
+                  opacity: isProgressActionDisabled ? 0.65 : 1,
                 }}
               >
                 {hasExistingProgress ? 'Обновить свой прогресс' : 'Заполнить свой прогресс'}
@@ -804,7 +868,8 @@ export function LessonPage() {
             <button
               type="button"
               onClick={saveProgress}
-              className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
+              disabled={isSavingProgress}
+              className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{
                 width: 263,
                 height: 52,
@@ -821,7 +886,7 @@ export function LessonPage() {
                 textAlign: 'center',
               }}
             >
-              Сохранить
+              {isSavingProgress ? 'Сохраняем...' : 'Сохранить'}
             </button>
           </div>
         </div>

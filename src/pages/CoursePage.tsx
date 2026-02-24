@@ -3,95 +3,11 @@ import { useParams, Navigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { SkillCourseCard } from '@/components/SkillCourseCard'
-import { getCourseBySlug } from '@/data/courses'
+import { ProfileCoursesLoading } from '@/components/Loading'
 import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi, type ApiCourse } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef } from '@/api/mappers'
 import { logError, logInfo } from '@/utils/logger'
-
-const COMMON_DIRECTIONS = [
-  'Йога для новичков',
-  'Классическая йога',
-  'Кундалини-йога',
-  'Йогатерапия',
-  'Хатха-йога',
-  'Аштанга-йога',
-]
-
-const COURSE_DESCRIPTIONS: Record<
-  string,
-  {
-    suits: string[]
-    directions: string[]
-    heroTitle: string
-    heroBullets: string[]
-  }
-> = {
-  yoga: {
-    suits: [
-      'Давно хотели попробовать\nйогу, но не решались начать',
-      'Хотите укрепить\nпозвоночник, избавиться\nот болей в спине\nи суставах',
-      'Ищете активность,\nполезную для тела и души',
-    ],
-    directions: COMMON_DIRECTIONS,
-    heroTitle: 'Начните путь к новому телу',
-    heroBullets: [
-      'проработка всех групп мышц',
-      'тренировка суставов',
-      'улучшение циркуляции крови',
-      'упражнения заряжают бодростью',
-      'помогают противостоять стрессам',
-    ],
-  },
-  stretching: {
-    suits: [
-      'Хотите развить гибкость и пластичность',
-      'Нужна реабилитация после травм',
-      'Ищете спокойную нагрузку без прыжков',
-    ],
-    directions: COMMON_DIRECTIONS,
-    heroTitle: 'Гибкость и здоровье',
-    heroBullets: [
-      'растяжка всех групп мышц',
-      'улучшение осанки',
-      'снятие напряжения',
-    ],
-  },
-  fitness: {
-    suits: [
-      'Хотите укрепить мышцы и выносливость',
-      'Готовы к регулярным тренировкам',
-      'Цель — подтянутое тело',
-    ],
-    directions: COMMON_DIRECTIONS,
-    heroTitle: 'Сила и выносливость',
-    heroBullets: [
-      'проработка всех групп мышц',
-      'тренировка суставов',
-      'улучшение циркуляции крови',
-    ],
-  },
-  step: {
-    suits: [
-      'Любите ритмичную нагрузку',
-      'Хотите сжечь калории весело',
-      'Есть степ-платформа или готовы импровизировать',
-    ],
-    directions: COMMON_DIRECTIONS,
-    heroTitle: 'Ритм и энергия',
-    heroBullets: ['кардионагрузка', 'координация', 'выносливость'],
-  },
-  bodyflex: {
-    suits: [
-      'Интересует дыхательная гимнастика',
-      'Хотите мягкую нагрузку',
-      'Нужна практика для снятия стресса',
-    ],
-    directions: COMMON_DIRECTIONS,
-    heroTitle: 'Дыхание и лёгкость',
-    heroBullets: ['дыхательные техники', 'растяжка', 'расслабление'],
-  },
-}
 
 function StarIcon({ className }: { className?: string }) {
   return (
@@ -123,8 +39,6 @@ export function CoursePage() {
   const [apiError, setApiError] = useState<string | null>(null)
   const [pendingAddCourse, setPendingAddCourse] = useState(false)
   const [addCourseLoading, setAddCourseLoading] = useState(false)
-  const course = slug ? getCourseBySlug(slug) : undefined
-  const description = slug ? COURSE_DESCRIPTIONS[slug] : undefined
 
   useEffect(() => {
     setApiLoading(true)
@@ -151,6 +65,10 @@ export function CoursePage() {
     if (!slug || !apiCourses) return null
     return apiCourses.find((item) => mapApiCourseToAppCourseRef(item).slug === slug) ?? null
   }, [slug, apiCourses])
+  const mappedCourse = useMemo(
+    () => (apiCourse ? mapApiCourseToAppCourseRef(apiCourse) : null),
+    [apiCourse],
+  )
 
   useEffect(() => {
     if (apiLoading) return
@@ -163,28 +81,17 @@ export function CoursePage() {
   const courseContent = useMemo(() => {
     const bullets = splitDescriptionToBullets(apiCourse?.description)
     return {
-      suits:
-        apiCourse?.fitting && apiCourse.fitting.length > 0
-          ? apiCourse.fitting
-          : description?.suits ?? [],
-      directions:
-        apiCourse?.directions && apiCourse.directions.length > 0
-          ? apiCourse.directions
-          : description?.directions ?? COMMON_DIRECTIONS,
+      suits: apiCourse?.fitting ?? [],
+      directions: apiCourse?.directions ?? [],
       heroTitle:
-        bullets[0] ??
-        description?.heroTitle ??
-        (apiCourse?.nameRU ? `Курс ${apiCourse.nameRU}` : 'Курс'),
-      heroBullets:
-        bullets.length > 1
-          ? bullets.slice(1)
-          : description?.heroBullets ?? [],
+        bullets[0] ?? (apiCourse?.nameRU ? `Курс ${apiCourse.nameRU}` : 'Курс'),
+      heroBullets: bullets.length > 1 ? bullets.slice(1) : [],
     }
-  }, [apiCourse, description])
+  }, [apiCourse])
 
   const isSelectedByUser = !!(user && apiCourse && user.selectedCourses.includes(apiCourse._id))
 
-  if (!course) {
+  if (!slug) {
     return <Navigate to="/" replace />
   }
 
@@ -245,27 +152,41 @@ export function CoursePage() {
       .finally(() => setPendingAddCourse(false))
   }, [pendingAddCourse, user, token, apiCourse?._id, isSelectedByUser, refreshMe])
 
+  if (apiLoading) {
+    return (
+      <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
+        <Header />
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-10">
+          <ProfileCoursesLoading label="Загружаем данные курса" />
+        </div>
+      </div>
+    )
+  }
+
+  if (apiError || !apiCourse || !mappedCourse) {
+    return (
+      <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
+        <Header />
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-10">
+          <p style={{ fontFamily: 'Roboto, sans-serif' }}>
+            {apiError ?? 'Курс не найден в API.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
       <Header />
-      {apiLoading && (
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-4">
-          <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем данные курса...</p>
-        </div>
-      )}
-      {apiError && (
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-4">
-          <p style={{ fontFamily: 'Roboto, sans-serif' }}>{apiError}</p>
-        </div>
-      )}
       {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
       <div className="relative z-0 max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
         <SkillCourseCard
-          imageSrc={course.imageSkillCard}
-          mobileImageSrc={course.image}
-          title={course.title}
-          slug={course.slug}
+          imageSrc={mappedCourse.imageSkillCard}
+          mobileImageSrc={mappedCourse.image}
+          title={mappedCourse.title}
+          slug={mappedCourse.slug}
         />
 
         {/* Подойдет для вас: от заголовка до карточек 40px; от карточек до «Направления» 60px */}
@@ -345,6 +266,11 @@ export function CoursePage() {
                 </div>
               </div>
             ))}
+            {courseContent.suits.length === 0 && (
+              <p style={{ fontFamily: 'Roboto, sans-serif' }}>
+                Сервер пока не вернул рекомендации для этого курса.
+              </p>
+            )}
           </div>
         </section>
 
@@ -391,6 +317,11 @@ export function CoursePage() {
                   </span>
                 </div>
               ))}
+              {courseContent.directions.length === 0 && (
+                <p style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  Сервер пока не вернул направления для этого курса.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -435,7 +366,7 @@ export function CoursePage() {
                 const img = e.currentTarget
                 if (img.getAttribute('data-fallback')) return
                 img.setAttribute('data-fallback', '1')
-                img.src = course.image
+                img.src = mappedCourse.image
               }}
             />
             <img
@@ -728,7 +659,7 @@ export function CoursePage() {
                   const img = e.currentTarget
                   if (img.getAttribute('data-fallback')) return
                   img.setAttribute('data-fallback', '1')
-                  img.src = course.image
+                  img.src = mappedCourse.image
                 }}
               />
             </div>

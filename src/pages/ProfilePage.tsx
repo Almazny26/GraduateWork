@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi, type ApiCourse, type ApiWorkout } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
 import { logError, logInfo } from '@/utils/logger'
+import { ProfileCoursesLoading } from '@/components/Loading'
 
 type ProfileCourse = AppCourseRef
 type PickerLesson = { id: string; title: string }
@@ -15,15 +16,19 @@ function ProfileCourseCard({
   progress,
   onRemove,
   removeDisabled = false,
-  onOpenLessonPicker,
-  onResetProgress,
+  isRemoving = false,
+  onStart,
+  startDisabled = false,
+  startLoading = false,
 }: {
   course: ProfileCourse
   progress: number
   onRemove?: () => void
   removeDisabled?: boolean
-  onOpenLessonPicker?: (course: ProfileCourse) => void
-  onResetProgress?: (course: ProfileCourse) => Promise<void> | void
+  isRemoving?: boolean
+  onStart?: () => Promise<void> | void
+  startDisabled?: boolean
+  startLoading?: boolean
 }) {
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
@@ -36,7 +41,9 @@ function ProfileCourseCard({
 
   return (
     <div
-      className="relative w-[343px] sm:w-[360px] min-h-[649px] shrink-0 group overflow-visible card-hover-group"
+      className={`relative w-[343px] sm:w-[360px] min-h-[649px] shrink-0 group overflow-visible card-hover-group transition-opacity duration-300 ${
+        isRemoving ? 'opacity-80' : 'opacity-100'
+      }`}
       style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}
     >
       <article
@@ -126,23 +133,28 @@ function ProfileCourseCard({
         </div>
         <button
           type="button"
-          onClick={async () => {
-            if (progress >= 100) {
-              await onResetProgress?.(course)
-            }
-            onOpenLessonPicker?.(course)
-          }}
+          onClick={() => onStart?.()}
+          disabled={startDisabled}
           className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-[1.03]"
           style={{
             backgroundColor: '#BCEC30',
             fontFamily: 'Roboto, sans-serif',
             padding: '16px 26px',
+            opacity: startDisabled ? 0.65 : 1,
           }}
         >
-          {progressLabel}
+          {startLoading ? 'Загружаем...' : progressLabel}
         </button>
       </div>
       </article>
+      {isRemoving && (
+        <div className="absolute inset-0 z-[40] rounded-[30px] bg-black/20 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <div className="relative w-9 h-9" aria-hidden>
+            <span className="absolute inset-0 rounded-full border-[3px] border-white/40" />
+            <span className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-white border-r-white animate-spin" />
+          </div>
+        </div>
+      )}
       {tooltipVisible && (
         <div
           className="fixed z-[100] flex flex-row items-center justify-center box-border pointer-events-none"
@@ -182,13 +194,17 @@ export function ProfilePage() {
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null)
   const [removingCourseId, setRemovingCourseId] = useState<string | null>(null)
+  const [startingCourseId, setStartingCourseId] = useState<string | null>(null)
   const [removedCourseIds, setRemovedCourseIds] = useState<string[]>([])
   const [courseWorkoutsMap, setCourseWorkoutsMap] = useState<Record<string, PickerLesson[]>>({})
   const [lessonPickerCourse, setLessonPickerCourse] = useState<ProfileCourse | null>(null)
   const [lessonPickerVisible, setLessonPickerVisible] = useState(false)
+  const [isLessonPickerLoading, setIsLessonPickerLoading] = useState(false)
+  const [lessonPickerLoadError, setLessonPickerLoadError] = useState<string | null>(null)
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
   const lessonListRef = useRef<HTMLDivElement>(null)
   const lessonPickerCloseTimerRef = useRef<number | null>(null)
+  const lessonPickerRequestIdRef = useRef(0)
   const [thumbTop, setThumbTop] = useState(0)
   const [thumbHeight, setThumbHeight] = useState(116)
   const [hasOverflow, setHasOverflow] = useState(false)
@@ -211,19 +227,35 @@ export function ProfilePage() {
       lessonPickerCloseTimerRef.current = null
     }
     if (!token) return
+    setLessonPickerCourse(course)
+    setLessonPickerLoadError(null)
+    setSelectedLessonIds([])
+    setHasOverflow(false)
+    requestAnimationFrame(() => setLessonPickerVisible(true))
+    setIsLessonPickerLoading(true)
+
     let lessons = courseWorkoutsMap[course.courseId] ?? []
+    let failedToLoad = false
+    const requestId = ++lessonPickerRequestIdRef.current
     if (lessons.length === 0) {
       try {
         const workouts = await fitnessApi.getCourseWorkouts(course.courseId, token)
+        if (requestId !== lessonPickerRequestIdRef.current) return
         lessons = workouts.map((item: ApiWorkout) => ({ id: item._id, title: item.name }))
         setCourseWorkoutsMap((prev) => ({ ...prev, [course.courseId]: lessons }))
       } catch {
+        if (requestId !== lessonPickerRequestIdRef.current) return
         lessons = []
+        failedToLoad = true
+        setLessonPickerLoadError('Не удалось загрузить список уроков')
       }
     }
-    setLessonPickerCourse(course)
+    if (requestId !== lessonPickerRequestIdRef.current) return
+    if (lessons.length === 0 && !failedToLoad) {
+      setLessonPickerLoadError('Для курса пока нет доступных уроков')
+    }
     setSelectedLessonIds(lessons[0]?.id ? [lessons[0].id] : [])
-    requestAnimationFrame(() => setLessonPickerVisible(true))
+    setIsLessonPickerLoading(false)
   }
 
   const resetCourseProgress = async (course: ProfileCourse) => {
@@ -234,6 +266,19 @@ export function ProfilePage() {
       logInfo('ProfilePage', 'reset course progress success', { courseId: course.courseId })
     } catch {
       logError('ProfilePage', 'reset course progress failed', { courseId: course.courseId })
+    }
+  }
+
+  const startCourse = async (course: ProfileCourse, progress: number) => {
+    if (startingCourseId === course.courseId || removingCourseId === course.courseId) return
+    setStartingCourseId(course.courseId)
+    try {
+      if (progress >= 100) {
+        await resetCourseProgress(course)
+      }
+      await openLessonPicker(course)
+    } finally {
+      setStartingCourseId(null)
     }
   }
 
@@ -275,6 +320,9 @@ export function ProfilePage() {
 
   const closeLessonPicker = () => {
     setLessonPickerVisible(false)
+    setIsLessonPickerLoading(false)
+    setLessonPickerLoadError(null)
+    lessonPickerRequestIdRef.current += 1
     if (lessonPickerCloseTimerRef.current) {
       window.clearTimeout(lessonPickerCloseTimerRef.current)
     }
@@ -302,11 +350,16 @@ export function ProfilePage() {
 
   const startSelectedLesson = () => {
     if (!lessonPickerCourse || selectedLessonIds.length === 0) return
-    const firstSelected = pickerLessons.find((lesson) =>
-      selectedLessonIds.includes(lesson.id),
-    )
+    const orderedSelection = pickerLessons
+      .filter((lesson) => selectedLessonIds.includes(lesson.id))
+      .map((lesson) => lesson.id)
+    const selectedId = orderedSelection[0]
+    const firstSelected = pickerLessons.find((lesson) => lesson.id === selectedId)
     if (!firstSelected) return
-    navigate(`/course/${lessonPickerCourse.slug}/lesson/${firstSelected.id}`)
+    const lessonIdsParam = encodeURIComponent(orderedSelection.join(','))
+    navigate(
+      `/course/${lessonPickerCourse.slug}/lesson/${firstSelected.id}?lessonIds=${lessonIdsParam}`,
+    )
     closeLessonPicker()
   }
 
@@ -472,18 +525,39 @@ export function ProfilePage() {
           ])
 
           const workoutsById = new Map(workouts.map((workout) => [workout._id, workout]))
-          const values = progress.workoutsProgress.map((workoutProgress) => {
+          let workoutsProgress = Array.isArray(progress.workoutsProgress)
+            ? progress.workoutsProgress
+            : []
+
+          // Fallback для нестабильного API: если прогресс курса пустой,
+          // догружаем прогресс по каждому уроку отдельно.
+          if (workoutsProgress.length === 0 && workouts.length > 0) {
+            const fallbackProgress = await Promise.all(
+              workouts.map((workout) =>
+                fitnessApi
+                  .getWorkoutProgress(courseId, workout._id, token)
+                  .catch(() => null),
+              ),
+            )
+            workoutsProgress = fallbackProgress.filter(
+              (item): item is NonNullable<typeof item> => item !== null,
+            )
+          }
+
+          const values = workoutsProgress.map((workoutProgress) => {
             if (workoutProgress.workoutCompleted) return 100
 
             const workout = workoutsById.get(workoutProgress.workoutId)
             if (!workout || workout.exercises.length === 0) {
               // Fallback для нестабильного API: если есть хоть какие-то повторы, показываем старт прогресса.
-              const hasAnyProgress = workoutProgress.progressData.some((value) => value > 0)
+              const hasAnyProgress = workoutProgress.progressData.some(
+                (value) => Number(value) > 0,
+              )
               return hasAnyProgress ? 1 : 0
             }
 
             const exercisePercents = workout.exercises.map((exercise, index) => {
-              const reps = workoutProgress.progressData[index] ?? 0
+              const reps = Number(workoutProgress.progressData[index] ?? 0)
               const target = Math.max(1, exercise.quantity)
               const percent = Math.round((reps / target) * 100)
               return Math.min(100, Math.max(0, percent))
@@ -495,10 +569,12 @@ export function ProfilePage() {
                 exercisePercents.length,
             )
           })
-          const avg =
+          const rawAvg =
             values.length > 0
               ? Math.round(values.reduce((s, v) => s + v, 0) / values.length)
               : 0
+          const hasAnyCourseProgress = values.some((value) => value > 0)
+          const avg = hasAnyCourseProgress ? Math.max(1, rawAvg) : 0
           return [mapped.slug, avg] as const
         } catch (err) {
           const msg = err instanceof Error ? err.message : ''
@@ -585,9 +661,7 @@ export function ProfilePage() {
               Мои курсы
             </h2>
             <div className="flex flex-row flex-wrap gap-6 sm:gap-[40px] overflow-visible">
-              {isLoadingCourses && (
-                <p style={{ fontFamily: 'Roboto, sans-serif' }}>Загружаем курсы профиля...</p>
-              )}
+              {isLoadingCourses && <ProfileCoursesLoading />}
               {!isLoadingCourses && profileLoadError && (
                 <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
                   {profileLoadError}
@@ -599,9 +673,15 @@ export function ProfilePage() {
                   course={course}
                   progress={progress}
                   onRemove={() => removeCourse(course)}
-                  removeDisabled={removingCourseId === course.courseId}
-                  onOpenLessonPicker={openLessonPicker}
-                  onResetProgress={resetCourseProgress}
+                  isRemoving={removingCourseId === course.courseId}
+                  removeDisabled={
+                    removingCourseId === course.courseId || startingCourseId === course.courseId
+                  }
+                  onStart={() => startCourse(course, progress)}
+                  startDisabled={
+                    removingCourseId === course.courseId || startingCourseId === course.courseId
+                  }
+                  startLoading={startingCourseId === course.courseId}
                 />
               ))}
               {!isLoadingCourses && !profileLoadError && purchasedWithCourse.length === 0 && (
@@ -696,90 +776,121 @@ export function ProfilePage() {
                 className="lesson-picker-scroll-hide flex flex-col items-start overflow-y-scroll overflow-x-hidden"
                 style={{ width: 283, height: 335, paddingRight: 26 }}
               >
-                {pickerLessons.map((lesson, index) => (
-                  <div
-                    key={lesson.id}
-                    className="flex flex-col items-start w-full"
-                    style={{ maxWidth: 303, marginTop: index === 0 ? 0 : 10 }}
-                  >
-                    <label
-                      className="flex items-start gap-3 cursor-pointer overflow-hidden"
+                {isLessonPickerLoading && (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ProfileCoursesLoading label="Загружаем список уроков" />
+                  </div>
+                )}
+                {!isLessonPickerLoading && lessonPickerLoadError && (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center">
+                    <p
+                      className="text-[16px] leading-[1.2] text-[#202020]"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    >
+                      {lessonPickerLoadError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (lessonPickerCourse) void openLessonPicker(lessonPickerCourse)
+                      }}
+                      className="rounded-[46px] bg-[#BCEC30] text-[16px] leading-[1.1] text-black hover:opacity-90 transition-opacity"
                       style={{
-                        width: '100%',
-                        padding: '0 0 9.5px 0',
-                        borderBottom:
-                          index < pickerLessons.length - 1
-                            ? '1px solid rgba(196, 196, 196, 1)'
-                            : 'none',
-                        boxSizing: 'border-box',
+                        minWidth: 180,
+                        height: 44,
+                        fontFamily: 'Roboto, sans-serif',
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        name="lesson"
-                        value={lesson.id}
-                        checked={selectedLessonIds.includes(lesson.id)}
-                        onChange={() => toggleLessonSelection(lesson.id)}
-                        className="sr-only"
-                      />
-                      {selectedLessonIds.includes(lesson.id) ? (
-                        <img
-                          src="/images/active.svg"
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="mt-[10.5px] shrink-0"
-                          aria-hidden
-                        />
-                      ) : (
-                        <img
-                          src="/images/pasive.svg"
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="mt-[10.5px] shrink-0"
-                          aria-hidden
-                        />
-                      )}
-                      <span className="flex flex-col gap-[10px]">
-                        <span
-                          style={{
-                            width: '100%',
-                            maxWidth: 320,
-                            minHeight: 26,
-                            color: 'rgba(0, 0, 0, 1)',
-                            fontFamily: 'Roboto, sans-serif',
-                            fontStyle: 'normal',
-                            fontWeight: 400,
-                            fontSize: 'clamp(20px, 4.6vw, 24px)',
-                            lineHeight: '110%',
-                            letterSpacing: 0,
-                            textAlign: 'left',
-                          }}
-                        >
-                          {lesson.title}
-                        </span>
-                        <span
-                          style={{
-                            width: '100%',
-                            maxWidth: 320,
-                            minHeight: 18,
-                            color: 'rgba(0, 0, 0, 1)',
-                            fontFamily: 'Roboto, sans-serif',
-                            fontStyle: 'normal',
-                            fontWeight: 400,
-                            fontSize: 'clamp(14px, 3.4vw, 16px)',
-                            lineHeight: '110%',
-                            letterSpacing: 0,
-                            textAlign: 'left',
-                          }}
-                        >
-                          {`${lessonSeriesTitle} / ${index + 1} день`}
-                        </span>
-                      </span>
-                    </label>
+                      Повторить
+                    </button>
                   </div>
-                ))}
+                )}
+                {!isLessonPickerLoading &&
+                  !lessonPickerLoadError &&
+                  pickerLessons.map((lesson, index) => (
+                    <div
+                      key={lesson.id}
+                      className="flex flex-col items-start w-full"
+                      style={{ maxWidth: 303, marginTop: index === 0 ? 0 : 10 }}
+                    >
+                      <label
+                        className="flex items-start gap-3 cursor-pointer overflow-hidden"
+                        style={{
+                          width: '100%',
+                          padding: '0 0 9.5px 0',
+                          borderBottom:
+                            index < pickerLessons.length - 1
+                              ? '1px solid rgba(196, 196, 196, 1)'
+                              : 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          name="lesson"
+                          value={lesson.id}
+                          checked={selectedLessonIds.includes(lesson.id)}
+                          onChange={() => toggleLessonSelection(lesson.id)}
+                          className="sr-only"
+                        />
+                        {selectedLessonIds.includes(lesson.id) ? (
+                          <img
+                            src="/images/active.svg"
+                            alt=""
+                            width={24}
+                            height={24}
+                            className="mt-[10.5px] shrink-0"
+                            aria-hidden
+                          />
+                        ) : (
+                          <img
+                            src="/images/pasive.svg"
+                            alt=""
+                            width={24}
+                            height={24}
+                            className="mt-[10.5px] shrink-0"
+                            aria-hidden
+                          />
+                        )}
+                        <span className="flex flex-col gap-[10px]">
+                          <span
+                            style={{
+                              width: '100%',
+                              maxWidth: 320,
+                              minHeight: 26,
+                              color: 'rgba(0, 0, 0, 1)',
+                              fontFamily: 'Roboto, sans-serif',
+                              fontStyle: 'normal',
+                              fontWeight: 400,
+                              fontSize: 'clamp(20px, 4.6vw, 24px)',
+                              lineHeight: '110%',
+                              letterSpacing: 0,
+                              textAlign: 'left',
+                            }}
+                          >
+                            {lesson.title}
+                          </span>
+                          <span
+                            style={{
+                              width: '100%',
+                              maxWidth: 320,
+                              minHeight: 18,
+                              color: 'rgba(0, 0, 0, 1)',
+                              fontFamily: 'Roboto, sans-serif',
+                              fontStyle: 'normal',
+                              fontWeight: 400,
+                              fontSize: 'clamp(14px, 3.4vw, 16px)',
+                              lineHeight: '110%',
+                              letterSpacing: 0,
+                              textAlign: 'left',
+                            }}
+                          >
+                            {`${lessonSeriesTitle} / ${index + 1} день`}
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  ))}
               </div>
               {hasOverflow && (
                 <>
@@ -824,9 +935,9 @@ export function ProfilePage() {
                   height: 52,
                   fontFamily: 'Roboto, sans-serif',
                 }}
-                disabled={selectedLessonIds.length === 0}
+                disabled={isLessonPickerLoading || selectedLessonIds.length === 0}
               >
-                Начать
+                {isLessonPickerLoading ? 'Загружаем...' : 'Начать'}
               </button>
             </div>
           </div>

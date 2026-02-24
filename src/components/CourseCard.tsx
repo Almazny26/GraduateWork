@@ -7,6 +7,7 @@ type CourseCardProps = {
   slug: string
   onAddCourse?: () => void | Promise<void>
   addDisabled?: boolean
+  isAdded?: boolean
 }
 
 /**
@@ -20,6 +21,7 @@ export function CourseCard({
   slug,
   onAddCourse,
   addDisabled = false,
+  isAdded = false,
 }: CourseCardProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
@@ -60,10 +62,14 @@ export function CourseCard({
               }}
               onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
               onMouseLeave={() => setTooltipVisible(false)}
-              aria-label="Добавить курс"
+              aria-label={isAdded ? 'Курс добавлен' : 'Добавить курс'}
             >
               <img
-                src="/images/add-workout-button.svg"
+                src={
+                  isAdded
+                    ? '/images/add-workout-button-checked.svg'
+                    : '/images/add-workout-button.svg'
+                }
                 alt=""
                 width={32}
                 height={32}
@@ -111,7 +117,7 @@ export function CourseCard({
             whiteSpace: 'nowrap',
           }}
         >
-          Добавить курс
+          {isAdded ? 'Курс добавлен' : 'Добавить курс'}
         </div>
       )}
     </Link>

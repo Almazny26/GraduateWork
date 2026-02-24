@@ -110,6 +110,7 @@ export function HomePage() {
                   slug={course.slug}
                   onAddCourse={() => handleAddCourseFromCard(course.courseId)}
                   addDisabled={addingCourseId === course.courseId}
+                  isAdded={!!user?.selectedCourses.includes(course.courseId)}
                 />
               </div>
             ))}

@@ -109,6 +109,8 @@ export function LoginModal({ open, onClose }: Props) {
   const [showRegisterRepeatPassword, setShowRegisterRepeatPassword] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [registerError, setRegisterError] = useState('')
+  const [isLoginSubmitting, setIsLoginSubmitting] = useState(false)
+  const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<number | null>(null)
 
@@ -122,6 +124,8 @@ export function LoginModal({ open, onClose }: Props) {
     setShowRegisterRepeatPassword(false)
     setLoginError('')
     setRegisterError('')
+    setIsLoginSubmitting(false)
+    setIsRegisterSubmitting(false)
   }
 
   const switchMode = (nextMode: AuthMode) => {
@@ -187,6 +191,7 @@ export function LoginModal({ open, onClose }: Props) {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoginSubmitting) return
     setLoginError('')
     const email = loginValue.trim().toLowerCase()
     const pass = password.trim()
@@ -196,6 +201,7 @@ export function LoginModal({ open, onClose }: Props) {
       return
     }
 
+    setIsLoginSubmitting(true)
     try {
       const { token } = await fitnessApi.login(email, pass)
       const me = await fitnessApi.me(token)
@@ -215,11 +221,14 @@ export function LoginModal({ open, onClose }: Props) {
       navigate('/profile')
     } catch (error) {
       setLoginError(error instanceof Error ? error.message : 'Ошибка авторизации')
+    } finally {
+      setIsLoginSubmitting(false)
     }
   }
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isRegisterSubmitting) return
     setRegisterError('')
     const email = emailValue.trim().toLowerCase()
     const pass = password.trim()
@@ -234,6 +243,7 @@ export function LoginModal({ open, onClose }: Props) {
       return
     }
 
+    setIsRegisterSubmitting(true)
     try {
       await fitnessApi.register(email, pass)
       const { token } = await fitnessApi.login(email, pass)
@@ -254,6 +264,8 @@ export function LoginModal({ open, onClose }: Props) {
       navigate('/profile')
     } catch (error) {
       setRegisterError(error instanceof Error ? error.message : 'Ошибка регистрации')
+    } finally {
+      setIsRegisterSubmitting(false)
     }
   }
 
@@ -270,6 +282,7 @@ export function LoginModal({ open, onClose }: Props) {
     showValue,
     onToggleShow,
     autoComplete,
+    disabled,
   }: {
     value: string
     onChange: (value: string) => void
@@ -278,6 +291,7 @@ export function LoginModal({ open, onClose }: Props) {
     showValue: boolean
     onToggleShow: () => void
     autoComplete: string
+    disabled: boolean
   }) => (
     <div className="relative w-full">
       {!showValue && value.length > 0 && (
@@ -292,6 +306,7 @@ export function LoginModal({ open, onClose }: Props) {
       <input
         type="text"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={`${inputClassName(hasError)} pr-[48px]`}
@@ -306,7 +321,8 @@ export function LoginModal({ open, onClose }: Props) {
       <button
         type="button"
         onClick={onToggleShow}
-        className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center text-[#7A7A7A] hover:text-black transition-colors"
+        disabled={disabled}
+        className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center text-[#7A7A7A] hover:text-black transition-colors disabled:opacity-60"
         aria-label={showValue ? 'Скрыть пароль' : 'Показать пароль'}
       >
         {showValue ? (
@@ -409,6 +425,7 @@ export function LoginModal({ open, onClose }: Props) {
               id="login-title"
               type="email"
               value={loginValue}
+              disabled={isLoginSubmitting}
               onChange={(e) => {
                 setLoginValue(e.target.value)
                 if (loginError) setLoginError('')
@@ -429,6 +446,7 @@ export function LoginModal({ open, onClose }: Props) {
               showValue: showLoginPassword,
               onToggleShow: () => setShowLoginPassword((prev) => !prev),
               autoComplete: 'current-password',
+              disabled: isLoginSubmitting,
             })}
 
             <div className="min-h-[14px]">
@@ -451,15 +469,17 @@ export function LoginModal({ open, onClose }: Props) {
 
             <button
               type="submit"
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity"
+              disabled={isLoginSubmitting}
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
             >
-              Войти
+              {isLoginSubmitting ? 'Входим...' : 'Войти'}
             </button>
             <button
               type="button"
               onClick={() => switchMode('register')}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors"
+              disabled={isLoginSubmitting}
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Зарегистрироваться
@@ -471,6 +491,7 @@ export function LoginModal({ open, onClose }: Props) {
               id="login-title"
               type="email"
               value={emailValue}
+              disabled={isRegisterSubmitting}
               onChange={(e) => {
                 setEmailValue(e.target.value)
                 if (registerError) setRegisterError('')
@@ -491,6 +512,7 @@ export function LoginModal({ open, onClose }: Props) {
               showValue: showRegisterPassword,
               onToggleShow: () => setShowRegisterPassword((prev) => !prev),
               autoComplete: 'new-password',
+              disabled: isRegisterSubmitting,
             })}
             {renderPasswordInput({
               value: repeatPassword,
@@ -503,6 +525,7 @@ export function LoginModal({ open, onClose }: Props) {
               showValue: showRegisterRepeatPassword,
               onToggleShow: () => setShowRegisterRepeatPassword((prev) => !prev),
               autoComplete: 'new-password',
+              disabled: isRegisterSubmitting,
             })}
 
             <p
@@ -533,15 +556,17 @@ export function LoginModal({ open, onClose }: Props) {
 
             <button
               type="submit"
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity"
+              disabled={isRegisterSubmitting}
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
             >
-              Зарегистрироваться
+              {isRegisterSubmitting ? 'Регистрируем...' : 'Зарегистрироваться'}
             </button>
             <button
               type="button"
               onClick={() => switchMode('login')}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors"
+              disabled={isRegisterSubmitting}
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Войти

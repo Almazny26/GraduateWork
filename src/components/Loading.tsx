@@ -49,3 +49,37 @@ export function CourseGridSkeleton({ count = 6 }: { count?: number }) {
     </div>
   )
 }
+
+export function ProfileCoursesLoading({
+  label = 'Загружаем курсы профиля',
+}: {
+  label?: string
+} = {}) {
+  return (
+    <div
+      className="inline-flex flex-row items-center gap-3 min-h-[24px]"
+      style={{ fontFamily: 'Roboto, sans-serif' }}
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="relative w-6 h-6 shrink-0" aria-hidden>
+        <span className="absolute inset-0 rounded-full border-2 border-black/10" />
+        <span
+          className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#BCEC30] border-r-[#BCEC30] animate-spin"
+          style={{ animationDuration: '0.9s' }}
+        />
+      </div>
+      <span
+        className="sfp-loading-glow text-[18px] sm:text-[20px] leading-[1.2] text-black"
+        style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 400 }}
+      >
+        {label}
+      </span>
+      <span className="sfp-profile-loading-dots inline-flex gap-0.5 text-[18px] sm:text-[20px] leading-[1.2] text-black">
+        <span>.</span>
+        <span>.</span>
+        <span>.</span>
+      </span>
+    </div>
+  )
+}
