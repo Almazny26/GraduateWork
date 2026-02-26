@@ -56,7 +56,7 @@ export type ApiWorkoutProgressByWorkout = {
 }
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
-const API_TIMEOUT_MS = 25000
+const API_TIMEOUT_MS = 45000
 const API_RETRY_COUNT = 1
 
 function buildHeaders(token?: string, withJsonBody?: boolean): HeadersInit {

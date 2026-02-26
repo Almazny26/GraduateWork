@@ -181,3 +181,28 @@ body {
 .sfp-loading-glow {
   animation: sfp-loading-glow 2s ease-in-out infinite;
 }
+
+/* Полоска прогресса на карточке курса: анимация при загрузке */
+@keyframes profile-progress-loading {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.profile-progress-loading-bar {
+  width: 100% !important;
+  min-width: 100% !important;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 193, 255, 0.2) 0%,
+    rgba(0, 193, 255, 0.9) 40%,
+    rgba(0, 193, 255, 1) 50%,
+    rgba(0, 193, 255, 0.9) 60%,
+    rgba(0, 193, 255, 0.2) 100%
+  );
+  background-size: 200% 100%;
+  animation: profile-progress-loading 1.4s ease-in-out infinite;
+}

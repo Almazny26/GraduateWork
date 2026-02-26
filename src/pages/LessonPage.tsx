@@ -542,7 +542,7 @@ export function LessonPage() {
                     width: '100%',
                     maxWidth: 283,
                     color: 'rgba(0, 0, 0, 1)',
-                    fontFamily: 'Roboto, sans-serif',
+                    fontFamily: 'StratosSkyeng, Roboto, sans-serif',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: 32,

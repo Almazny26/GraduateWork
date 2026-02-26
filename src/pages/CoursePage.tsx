@@ -196,15 +196,13 @@ export function CoursePage() {
         >
           <h2
             id="suits-heading"
-            className="text-left"
+            className="text-left text-2xl sm:text-[40px] font-medium sm:font-semibold"
             style={{
               width: '100%',
               maxWidth: 810,
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
-              fontWeight: 500,
-              fontSize: '24px',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -247,15 +245,14 @@ export function CoursePage() {
                   >
                     {i + 1}
                   </span>
-                  {/* Текст по макету: 268×78, white, Roboto Regular 24px, 110%, 400 */}
+                  {/* Текст: мобильная 18px, sm+ 24px; Roboto Regular, 110%, 400 */}
                   <span
-                    className="min-w-0 flex-1 break-words whitespace-pre-line block text-left font-normal"
+                    className="min-w-0 flex-1 break-words whitespace-pre-line block text-left font-normal text-[18px] sm:text-[24px]"
                     style={{
                       color: 'rgba(255, 255, 255, 1)',
                       fontFamily: 'Roboto',
                       fontStyle: 'normal',
                       fontWeight: 400,
-                      fontSize: '18px',
                       lineHeight: '110%',
                       letterSpacing: '0px',
                       textAlign: 'left',
@@ -277,13 +274,11 @@ export function CoursePage() {
         {/* Направления: от карточек до этого блока 60px; от этого блока до «Тренировки» 40px */}
         <div className="w-full max-w-[343px] sm:max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px] mt-[40px] sm:mt-[60px]">
           <h2
-            className="text-left"
+            className="text-left text-2xl sm:text-[40px] font-medium sm:font-semibold"
             style={{
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
               fontStyle: 'normal',
-              fontWeight: 500,
-              fontSize: '24px',
               lineHeight: '110%',
               letterSpacing: 0,
               textAlign: 'left',
@@ -291,24 +286,23 @@ export function CoursePage() {
           >
             Направления
           </h2>
-          {/* Frame 2043683031: 1160×146, flex column, gap 10, padding 30, radius 28, один цвет на всех страницах */}
-          {/* Frame 2043683031: гибкий блок; на md+ — 2 строки, 158px по горизонтали, 34px между строками */}
+          {/* Frame 2043683031: контент центрирован относительно блока (разное кол-во пунктов на страницах) */}
           <div
-            className="w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[336px] sm:h-auto sm:min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-start items-start overflow-hidden"
+            className="w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[336px] sm:h-auto sm:min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-center items-center overflow-hidden"
             style={{
               gap: 10,
               backgroundColor: 'rgba(188, 236, 48, 1)',
             }}
           >
             <div
-              className="w-full h-full sm:h-auto min-w-0 flex flex-col justify-between lg:grid lg:grid-rows-2 lg:grid-flow-col lg:gap-x-[158px] lg:gap-y-[34px] lg:content-start"
+              className="w-full min-w-0 max-w-[283px] flex flex-col justify-start items-start gap-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:items-center sm:gap-x-8 sm:gap-y-4 lg:gap-x-12 lg:gap-y-6"
             >
               {courseContent.directions.map((name) => (
                 <div
                   key={name}
-                  className="flex flex-row items-start gap-2 sm:gap-[8px] min-w-0 w-full"
+                  className="flex flex-row items-center gap-2 sm:gap-[8px] min-w-0 shrink-0"
                 >
-                  <StarIcon className="w-[26px] h-[26px] shrink-0 flex-shrink-0 mt-0.5" />
+                  <StarIcon className="w-[26px] h-[26px] shrink-0 flex-shrink-0" />
                   <span
                     className="text-[18px] sm:text-[24px] font-normal leading-[1.1] min-w-0 break-words"
                     style={{ color: 'rgba(0, 0, 0, 1)' }}
@@ -421,7 +415,7 @@ export function CoursePage() {
                 type="button"
                 onClick={handleAddCourse}
                 disabled={addCourseLoading}
-                className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity flex items-center justify-center"
+                className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity flex items-center justify-center px-4 min-w-0"
                 style={{
                   backgroundColor: 'rgba(188, 236, 48, 1)',
                   color: 'rgba(0, 0, 0, 1)',
@@ -433,14 +427,7 @@ export function CoursePage() {
                   letterSpacing: '0px',
                 }}
               >
-                <span
-                  style={{
-                    width: '112px',
-                    height: '18px',
-                    textAlign: 'left',
-                    display: 'inline-block',
-                  }}
-                >
+                <span className="text-center min-w-0 break-words">
                   {!user
                     ? 'Войдите, чтобы добавить курс'
                     : isSelectedByUser
@@ -474,64 +461,65 @@ export function CoursePage() {
             }}
           />
 
-          {/* Frame 2043683032: 437×406, (40,142), flex col gap 28 */}
+          {/* Frame 2043683032: 437×406, (40,142) — текст с сервера только в левой зоне, парень и линии справа на месте */}
           <div
             className="absolute flex flex-col justify-start items-start pointer-events-auto z-10"
             style={{
               left: 40,
               top: 142,
-              width: 437,
+              width: 660,
+              maxWidth: 660,
               height: 406,
               gap: 28,
+              overflow: 'hidden',
             }}
           >
-            {/* Заголовок: 398×120, Roboto Medium 60px, 500, line-height 100% */}
+            {/* Заголовок: уменьшенный размер для длинных названий с сервера */}
             <h2
-              className="text-left"
+              className="text-left break-words shrink-0"
               style={{
-                width: 398,
-                minHeight: 120,
+                width: '100%',
+                maxWidth: 660,
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'Roboto, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 500,
-                fontSize: 60,
-                lineHeight: '100%',
+                fontSize: 32,
+                lineHeight: '110%',
                 letterSpacing: 0,
               }}
             >
               {courseContent.heroTitle}
             </h2>
-            {/* Список: 437×178, flex row, Roboto Regular 24px, 110%, по макету */}
+            {/* Список: колонка, каждый пункт с переносом текста на следующую строку */}
             <div
-              className="flex flex-row flex-wrap items-center gap-x-3 gap-y-2"
+              className="flex flex-col gap-y-2 overflow-hidden min-h-0 flex-1 w-full"
               style={{
-                width: 437,
-                height: 178,
+                maxWidth: 660,
                 marginLeft: 5,
                 opacity: 0.6,
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'Roboto, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
-                fontSize: 24,
+                fontSize: 18,
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'left',
               }}
             >
               {courseContent.heroBullets.map((line) => (
-                <div key={line} className="flex flex-row items-center shrink-0" style={{ gap: 20 }}>
+                <div key={line} className="flex flex-row items-start gap-3 min-w-0 w-full">
                   <span
-                    className="rounded-full shrink-0 w-[6px] h-[6px]"
+                    className="rounded-full shrink-0 w-[6px] h-[6px] mt-[6px]"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
                     aria-hidden
                   />
-                  {line}
+                  <span className="break-words min-w-0 flex-1">{line}</span>
                 </div>
               ))}
             </div>
-            {/* Frame 2043683033: кнопка 437×52, padding 16px 26px, radius 46px */}
+            {/* Кнопка всегда внизу блока */}
             <button
               type="button"
               onClick={handleAddCourse}
@@ -560,9 +548,9 @@ export function CoursePage() {
             </button>
           </div>
 
-          {/* Конструкция (парень, силует, линии): обёртка с лёгким увеличением */}
+          {/* Конструкция (парень, силует, линии): под текстом (z-10), остаётся на месте */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none z-0"
             style={{
               transform: 'translateX(40px) scale(1.06)',
               transformOrigin: '800px 317px',

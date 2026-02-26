@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
-import { fitnessApi, type ApiCourse, type ApiWorkout } from '@/api/fitness'
+import { fitnessApi, type ApiCourse, type ApiWorkout, type ApiWorkoutProgress } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
 import { logError, logInfo } from '@/utils/logger'
 import { ProfileCoursesLoading } from '@/components/Loading'
@@ -14,6 +14,7 @@ type PickerLesson = { id: string; title: string }
 function ProfileCourseCard({
   course,
   progress,
+  progressLoading = false,
   onRemove,
   removeDisabled = false,
   isRemoving = false,
@@ -23,6 +24,7 @@ function ProfileCourseCard({
 }: {
   course: ProfileCourse
   progress: number
+  progressLoading?: boolean
   onRemove?: () => void
   removeDisabled?: boolean
   isRemoving?: boolean
@@ -120,15 +122,28 @@ function ProfileCourseCard({
           </div>
         </div>
         <div className="flex flex-col gap-[10px] w-full max-w-[300px]">
-          <p className="text-[18px] leading-[1.1] text-black text-left" style={{ fontFamily: 'Roboto, sans-serif' }}>Прогресс {progress}%</p>
+          <p className="text-[18px] leading-[1.1] text-black text-left flex items-center gap-2" style={{ fontFamily: 'Roboto, sans-serif' }}>
+            Прогресс{' '}
+            {progressLoading ? (
+              <span className="relative inline-block w-[18px] h-[18px] shrink-0" aria-hidden>
+                <span className="absolute inset-0 rounded-full border-2 border-[#D9D9D9] border-t-[#00C1FF] border-r-[#00C1FF] animate-spin" />
+              </span>
+            ) : (
+              `${progress}%`
+            )}
+          </p>
           <div className="h-[6px] w-full max-w-[300px] rounded-[50px] bg-[#D9D9D9] overflow-hidden">
-            <div
-              className="h-full rounded-[50px] transition-all duration-300"
-              style={{
-                width: `${progress}%`,
-                background: 'rgba(0, 193, 255, 1)',
-              }}
-            />
+            {progressLoading ? (
+              <div className="profile-progress-loading-bar h-full rounded-[50px]" />
+            ) : (
+              <div
+                className="h-full rounded-[50px] transition-all duration-300"
+                style={{
+                  width: `${progress}%`,
+                  background: 'rgba(0, 193, 255, 1)',
+                }}
+              />
+            )}
           </div>
         </div>
         <button
@@ -208,6 +223,31 @@ export function ProfilePage() {
   const [thumbTop, setThumbTop] = useState(0)
   const [thumbHeight, setThumbHeight] = useState(116)
   const [hasOverflow, setHasOverflow] = useState(false)
+  const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
+  const [isProgressLoading, setIsProgressLoading] = useState(false)
+
+  useEffect(() => {
+    let hiddenAt: number | null = null
+    let timeoutId: number | null = null
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now()
+      } else {
+        if (hiddenAt != null && Date.now() - hiddenAt > 1500) {
+          timeoutId = window.setTimeout(
+            () => setProgressRefreshTrigger((k) => k + 1),
+            300,
+          )
+        }
+        hiddenAt = null
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (timeoutId != null) window.clearTimeout(timeoutId)
+    }
+  }, [])
 
   useEffect(() => {
     if (!user) {
@@ -513,6 +553,10 @@ export function ProfilePage() {
     const courseIds = user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
     if (!user || !token || allKnownCourses.length === 0 || courseIds.length === 0) return
     let cancelled = false
+    setIsProgressLoading(true)
+    const progressLoadMaxWait = window.setTimeout(() => {
+      if (!cancelled) setIsProgressLoading(false)
+    }, 60000)
     Promise.all(
       courseIds.map(async (courseId) => {
         const apiCourse = allKnownCourses.find((item) => item._id === courseId)
@@ -524,16 +568,15 @@ export function ProfilePage() {
             fitnessApi.getCourseWorkouts(courseId, token),
           ])
 
-          const workoutsById = new Map(workouts.map((workout) => [workout._id, workout]))
-          let workoutsProgress = Array.isArray(progress.workoutsProgress)
+          const workoutsList = Array.isArray(workouts) ? workouts : []
+          const workoutsById = new Map(workoutsList.map((workout) => [workout._id, workout]))
+          let workoutsProgress = progress && Array.isArray(progress.workoutsProgress)
             ? progress.workoutsProgress
             : []
 
-          // Fallback для нестабильного API: если прогресс курса пустой,
-          // догружаем прогресс по каждому уроку отдельно.
-          if (workoutsProgress.length === 0 && workouts.length > 0) {
+          if (workoutsProgress.length === 0 && workoutsList.length > 0) {
             const fallbackProgress = await Promise.all(
-              workouts.map((workout) =>
+              workoutsList.map((workout) =>
                 fitnessApi
                   .getWorkoutProgress(courseId, workout._id, token)
                   .catch(() => null),
@@ -544,30 +587,37 @@ export function ProfilePage() {
             )
           }
 
-          const values = workoutsProgress.map((workoutProgress) => {
-            if (workoutProgress.workoutCompleted) return 100
+          const progressByWorkoutId = new Map(
+            workoutsProgress.map((wp) => [wp.workoutId, wp]),
+          )
 
-            const workout = workoutsById.get(workoutProgress.workoutId)
-            if (!workout || workout.exercises.length === 0) {
-              // Fallback для нестабильного API: если есть хоть какие-то повторы, показываем старт прогресса.
-              const hasAnyProgress = workoutProgress.progressData.some(
-                (value) => Number(value) > 0,
-              )
+          function getWorkoutPercent(workout: { _id: string; exercises?: { quantity?: number }[] }, workoutProgress: ApiWorkoutProgress | undefined): number {
+            if (!workoutProgress) return 0
+            if (workoutProgress.workoutCompleted) return 100
+            const progressData = Array.isArray(workoutProgress.progressData)
+              ? workoutProgress.progressData
+              : []
+            if (!Array.isArray(workout.exercises) || workout.exercises.length === 0) {
+              const hasAnyProgress = progressData.some((value) => Number(value) > 0)
               return hasAnyProgress ? 1 : 0
             }
-
             const exercisePercents = workout.exercises.map((exercise, index) => {
-              const reps = Number(workoutProgress.progressData[index] ?? 0)
-              const target = Math.max(1, exercise.quantity)
+              const reps = Number(progressData[index] ?? 0)
+              const target = Math.max(1, exercise?.quantity ?? 1)
               const percent = Math.round((reps / target) * 100)
               return Math.min(100, Math.max(0, percent))
             })
-
             if (exercisePercents.length === 0) return 0
             return Math.round(
               exercisePercents.reduce((sum, value) => sum + value, 0) /
                 exercisePercents.length,
             )
+          }
+
+          const allWorkoutIds = Array.isArray(apiCourse.workouts) ? apiCourse.workouts : workoutsList.map((w) => w._id)
+          const values = allWorkoutIds.map((workoutId) => {
+            const workout = workoutsById.get(workoutId) ?? { _id: workoutId, exercises: [] as { quantity?: number }[] }
+            return getWorkoutPercent(workout, progressByWorkoutId.get(workoutId))
           })
           const rawAvg =
             values.length > 0
@@ -577,24 +627,38 @@ export function ProfilePage() {
           const avg = hasAnyCourseProgress ? Math.max(1, rawAvg) : 0
           return [mapped.slug, avg] as const
         } catch (err) {
-          const msg = err instanceof Error ? err.message : ''
+          const msg = err instanceof Error ? err.message : String(err)
           if (msg.includes('не был добавлен') || msg.includes('не был добавлен этот курс')) {
             return [mapped.slug, 0] as const
           }
-          logError('ProfilePage', 'load course progress failed', { courseId })
-          return null
+          if (msg.includes('404') || msg.includes('Not Found') || msg.includes('не найден')) {
+            return [mapped.slug, 0] as const
+          }
+          logError('ProfilePage', 'load course progress failed', { courseId, error: msg })
+          return [mapped.slug, 0] as const
         }
       }),
-    ).then((pairs) => {
-      if (cancelled) return
-      const next = pairs.filter(Boolean) as ReadonlyArray<readonly [string, number]>
-      if (next.length === 0) return
-      setCourseProgressMap((prev) => ({ ...prev, ...Object.fromEntries(next) }))
-    })
+    )
+      .then((pairs) => {
+        if (cancelled) return
+        const next = pairs.filter(Boolean) as ReadonlyArray<readonly [string, number]>
+        if (next.length > 0) {
+          setCourseProgressMap((prev) => ({ ...prev, ...Object.fromEntries(next) }))
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) logError('ProfilePage', 'load course progress failed', { error: err instanceof Error ? err.message : String(err) })
+      })
+      .finally(() => {
+        window.clearTimeout(progressLoadMaxWait)
+        setIsProgressLoading(false)
+      })
     return () => {
       cancelled = true
+      window.clearTimeout(progressLoadMaxWait)
+      setIsProgressLoading(false)
     }
-  }, [user, token, allKnownCourses, removedCourseIds])
+  }, [user, token, allKnownCourses, removedCourseIds, progressRefreshTrigger])
 
   if (!user) return null
 
@@ -672,6 +736,7 @@ export function ProfilePage() {
                   key={course.slug}
                   course={course}
                   progress={progress}
+                  progressLoading={isProgressLoading}
                   onRemove={() => removeCourse(course)}
                   isRemoving={removingCourseId === course.courseId}
                   removeDisabled={
@@ -751,6 +816,7 @@ export function ProfilePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3
+              className="text-[32px]"
               style={{
                 width: '100%',
                 maxWidth: 303,
@@ -760,7 +826,6 @@ export function ProfilePage() {
                 fontFamily: 'StratosSkyeng, Roboto, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
-                fontSize: 'clamp(28px, 5vw, 32px)',
                 lineHeight: '110%',
                 letterSpacing: 0,
                 textAlign: 'left',
