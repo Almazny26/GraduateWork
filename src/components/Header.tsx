@@ -2,32 +2,77 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
+// шапка: лого, слоган на главной, кнопка входа или меню юзера
 export function Header() {
   const { user, logout, openLoginModal } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [dropdownAnimated, setDropdownAnimated] = useState(false) // для плавного появления/скрытия
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const closeTimeoutRef = useRef<number | null>(null) // таймер перед закрытием, чтобы успела анимация
   const showTagline =
     location.pathname === '/' || /^\/course\/[^/]+\/?$/.test(location.pathname)
 
+  // закрытие с анимацией: сначала уезжает вверх, потом размонтируем
+  const closeDropdown = () => {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    if (dropdownAnimated) {
+      setDropdownAnimated(false)
+      closeTimeoutRef.current = window.setTimeout(() => {
+        setDropdownOpen(false)
+        closeTimeoutRef.current = null
+      }, 300)
+    } else {
+      setDropdownOpen(false)
+    }
+  }
+
+  // клик вне меню - закрыть
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
+        closeDropdown()
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dropdownAnimated])
+
+  // при открытии дропдауна через кадр включаем анимацию (иначе не видно выезд)
+  useEffect(() => {
+    if (!dropdownOpen) {
+      setDropdownAnimated(false)
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+      return
+    }
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    const raf = requestAnimationFrame(() => setDropdownAnimated(true))
+    return () => cancelAnimationFrame(raf)
+  }, [dropdownOpen])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current)
+    }
   }, [])
 
   const handleProfileClick = () => {
-    setDropdownOpen(false)
+    closeDropdown()
     navigate('/profile')
   }
 
   const handleLogout = () => {
-    setDropdownOpen(false)
+    closeDropdown()
     logout()
     navigate('/')
   }
@@ -58,7 +103,7 @@ export function Header() {
           <>
             <button
               type="button"
-              onClick={() => setDropdownOpen((v) => !v)}
+              onClick={() => (dropdownOpen ? closeDropdown() : setDropdownOpen(true))}
               className="flex flex-row items-center gap-2 sm:gap-4 rounded-[46px] hover:opacity-90 transition-opacity py-1 pr-2 pl-1"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
@@ -80,7 +125,9 @@ export function Header() {
             </button>
             {dropdownOpen && (
               <div
-                className="absolute right-0 top-full mt-2 z-50 flex flex-col items-center rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-visible transition-all duration-300 ease-out origin-top opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                className={`absolute right-0 top-full mt-2 z-50 flex flex-col items-center rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] overflow-visible transition-all duration-300 ease-out origin-top pointer-events-auto ${
+                  dropdownAnimated ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-3 scale-[0.98]'
+                }`}
                 style={{
                   width: 320,
                   minHeight: 258,
@@ -91,13 +138,13 @@ export function Header() {
                 <div className="flex flex-col items-center w-full min-w-0" style={{ gap: 10 }}>
                   <span
                     className="text-[18px] leading-[1.1] text-black"
-                    style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
+                    style={{ fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif' }}
                   >
                     {user.name}
                   </span>
                   <span
                     className="text-[18px] leading-[1.1] text-[#999999]"
-                    style={{ fontFamily: 'StratosSkyeng, Roboto, sans-serif' }}
+                    style={{ fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif' }}
                   >
                     {user.email || user.login}
                   </span>
@@ -139,7 +186,7 @@ export function Header() {
           <button
             type="button"
             onClick={openLoginModal}
-            className="flex flex-row justify-center items-center gap-2 rounded-[46px] hover:opacity-90 transition-opacity shrink-0 w-[83px] sm:w-[103px] h-[36px] sm:h-[52px] px-4 sm:px-[26px] py-2 sm:py-4"
+            className="flex flex-row justify-center items-center gap-2 rounded-[46px] hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out shrink-0 w-[83px] sm:w-[103px] h-[36px] sm:h-[52px] px-4 sm:px-[26px] py-2 sm:py-4"
             style={{
               background: 'rgba(188, 236, 48, 1)',
               color: 'rgba(0, 0, 0, 1)',

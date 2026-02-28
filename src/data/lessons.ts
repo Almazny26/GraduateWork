@@ -5,6 +5,7 @@ export type Lesson = {
   tasks: string[]
 }
 
+// запасные данные уроков по слагам (основные с API)
 export const COURSE_LESSONS: Record<string, Lesson[]> = {
   yoga: [
     {

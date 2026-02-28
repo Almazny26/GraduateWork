@@ -10,6 +10,7 @@ import { mapApiCourseToAppCourseRef } from '@/api/mappers'
 import { useAuth } from '@/contexts/AuthContext'
 import { logError, logInfo } from '@/utils/logger'
 
+// порядок курсов как в макете (йога, стретчинг и т.д.)
 const COURSE_ORDER_BY_SLUG = new Map(COURSES.map((course, index) => [course.slug, index]))
 
 export function HomePage() {
@@ -19,6 +20,7 @@ export function HomePage() {
   const [coursesLoadError, setCoursesLoadError] = useState<string | null>(null)
   const [addingCourseId, setAddingCourseId] = useState<string | null>(null)
 
+  // при загрузке страницы тянем список курсов с API
   useEffect(() => {
     setIsLoadingCourses(true)
     setCoursesLoadError(null)
@@ -26,8 +28,9 @@ export function HomePage() {
     fitnessApi
       .getCourses()
       .then((data) => {
-        setCourses(data)
-        logInfo('HomePage', 'load courses success', { count: data.length })
+        const list = Array.isArray(data) ? data : []
+        setCourses(list)
+        logInfo('HomePage', 'load courses success', { count: list.length })
       })
       .catch((error) => {
         setCourses([])
@@ -39,6 +42,7 @@ export function HomePage() {
       .finally(() => setIsLoadingCourses(false))
   }, [])
 
+  // курсы для карточек в нужном порядке
   const cardCourses = useMemo(() => {
     const mapped = courses.map((course) => mapApiCourseToAppCourseRef(course))
     return mapped.sort((a, b) => {
@@ -51,6 +55,7 @@ export function HomePage() {
     })
   }, [courses])
 
+  // добавление курса в профиль по клику на плюс
   const handleAddCourseFromCard = async (courseId: string) => {
     if (!user || !token) {
       toast('Войдите, чтобы добавить курс')
@@ -72,7 +77,7 @@ export function HomePage() {
     try {
       await fitnessApi.addCourseToUser(courseId, token)
       await refreshMe()
-      toast.success('Курс добавлен в ваш кабинет')
+      toast.success('Курс добавлен в ваш профиль')
       logInfo('HomePage', 'add course success', { courseId })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось добавить курс'

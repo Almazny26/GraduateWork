@@ -22,6 +22,7 @@ function StarIcon({ className }: { className?: string }) {
   )
 }
 
+// описание курса режу на пункты по точкам/восклицательным и т.д.
 function splitDescriptionToBullets(description?: string): string[] {
   if (!description) return []
   return description
@@ -30,6 +31,7 @@ function splitDescriptionToBullets(description?: string): string[] {
     .filter(Boolean)
 }
 
+// страница одного курса: большая карточка, описание, список уроков, кнопка добавить в профиль
 export function CoursePage() {
   const { slug } = useParams<{ slug: string }>()
   const { user, token, openLoginModal, refreshMe } = useAuth()
@@ -118,7 +120,7 @@ export function CoursePage() {
       await fitnessApi.addCourseToUser(apiCourse._id, token)
       await refreshMe()
       setPendingAddCourse(false)
-      toast.success('Курс добавлен в ваш кабинет')
+      toast.success('Курс добавлен в ваш профиль')
       logInfo('CoursePage', 'add course success', { slug, courseId: apiCourse._id })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось добавить курс'
@@ -179,7 +181,7 @@ export function CoursePage() {
   return (
     <div className="min-h-screen bg-page font-sans text-text overflow-x-hidden">
       <Header />
-      {/* Frame 2043683081 (node 60:2107): колонка, gap 60px — жёлтая карточка, «Подойдет для вас», «Направления» */}
+      {/* Frame 2043683081 (node 60:2107): колонка, gap 60px - жёлтая карточка, «Подойдет для вас», «Направления» */}
       <div className="relative z-0 max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col">
         {/* Верхняя карточка: название и цвет по выбранной тренировке */}
         <SkillCourseCard
@@ -196,7 +198,7 @@ export function CoursePage() {
         >
           <h2
             id="suits-heading"
-            className="text-left text-2xl sm:text-[40px] font-medium sm:font-semibold"
+            className="text-left text-2xl sm:text-[40px] font-normal sm:font-semibold"
             style={{
               width: '100%',
               maxWidth: 810,
@@ -274,7 +276,7 @@ export function CoursePage() {
         {/* Направления: от карточек до этого блока 60px; от этого блока до «Тренировки» 40px */}
         <div className="w-full max-w-[343px] sm:max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px] mt-[40px] sm:mt-[60px]">
           <h2
-            className="text-left text-2xl sm:text-[40px] font-medium sm:font-semibold"
+            className="text-left text-2xl sm:text-[40px] font-normal sm:font-semibold"
             style={{
               color: 'rgba(0, 0, 0, 1)',
               fontFamily: 'Roboto, sans-serif',
@@ -288,7 +290,7 @@ export function CoursePage() {
           </h2>
           {/* Frame 2043683031: контент центрирован относительно блока (разное кол-во пунктов на страницах) */}
           <div
-            className="w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[336px] sm:h-auto sm:min-h-[146px] rounded-[28px] p-[30px] box-border flex flex-col justify-center items-center overflow-hidden"
+            className="w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-auto min-h-0 py-[30px] sm:min-h-[146px] rounded-[28px] px-[30px] sm:p-[30px] box-border flex flex-col justify-center items-center overflow-hidden"
             style={{
               gap: 10,
               backgroundColor: 'rgba(188, 236, 48, 1)',
@@ -322,7 +324,7 @@ export function CoursePage() {
 
       </div>
 
-      {/* Group 1597880544: 1160×588 — по макету node 31-1394; 102px от верхнего блока */}
+      {/* Group 1597880544: 1160×588 - по макету node 31-1394; 102px от верхнего блока */}
       <section className="relative z-[120] max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-14 xl:px-[140px] pt-0 sm:pt-0 pb-0 sm:pb-[90px]">
         <div className="md:hidden relative mt-[156px] pb-[30px] w-full max-w-[343px] mx-auto">
           <div
@@ -415,7 +417,7 @@ export function CoursePage() {
                 type="button"
                 onClick={handleAddCourse}
                 disabled={addCourseLoading}
-                className="w-full h-[52px] rounded-[46px] hover:opacity-90 transition-opacity flex items-center justify-center px-4 min-w-0"
+                className="w-full h-[52px] rounded-[46px] hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out flex items-center justify-center px-4 min-w-0 overflow-hidden"
                 style={{
                   backgroundColor: 'rgba(188, 236, 48, 1)',
                   color: 'rgba(0, 0, 0, 1)',
@@ -461,7 +463,7 @@ export function CoursePage() {
             }}
           />
 
-          {/* Frame 2043683032: 437×406, (40,142) — текст с сервера только в левой зоне, парень и линии справа на месте */}
+          {/* Frame 2043683032: 437×406, (40,142) - текст с сервера только в левой зоне, парень и линии справа на месте */}
           <div
             className="absolute flex flex-col justify-start items-start pointer-events-auto z-10"
             style={{

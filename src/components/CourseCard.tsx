@@ -10,11 +10,7 @@ type CourseCardProps = {
   isAdded?: boolean
 }
 
-/**
- * Карточка курса по макету Figma (node 15-896, prof card 19:2400, Frame 17:2296).
- * Шрифты: заголовок 32px medium, чипы 16px normal; отступы: gap 24px, блок текста gap 20px, чипы gap 6px; тень и скругление по макету.
- * Гибкая: ширина подстраивается под сетку, не накладывается при уменьшении экрана.
- */
+// карточка курса на главной и на странице курса, кнопка добавить курс
 export function CourseCard({
   title,
   imageSrc,
@@ -43,7 +39,7 @@ export function CourseCard({
               width={360}
               height={325}
             />
-            {/* Кнопка добавления — внутри карточки, чтобы масштабировалась вместе с ней */}
+            {/* Кнопка добавления - внутри карточки, чтобы масштабировалась вместе с ней */}
             <button
               type="button"
               disabled={addDisabled}
@@ -82,7 +78,7 @@ export function CourseCard({
             <h2 className="text-[24px] sm:text-[32px] font-medium leading-[1.1] text-[#000000] sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]">
               <span className="card-title-glow">{title}</span>
             </h2>
-            {/* Чипы: Frame 2043683021 — flex row, gap 6, padding 10, radius 50px, bg #F7F7F7; текст Roboto 16px 400, 110%, #202020 */}
+            {/* Чипы: Frame 2043683021 - flex row, gap 6, padding 10, radius 50px, bg #F7F7F7; текст Roboto 16px 400, 110%, #202020 */}
             <div className="flex flex-col gap-[6px]">
               <div className="flex flex-row flex-wrap items-center gap-[6px]">
                 <Chip icon="/images/calendar-icon.svg" label="25 дней" />

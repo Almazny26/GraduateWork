@@ -11,6 +11,7 @@ import { ProfileCoursesLoading } from '@/components/Loading'
 type ProfileCourse = AppCourseRef
 type PickerLesson = { id: string; title: string }
 
+// карточка курса в профиле: прогресс, кнопки удалить и начать/продолжить
 function ProfileCourseCard({
   course,
   progress,
@@ -200,10 +201,11 @@ function ProfileCourseCard({
   )
 }
 
+// страница профиля: мои курсы, прогресс по каждому, удаление, выбор урока для старта
 export function ProfilePage() {
   const navigate = useNavigate()
   const { user, token, logout, openLoginModal, refreshMe } = useAuth()
-  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>({})
+  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>({}) // slug -> процент
   const [apiCourses, setApiCourses] = useState<ApiCourse[]>([])
   const [coursesById, setCoursesById] = useState<Record<string, ApiCourse>>({})
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
@@ -224,7 +226,7 @@ export function ProfilePage() {
   const [thumbHeight, setThumbHeight] = useState(116)
   const [hasOverflow, setHasOverflow] = useState(false)
   const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
-  const [isProgressLoading, setIsProgressLoading] = useState(false)
+  const [isProgressLoading, setIsProgressLoading] = useState(true)
 
   useEffect(() => {
     let hiddenAt: number | null = null
@@ -298,6 +300,7 @@ export function ProfilePage() {
     setIsLessonPickerLoading(false)
   }
 
+  // сброс прогресса по курсу (кнопка «Начать заново»)
   const resetCourseProgress = async (course: ProfileCourse) => {
     if (!token) return
     try {
@@ -309,6 +312,7 @@ export function ProfilePage() {
     }
   }
 
+  // открываю пикер урока и потом перехожу на урок
   const startCourse = async (course: ProfileCourse, progress: number) => {
     if (startingCourseId === course.courseId || removingCourseId === course.courseId) return
     setStartingCourseId(course.courseId)
@@ -549,9 +553,18 @@ export function ProfilePage() {
     )
   }, [user, apiCourses, coursesById])
 
+  // грузим прогресс по каждому курсу; не сбрасываем загрузку пока нет курсов - иначе мелькает 0%
   useEffect(() => {
     const courseIds = user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
-    if (!user || !token || allKnownCourses.length === 0 || courseIds.length === 0) return
+    if (!user || !token) {
+      setIsProgressLoading(false)
+      return
+    }
+    if (allKnownCourses.length === 0) return
+    if (courseIds.length === 0) {
+      setIsProgressLoading(false)
+      return
+    }
     let cancelled = false
     setIsProgressLoading(true)
     const progressLoadMaxWait = window.setTimeout(() => {
@@ -667,10 +680,10 @@ export function ProfilePage() {
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-0 sm:pb-12">
         <div className="flex flex-col gap-[24px] sm:gap-[60px] max-w-[1160px]">
-          {/* Блок «Профиль» — плашка по макету 60-1707 */}
+          {/* Блок «Профиль» - плашка по макету 60-1707 */}
           <section className="flex flex-col gap-[24px] sm:gap-[40px]">
             <h1
-              className="text-left font-medium text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
+              className="text-left font-normal text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
             >
               Профиль
@@ -689,7 +702,7 @@ export function ProfilePage() {
                 <div className="mt-[30px] sm:mt-0 w-full flex flex-col items-start gap-[20px] sm:gap-[44px] min-w-0">
                   <div className="flex flex-col gap-[20px] w-full items-start">
                     <p
-                      className="text-left font-medium text-[24px] sm:text-[32px] leading-[1.1] text-black max-w-[300px]"
+                      className="text-left font-normal text-[24px] sm:text-[32px] leading-[1.1] text-black max-w-[300px]"
                       style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
                     >
                       {user.name}
@@ -719,7 +732,7 @@ export function ProfilePage() {
           {/* Блок «Мои курсы» */}
           <section className="flex flex-col gap-[40px]">
             <h2
-              className="text-left font-medium text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
+              className="text-left font-normal text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
             >
               Мои курсы
@@ -802,45 +815,35 @@ export function ProfilePage() {
           onClick={closeLessonPicker}
         >
           <div
-            className={`rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-start transition-all duration-300 ease-out ${
+            className={`lesson-picker-modal rounded-[40px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] transition-all duration-300 ease-out ${
               lessonPickerVisible
                 ? 'opacity-100 translate-y-0 scale-100'
                 : 'opacity-0 translate-y-2 scale-95'
             }`}
-            style={{
-              width: 'min(343px, calc(100vw - 24px))',
-              height: 'min(585px, calc(100vh - 24px))',
-              gap: 34,
-              padding: 30,
-            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
-              className="text-[32px]"
+              className="lesson-picker-title text-[32px] text-left w-full sm:whitespace-nowrap"
               style={{
-                width: '100%',
-                maxWidth: 303,
                 minHeight: 35,
                 margin: 0,
                 color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'StratosSkyeng, Roboto, sans-serif',
+                fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
                 lineHeight: '110%',
                 letterSpacing: 0,
-                textAlign: 'left',
               }}
             >
               Выберите тренировку
             </h3>
 
-            <div className="relative w-[283px] h-[335px]">
-              <div
-                ref={lessonListRef}
-                onScroll={updateCustomScrollbar}
-                className="lesson-picker-scroll-hide flex flex-col items-start overflow-y-scroll overflow-x-hidden"
-                style={{ width: 283, height: 335, paddingRight: 26 }}
-              >
+            <div className="lesson-picker-content flex flex-col w-full gap-[34px]">
+            <div
+              ref={lessonListRef}
+              onScroll={updateCustomScrollbar}
+              className="relative w-[283px] h-[360px] sm:w-full lesson-picker-list lesson-picker-scroll-hide flex flex-col justify-start items-start sm:items-start sm:gap-[10px] overflow-y-scroll overflow-x-hidden box-border sm:box-content pr-[26px] sm:pr-0"
+            >
                 {isLessonPickerLoading && (
                   <div className="w-full h-full flex items-center justify-center">
                     <ProfileCoursesLoading label="Загружаем список уроков" />
@@ -879,7 +882,7 @@ export function ProfilePage() {
                       style={{ maxWidth: 303, marginTop: index === 0 ? 0 : 10 }}
                     >
                       <label
-                        className="flex items-start gap-3 cursor-pointer overflow-hidden"
+                        className="flex items-center gap-3 cursor-pointer overflow-hidden"
                         style={{
                           width: '100%',
                           padding: '0 0 9.5px 0',
@@ -904,7 +907,7 @@ export function ProfilePage() {
                             alt=""
                             width={24}
                             height={24}
-                            className="mt-[10.5px] shrink-0"
+                            className="shrink-0"
                             aria-hidden
                           />
                         ) : (
@@ -913,12 +916,13 @@ export function ProfilePage() {
                             alt=""
                             width={24}
                             height={24}
-                            className="mt-[10.5px] shrink-0"
+                            className="shrink-0"
                             aria-hidden
                           />
                         )}
-                        <span className="flex flex-col gap-[10px]">
+                        <span className="flex flex-col justify-center items-start gap-[10px]">
                           <span
+                            className="text-[20px] sm:text-[24px]"
                             style={{
                               width: '100%',
                               maxWidth: 320,
@@ -927,7 +931,6 @@ export function ProfilePage() {
                               fontFamily: 'Roboto, sans-serif',
                               fontStyle: 'normal',
                               fontWeight: 400,
-                              fontSize: 'clamp(20px, 4.6vw, 24px)',
                               lineHeight: '110%',
                               letterSpacing: 0,
                               textAlign: 'left',
@@ -936,6 +939,7 @@ export function ProfilePage() {
                             {lesson.title}
                           </span>
                           <span
+                            className="text-[14px] sm:text-[16px]"
                             style={{
                               width: '100%',
                               maxWidth: 320,
@@ -944,7 +948,6 @@ export function ProfilePage() {
                               fontFamily: 'Roboto, sans-serif',
                               fontStyle: 'normal',
                               fontWeight: 400,
-                              fontSize: 'clamp(14px, 3.4vw, 16px)',
                               lineHeight: '110%',
                               letterSpacing: 0,
                               textAlign: 'left',
@@ -956,7 +959,6 @@ export function ProfilePage() {
                       </label>
                     </div>
                   ))}
-              </div>
               {hasOverflow && (
                 <>
                   <div
@@ -988,22 +990,19 @@ export function ProfilePage() {
               )}
             </div>
 
-            <div
-              className="w-full flex items-center justify-center"
-            >
+            <div className="w-full flex items-center justify-center">
               <button
                 type="button"
                 onClick={startSelectedLesson}
-                className="rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
+                className="lesson-picker-btn rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
                 style={{
-                  width: 303,
-                  height: 52,
                   fontFamily: 'Roboto, sans-serif',
                 }}
                 disabled={isLessonPickerLoading || selectedLessonIds.length === 0}
               >
                 {isLessonPickerLoading ? 'Загружаем...' : 'Начать'}
               </button>
+            </div>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+// полноэкранный оверлей со спиннером пока грузится что-то
 type PageLoadingOverlayProps = {
   visible: boolean
   label?: string
@@ -27,6 +28,7 @@ export function PageLoadingOverlay({
   )
 }
 
+// заглушки карточек пока грузятся курсы
 export function CourseGridSkeleton({ count = 6 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
@@ -50,6 +52,7 @@ export function CourseGridSkeleton({ count = 6 }: { count?: number }) {
   )
 }
 
+// текст «Загружаем курсы...» со спиннером для профиля
 export function ProfileCoursesLoading({
   label = 'Загружаем курсы профиля',
 }: {

@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/api/config'
 import { logError, logInfo, logWarn } from '@/utils/logger'
 
+// ключ в localStorage под токен
 export const AUTH_TOKEN_STORAGE_KEY = 'skyfitness_auth_token'
 
 export type ApiUserMe = {
@@ -57,15 +58,15 @@ export type ApiWorkoutProgressByWorkout = {
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 const API_TIMEOUT_MS = 45000
-const API_RETRY_COUNT = 1
+const API_RETRY_COUNT = 1 // один повтор при таймауте/сети
 
-function buildHeaders(token?: string, withJsonBody?: boolean): HeadersInit {
+function buildHeaders(token?: string): HeadersInit {
   const headers: Record<string, string> = {}
-  void withJsonBody
   if (token) headers.Authorization = `Bearer ${token}`
   return headers
 }
 
+// в логах пароль не светим
 function sanitizeRequestBody(path: string, body: unknown): unknown {
   if (!body || typeof body !== 'object') return body
   const data = body as Record<string, unknown>
@@ -100,16 +101,18 @@ async function request<T>(
     try {
       response = await fetch(requestUrl, {
         method,
-        headers: buildHeaders(options?.token, options?.body !== undefined),
+        headers: buildHeaders(options?.token),
         body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
         signal: controller.signal,
       })
-      logInfo('API', 'request success', {
-        method,
-        path,
-        status: response.status,
-        attempt,
-      })
+      if (response.ok) {
+        logInfo('API', 'request success', {
+          method,
+          path,
+          status: response.status,
+          attempt,
+        })
+      }
       break
     } catch (error) {
       const isAbortError =
@@ -159,14 +162,36 @@ async function request<T>(
     payload = null
   }
 
+  if (path === '/courses' && response.ok) {
+    const preview = rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText
+    logInfo('API', 'courses response body', {
+      len: rawText.length,
+      isArray: Array.isArray(payload),
+      preview: preview.slice(0, 120),
+    })
+  }
+
   if (!response.ok) {
-    const apiMessage =
-      typeof payload === 'object' &&
-      payload !== null &&
-      'message' in payload &&
-      typeof (payload as { message?: unknown }).message === 'string'
-        ? (payload as { message: string }).message
-        : null
+    let apiMessage: string | null = null
+    if (typeof payload === 'object' && payload !== null) {
+      const p = payload as Record<string, unknown>
+      if (typeof p.message === 'string') apiMessage = p.message
+      else if (typeof p.error === 'string') apiMessage = p.error
+      else if (typeof p.msg === 'string') apiMessage = p.msg
+    }
+    if (!apiMessage && typeof rawText === 'string' && rawText.trim().length > 0 && rawText.length < 500) {
+      try {
+        const parsed = JSON.parse(rawText) as Record<string, unknown>
+        if (typeof parsed?.message === 'string') apiMessage = parsed.message
+      } catch {
+        apiMessage = rawText.trim()
+      }
+    }
+    if (!apiMessage && response.status === 404 && (path.includes('/auth/login') || path.includes('/auth/register'))) {
+      apiMessage = path.includes('/auth/register')
+        ? 'Пользователь с таким email уже существует или неверные данные.'
+        : 'Пользователь не найден или неверный пароль.'
+    }
 
     if (apiMessage) {
       logWarn('API', 'request api-error message', {
@@ -217,7 +242,10 @@ export const fitnessApi = {
 
   me: (token: string) => request<ApiUserMe>('/users/me', 'GET', { token }),
 
-  getCourses: () => request<ApiCourse[]>('/courses', 'GET'),
+  getCourses: async (): Promise<ApiCourse[]> => {
+    const data = await request<ApiCourse[] | null>('/courses', 'GET')
+    return Array.isArray(data) ? data : []
+  },
 
   getCourseById: (courseId: string) =>
     request<ApiCourse>(`/courses/${courseId}`, 'GET'),

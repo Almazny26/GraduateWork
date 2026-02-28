@@ -8,6 +8,7 @@ import { CoursePage } from '@/pages/CoursePage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { LessonPage } from '@/pages/LessonPage'
 
+// при смене страницы скролл вверх, иначе остаётся где был
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
@@ -16,6 +17,7 @@ function ScrollToTop() {
   return null
 }
 
+// роуты и тост сверху справа + модалка входа
 function AppRoutes() {
   const { loginModalOpen, closeLoginModal } = useAuth()
 

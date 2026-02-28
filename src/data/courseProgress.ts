@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'skyfitnesspro-course-progress'
 
+// дефолты для демо/тестов, прогресс реальный теперь с API
 const DEFAULT_COURSE_PROGRESS: Record<string, number> = {
   yoga: 40,
   stretching: 0,

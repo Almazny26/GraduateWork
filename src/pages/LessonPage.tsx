@@ -28,6 +28,7 @@ type SelectedLessonItem = {
   title: string
 }
 
+// начальные проценты по упражнениям (все 0 или одно значение)
 function createExerciseProgress(
   items: ExerciseItem[],
   value: number,
@@ -39,6 +40,7 @@ function createDraftProgress(items: ExerciseItem[]): Record<string, string> {
   return Object.fromEntries(items.map((item) => [item.id, '']))
 }
 
+// страница урока: видео + список упражнений + модалка «Мой прогресс»
 export function LessonPage() {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>()
   const location = useLocation()
@@ -80,6 +82,7 @@ export function LessonPage() {
       .filter(Boolean)
   }, [location.search])
 
+  // открываю модалку прогресса и подставляю текущие значения в инпуты
   const openProgressModal = () => {
     if (isLessonLoading || exerciseItems.length === 0 || isSavingProgress) return
     if (progressModalUnmountTimerRef.current) {
@@ -109,6 +112,7 @@ export function LessonPage() {
     }, 240)
   }
 
+  // сохраняю прогресс на бэк и закрываю модалку
   const saveProgress = async () => {
     if (isSavingProgress) return
     const normalizeReps = (value: string) => {
@@ -413,6 +417,12 @@ export function LessonPage() {
     [selectedLessons],
   )
 
+  const videoPreviewThumbnail = useMemo(() => {
+    if (!lessonVideoUrl) return null
+    const m = lessonVideoUrl.match(/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
+    return m ? `https://img.youtube.com/vi/${m}/maxresdefault.jpg` : null
+  }, [lessonVideoUrl])
+
   if (!token) {
     return <Navigate to="/" replace />
   }
@@ -472,15 +482,12 @@ export function LessonPage() {
               className="relative w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[189px] sm:h-auto lg:h-[639px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
               style={{ minHeight: 189 }}
             >
-              {(!showVideo || !videoLoaded) && (
-                <div className="absolute inset-0 z-[5] bg-[#1E1E1E] flex items-center justify-center">
-                  <p
-                    className="text-[16px] text-white/80"
-                    style={{ fontFamily: 'Roboto, sans-serif' }}
-                  >
-                    {isLessonLoading ? 'Загружаем видео...' : 'Нажмите, чтобы запустить видео'}
-                  </p>
-                </div>
+              {!showVideo && videoPreviewThumbnail && (
+                <div
+                  className="absolute inset-0 z-[1] bg-cover bg-center"
+                  style={{ backgroundImage: `url(${videoPreviewThumbnail})` }}
+                  aria-hidden
+                />
               )}
               {showVideo && (
                 <iframe
@@ -493,7 +500,6 @@ export function LessonPage() {
                   onLoad={() => setVideoLoaded(true)}
                 />
               )}
-              {/* Центральный знак воспроизведения: запускаем iframe по клику */}
               {!showVideo ? (
                 <button
                   type="button"
@@ -501,7 +507,7 @@ export function LessonPage() {
                     if (lessonVideoUrl) setShowVideo(true)
                   }}
                   disabled={!lessonVideoUrl || isLessonLoading}
-                  className="absolute inset-0 z-10 flex items-center justify-center disabled:opacity-60"
+                  className="absolute inset-0 z-10 flex items-center justify-center disabled:opacity-60 transition-transform duration-200 hover:scale-105"
                   aria-label="Запустить видео"
                 >
                   <img
@@ -509,24 +515,24 @@ export function LessonPage() {
                     alt=""
                     width={46}
                     height={46}
-                    className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain"
+                    className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain transition-transform duration-200 hover:scale-110"
                   />
                 </button>
               ) : (
-                <div
-                  className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
-                  aria-hidden
-                >
-                  <img
-                    src="/images/play.svg"
-                    alt=""
-                    width={46}
-                    height={46}
-                    className={`w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain transition-opacity duration-200 ${
-                      videoLoaded ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  />
-                </div>
+                !videoLoaded && (
+                  <div
+                    className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                    aria-hidden
+                  >
+                    <img
+                      src="/images/play.svg"
+                      alt=""
+                      width={46}
+                      height={46}
+                      className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain opacity-0"
+                    />
+                  </div>
+                )
               )}
             </div>
           </section>
@@ -542,7 +548,7 @@ export function LessonPage() {
                     width: '100%',
                     maxWidth: 283,
                     color: 'rgba(0, 0, 0, 1)',
-                    fontFamily: 'StratosSkyeng, Roboto, sans-serif',
+                    fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: 32,
@@ -647,7 +653,7 @@ export function LessonPage() {
                     width: '100%',
                     maxWidth: 403,
                     color: 'rgba(0, 0, 0, 1)',
-                    fontFamily: 'StratosSkyeng, Roboto, sans-serif',
+                    fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: 'clamp(28px, 3.2vw, 32px)',
@@ -752,26 +758,22 @@ export function LessonPage() {
           onClick={closeProgressModal}
         >
           <div
-            className={`bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
+            className={`progress-modal bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
               progressModalVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
             }`}
-            style={{
-              width: 'min(343px, calc(100vw - 24px))',
-              height: 'min(572px, calc(100vh - 24px))',
-              padding: 40,
-              gap: 34,
-            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full flex flex-col" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+            <div className="w-full flex flex-col progress-modal-content" style={{ flex: 1, minHeight: 0 }}>
               <h3
+                className="text-[32px]"
                 style={{
                   width: '100%',
                   maxWidth: 263,
                   color: 'rgba(0, 0, 0, 1)',
-                  fontFamily: 'StratosSkyeng, Roboto, sans-serif',
+                  backgroundClip: 'unset',
+                  WebkitBackgroundClip: 'unset',
+                  fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                   fontWeight: 400,
-                  fontSize: 32,
                   lineHeight: '110%',
                   letterSpacing: 0,
                   textAlign: 'left',
@@ -781,22 +783,22 @@ export function LessonPage() {
                 Мой прогресс
               </h3>
 
-              <div className="relative" style={{ flex: 1, minHeight: 0 }}>
+              <div className="relative min-w-0 flex-1 min-h-0">
                 <div
                   ref={progressListRef}
-                  className="lesson-picker-scroll-hide overflow-y-auto overflow-x-hidden"
+                  className="progress-modal-scroll lesson-picker-scroll-hide overflow-y-auto overflow-x-hidden min-w-0 flex flex-col justify-start items-center"
                   style={{ height: 'calc(100% - 12px)', minHeight: 0, paddingRight: 20 }}
                 >
-                  <div className="flex flex-col" style={{ gap: 20 }}>
+                  <div className="progress-modal-scroll-inner flex flex-col w-full" style={{ gap: 20 }}>
                     {exerciseItems.map((item) => (
-                      <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
+                      <div key={item.id} className="flex flex-col min-w-0" style={{ gap: 10 }}>
                         <label
+                          className="text-[16px] sm:text-[18px] break-words"
                           style={{
                             color: 'rgba(0, 0, 0, 1)',
                             fontFamily: 'Roboto, sans-serif',
                             fontStyle: 'normal',
                             fontWeight: 400,
-                            fontSize: 16,
                             lineHeight: '110%',
                             letterSpacing: 0,
                             textAlign: 'left',
@@ -869,7 +871,7 @@ export function LessonPage() {
               type="button"
               onClick={saveProgress}
               disabled={isSavingProgress}
-              className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="progress-modal-save-btn flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{
                 width: 263,
                 height: 52,

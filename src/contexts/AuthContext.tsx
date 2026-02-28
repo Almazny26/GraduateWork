@@ -11,6 +11,7 @@ import { logError, logInfo, logWarn } from '@/utils/logger'
 
 const STORAGE_KEY = 'skyfitness_user'
 
+// из ответа API достаём email и делаем логин из части до @
 function parseAuthIdentity(email: unknown) {
   if (typeof email !== 'string') {
     return { email: '', login: 'user' }
@@ -30,6 +31,7 @@ function toRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
+// рекурсивно ищем объекты в ответе (user, data, result и т.д.)
 function collectNestedRecords(root: unknown): Record<string, unknown>[] {
   const first = toRecord(root)
   if (!first) return []
@@ -54,6 +56,7 @@ function collectNestedRecords(root: unknown): Record<string, unknown>[] {
   return result
 }
 
+// email может быть вложен в разные поля ответа
 function extractApiEmail(payload: unknown): string {
   const records = collectNestedRecords(payload)
   for (const record of records) {
@@ -62,6 +65,7 @@ function extractApiEmail(payload: unknown): string {
   return ''
 }
 
+// selectedCourses с бэка привожу к массиву id
 function normalizeSelectedCourseIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
 
@@ -121,6 +125,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+// при загрузке страницы читаю юзера из localStorage
 function loadUser(): User | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -202,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // при первом заходе если есть токен - подтягиваю данные юзера с API
   useEffect(() => {
     const activeToken = loadToken()
     if (!activeToken) return
@@ -223,8 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       })
       .catch(() => {
-        // Не выходим из сессии из-за временных проблем API при инициализации.
-        // Оставляем последние сохранённые user/token из localStorage.
+        // если API недоступен при загрузке - не выкидываю из сессии, оставляю что в localStorage
         logWarn('AuthContext', 'bootstrap me failed, keep local session')
       })
   }, [])

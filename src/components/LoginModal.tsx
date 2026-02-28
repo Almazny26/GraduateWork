@@ -8,6 +8,7 @@ import photoMiniImg from '@/assets/photo_mini.png'
 type Props = { open: boolean; onClose: () => void }
 type AuthMode = 'login' | 'register'
 
+// тут тоже достаю email/selectedCourses из ответа API (как в AuthContext)
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (typeof value !== 'object' || value === null) return null
   return value as Record<string, unknown>
@@ -94,21 +95,21 @@ function extractSelectedCourses(payload: unknown): string[] {
   return []
 }
 
+// модалка входа/регистрации, после успеха вызываем login() из контекста
 export function LoginModal({ open, onClose }: Props) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [shouldRender, setShouldRender] = useState(open)
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(false) // для анимации появления
   const [mode, setMode] = useState<AuthMode>('login')
   const [loginValue, setLoginValue] = useState('')
   const [emailValue, setEmailValue] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
-  const [showLoginPassword, setShowLoginPassword] = useState(false)
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
-  const [showRegisterRepeatPassword, setShowRegisterRepeatPassword] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [registerError, setRegisterError] = useState('')
+  const [canShowRegisterError, setCanShowRegisterError] = useState(false)
+  const [registerSubmitAttempted, setRegisterSubmitAttempted] = useState(false)
   const [isLoginSubmitting, setIsLoginSubmitting] = useState(false)
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -119,11 +120,10 @@ export function LoginModal({ open, onClose }: Props) {
     setEmailValue('')
     setPassword('')
     setRepeatPassword('')
-    setShowLoginPassword(false)
-    setShowRegisterPassword(false)
-    setShowRegisterRepeatPassword(false)
     setLoginError('')
     setRegisterError('')
+    setCanShowRegisterError(false)
+    setRegisterSubmitAttempted(false)
     setIsLoginSubmitting(false)
     setIsRegisterSubmitting(false)
   }
@@ -132,6 +132,7 @@ export function LoginModal({ open, onClose }: Props) {
     setMode(nextMode)
     setLoginError('')
     setRegisterError('')
+    setCanShowRegisterError(false)
   }
 
   useEffect(() => {
@@ -143,6 +144,7 @@ export function LoginModal({ open, onClose }: Props) {
       setShouldRender(true)
       clearFormState()
       setMode('login')
+      setCanShowRegisterError(false)
       const raf = requestAnimationFrame(() => setIsVisible(true))
       return () => cancelAnimationFrame(raf)
     }
@@ -220,7 +222,13 @@ export function LoginModal({ open, onClose }: Props) {
       onClose()
       navigate('/profile')
     } catch (error) {
-      setLoginError(error instanceof Error ? error.message : 'Ошибка авторизации')
+      const message = error instanceof Error ? error.message : 'Ошибка авторизации'
+      const isWrongPassword =
+        message.toLowerCase().includes('неверный') &&
+        message.toLowerCase().includes('пароль')
+      setLoginError(
+        isWrongPassword ? 'Пароль введен неверно,\nпопробуйте еще раз.' : message,
+      )
     } finally {
       setIsLoginSubmitting(false)
     }
@@ -229,6 +237,8 @@ export function LoginModal({ open, onClose }: Props) {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isRegisterSubmitting) return
+    setCanShowRegisterError(true)
+    setRegisterSubmitAttempted(true)
     setRegisterError('')
     const email = emailValue.trim().toLowerCase()
     const pass = password.trim()
@@ -263,7 +273,16 @@ export function LoginModal({ open, onClose }: Props) {
       onClose()
       navigate('/profile')
     } catch (error) {
-      setRegisterError(error instanceof Error ? error.message : 'Ошибка регистрации')
+      const msg = error instanceof Error ? error.message : 'Ошибка регистрации'
+      const isExistingEmail =
+        msg.toLowerCase().includes('почта') ||
+        msg.toLowerCase().includes('уже существует') ||
+        msg.toLowerCase().includes('уже используется')
+      setRegisterError(
+        isExistingEmail
+          ? 'Данная почта уже используется. Попробуйте войти.'
+          : msg,
+      )
     } finally {
       setIsRegisterSubmitting(false)
     }
@@ -273,117 +292,6 @@ export function LoginModal({ open, onClose }: Props) {
     `w-full h-[52px] rounded-[8px] border bg-white px-4 text-[18px] leading-[1.1] text-black placeholder:text-black/25 outline-none ${
       hasError ? 'border-[#FF4D6D]' : 'border-[#D0D0D0]'
     }`
-
-  const renderPasswordInput = ({
-    value,
-    onChange,
-    placeholder,
-    hasError,
-    showValue,
-    onToggleShow,
-    autoComplete,
-    disabled,
-  }: {
-    value: string
-    onChange: (value: string) => void
-    placeholder: string
-    hasError: boolean
-    showValue: boolean
-    onToggleShow: () => void
-    autoComplete: string
-    disabled: boolean
-  }) => (
-    <div className="relative w-full">
-      {!showValue && value.length > 0 && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-4 right-[48px] top-1/2 -translate-y-1/2 overflow-hidden whitespace-nowrap text-[18px] leading-[1.1] text-black"
-          style={{ fontFamily: 'Roboto, sans-serif', letterSpacing: 0 }}
-        >
-          {'*'.repeat(value.length)}
-        </span>
-      )}
-      <input
-        type="text"
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`${inputClassName(hasError)} pr-[48px]`}
-        style={{
-          fontFamily: 'Roboto, sans-serif',
-          fontSize: 18,
-          color: showValue ? 'rgba(0, 0, 0, 1)' : 'transparent',
-          caretColor: 'rgba(0, 0, 0, 1)',
-        }}
-        autoComplete={autoComplete}
-      />
-      <button
-        type="button"
-        onClick={onToggleShow}
-        disabled={disabled}
-        className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center text-[#7A7A7A] hover:text-black transition-colors disabled:opacity-60"
-        aria-label={showValue ? 'Скрыть пароль' : 'Показать пароль'}
-      >
-        {showValue ? (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-          >
-            <path
-              d="M3 3L21 21"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-            <path
-              d="M9.9 9.9C9.39 10.41 9.08 11.12 9.08 11.9C9.08 13.45 10.35 14.72 11.9 14.72C12.68 14.72 13.39 14.41 13.9 13.9"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M6.56 6.56C4.74 7.79 3.41 9.67 2.7 12C4.04 16.4 7.67 19 12 19C13.88 19 15.63 18.51 17.18 17.62"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10.73 5.08C11.14 5.03 11.56 5 12 5C16.33 5 19.96 7.6 21.3 12C20.83 13.54 20.06 14.89 19.08 16"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-          >
-            <path
-              d="M2.7 12C4.04 7.6 7.67 5 12 5C16.33 5 19.96 7.6 21.3 12C19.96 16.4 16.33 19 12 19C7.67 19 4.04 16.4 2.7 12Z"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
-          </svg>
-        )}
-      </button>
-    </div>
-  )
 
   if (!shouldRender) return null
 
@@ -400,15 +308,9 @@ export function LoginModal({ open, onClose }: Props) {
       aria-labelledby="login-title"
     >
       <div
-        className={`relative w-full rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
-          isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
-        }`}
-        style={{
-          width: 'min(343px, calc(100vw - 24px))',
-          height: mode === 'register' ? 487 : 425,
-          padding: 40,
-          gap: 48,
-        }}
+        className={`relative w-[343px] sm:w-[360px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center transition-all duration-300 ease-out p-10 gap-12 ${
+          mode === 'register' ? 'min-h-[465px] sm:min-h-[487px]' : 'h-[425px]'
+        } ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <img
@@ -435,28 +337,27 @@ export function LoginModal({ open, onClose }: Props) {
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
               autoComplete="email"
             />
-            {renderPasswordInput({
-              value: password,
-              onChange: (nextValue) => {
-                setPassword(nextValue)
+            <input
+              type="password"
+              value={password}
+              disabled={isLoginSubmitting}
+              onChange={(e) => {
+                setPassword(e.target.value)
                 if (loginError) setLoginError('')
-              },
-              placeholder: 'Пароль',
-              hasError: !!loginError,
-              showValue: showLoginPassword,
-              onToggleShow: () => setShowLoginPassword((prev) => !prev),
-              autoComplete: 'current-password',
-              disabled: isLoginSubmitting,
-            })}
+              }}
+              placeholder="Пароль"
+              className={inputClassName(!!loginError)}
+              style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
+              autoComplete="current-password"
+            />
 
             <div className="min-h-[14px]">
               {loginError && (
                 <p
-                  className="text-center text-[14px] leading-[1.1]"
+                  className="text-center text-[14px] leading-[1.1] whitespace-pre-line"
                   style={{
                     color: 'rgba(219, 0, 48, 1)',
                     fontFamily: 'Roboto, sans-serif',
-                    fontStyle: 'normal',
                     fontWeight: 400,
                     letterSpacing: 0,
                     textAlign: 'center',
@@ -470,16 +371,20 @@ export function LoginModal({ open, onClose }: Props) {
             <button
               type="submit"
               disabled={isLoginSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
             >
               {isLoginSubmitting ? 'Входим...' : 'Войти'}
             </button>
             <button
               type="button"
-              onClick={() => switchMode('register')}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                switchMode('register')
+              }}
               disabled={isLoginSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Зарегистрироваться
@@ -497,59 +402,53 @@ export function LoginModal({ open, onClose }: Props) {
                 if (registerError) setRegisterError('')
               }}
               placeholder="Эл. почта"
-              className={inputClassName(registerError.includes('почта'))}
+              className={inputClassName(
+                !!(canShowRegisterError && registerSubmitAttempted && registerError && (registerError.includes('почта') || registerError.includes('уже используется'))),
+              )}
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
               autoComplete="email"
             />
-            {renderPasswordInput({
-              value: password,
-              onChange: (nextValue) => {
-                setPassword(nextValue)
+            <input
+              type="password"
+              value={password}
+              disabled={isRegisterSubmitting}
+              onChange={(e) => {
+                setPassword(e.target.value)
                 if (registerError) setRegisterError('')
-              },
-              placeholder: 'Пароль',
-              hasError: false,
-              showValue: showRegisterPassword,
-              onToggleShow: () => setShowRegisterPassword((prev) => !prev),
-              autoComplete: 'new-password',
-              disabled: isRegisterSubmitting,
-            })}
-            {renderPasswordInput({
-              value: repeatPassword,
-              onChange: (nextValue) => {
-                setRepeatPassword(nextValue)
+              }}
+              placeholder="Пароль"
+              className={inputClassName(false)}
+              style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
+              autoComplete="new-password"
+            />
+            <input
+              type="password"
+              value={repeatPassword}
+              disabled={isRegisterSubmitting}
+              onChange={(e) => {
+                setRepeatPassword(e.target.value)
                 if (registerError) setRegisterError('')
-              },
-              placeholder: 'Повторите пароль',
-              hasError: registerError.includes('Пароли'),
-              showValue: showRegisterRepeatPassword,
-              onToggleShow: () => setShowRegisterRepeatPassword((prev) => !prev),
-              autoComplete: 'new-password',
-              disabled: isRegisterSubmitting,
-            })}
+              }}
+              placeholder="Повторите пароль"
+              className={inputClassName(registerError.includes('Пароли'))}
+              style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
+              autoComplete="new-password"
+            />
 
-            <p
-              className="text-[12px] leading-[1.2] text-black/60"
-              style={{ fontFamily: 'Roboto, sans-serif' }}
+            <div
+              className={canShowRegisterError && registerSubmitAttempted && registerError ? 'min-h-[34px]' : 'min-h-0'}
             >
-              Пароль: минимум 6 символов, минимум 2 спецсимвола и минимум 1 заглавная буква.
-            </p>
-
-            <div className="min-h-[34px] pt-1">
-              {registerError && (
+              {canShowRegisterError && registerSubmitAttempted && registerError && (
                 <p
-                  className="text-center text-[18px] leading-[1.1] text-[#FF4D6D]"
-                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                  className="text-center text-[14px] leading-[1.1] text-[#DB0030]"
+                  style={{
+                    fontFamily: 'Roboto, sans-serif',
+                    fontWeight: 400,
+                    letterSpacing: 0,
+                    textAlign: 'center',
+                  }}
                 >
-                  {registerError.includes('почта') ? (
-                    <>
-                      Данная почта уже используется.
-                      <br />
-                      Попробуйте войти.
-                    </>
-                  ) : (
-                    registerError
-                  )}
+                  {registerError}
                 </p>
               )}
             </div>
@@ -557,16 +456,22 @@ export function LoginModal({ open, onClose }: Props) {
             <button
               type="submit"
               disabled={isRegisterSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 transition-opacity disabled:opacity-60"
+              className={`w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60 ${
+                canShowRegisterError && registerSubmitAttempted && registerError ? 'mt-[34px]' : 'mt-[24px]'
+              }`}
               style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
             >
               {isRegisterSubmitting ? 'Регистрируем...' : 'Зарегистрироваться'}
             </button>
             <button
               type="button"
-              onClick={() => switchMode('login')}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                switchMode('login')
+              }}
               disabled={isRegisterSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Войти

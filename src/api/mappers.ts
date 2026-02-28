@@ -1,6 +1,7 @@
 import type { ApiCourse } from '@/api/fitness'
 import { COURSES } from '@/data/courses'
 
+// разные написания слага с бэка приводим к одному
 const COURSE_SLUG_ALIASES: Record<string, string> = {
   yoga: 'yoga',
   stretching: 'stretching',
@@ -51,6 +52,7 @@ export type AppCourseRef = {
   imageSkillCard: string
 }
 
+// курс с API превращаю в то что нужно для карточек (slug, картинка и т.д.)
 export function mapApiCourseToAppCourseRef(course: ApiCourse): AppCourseRef {
   const slugFromEN = toSlugFromNameEN(course.nameEN)
   const visualByEN = getVisualCourseBySlug(slugFromEN)

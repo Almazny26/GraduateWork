@@ -1,4 +1,4 @@
-/** Цвета skill card по макету Figma: 1160×310, radius 30px, фон и белый текст */
+// цвета для больших карточек курсов на главной (если понадобятся)
 export const COURSE_COLORS: Record<string, string> = {
   yoga: 'rgba(255, 199, 0, 1)', // skill card 1
   stretching: 'rgba(36, 145, 210, 1)', // skill card 2
@@ -7,6 +7,7 @@ export const COURSE_COLORS: Record<string, string> = {
   bodyflex: 'rgba(125, 69, 140, 1)', // skill card 5
 }
 
+// список курсов для карточек: слаг, название, картинки (с API маппим по slug)
 export const COURSES = [
   {
     id: 'yoga',
