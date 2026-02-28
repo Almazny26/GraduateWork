@@ -1,12 +1,3 @@
-// цвета для больших карточек курсов на главной (если понадобятся)
-export const COURSE_COLORS: Record<string, string> = {
-  yoga: 'rgba(255, 199, 0, 1)', // skill card 1
-  stretching: 'rgba(36, 145, 210, 1)', // skill card 2
-  fitness: 'rgba(247, 160, 18, 1)', // skill card 3
-  step: 'rgba(255, 126, 101, 1)', // skill card 4
-  bodyflex: 'rgba(125, 69, 140, 1)', // skill card 5
-}
-
 // список курсов для карточек: слаг, название, картинки (с API маппим по slug)
 export const COURSES = [
   {
@@ -47,7 +38,3 @@ export const COURSES = [
 ]
 
 export type Course = (typeof COURSES)[number]
-
-export function getCourseBySlug(slug: string): Course | undefined {
-  return COURSES.find((c) => c.slug === slug)
-}

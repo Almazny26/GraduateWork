@@ -274,7 +274,6 @@ export function ProfilePage() {
   const [thumbHeight, setThumbHeight] = useState(116)
   const [hasOverflow, setHasOverflow] = useState(false)
   const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
-  const [isProgressLoading, setIsProgressLoading] = useState(true)
   // по каким курсам уже пришёл прогресс из API (чтобы не показывать 0% до загрузки)
   const [progressLoadedSlugs, setProgressLoadedSlugs] = useState<Set<string>>(
     () => new Set()
@@ -637,24 +636,24 @@ export function ProfilePage() {
     })
   }, [user, apiCourses, coursesById])
 
-  // грузим прогресс по каждому курсу; не сбрасываем загрузку пока нет курсов - иначе мелькает 0%
+  // грузим прогресс по каждому курсу
   useEffect(() => {
     const courseIds =
       user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
-    if (!user || !token) {
-      setIsProgressLoading(false)
-      return
-    }
+    if (!user || !token) return
     if (allKnownCourses.length === 0) return
-    if (courseIds.length === 0) {
-      setIsProgressLoading(false)
-      return
-    }
+    if (courseIds.length === 0) return
     let cancelled = false
-    setIsProgressLoading(true)
     setProgressLoadedSlugs(new Set())
     const progressLoadMaxWait = window.setTimeout(() => {
-      if (!cancelled) setIsProgressLoading(false)
+      if (cancelled) return
+      const timeoutSlugs = courseIds
+        .map((id) => {
+          const apiCourse = allKnownCourses.find((c) => c._id === id)
+          return apiCourse ? mapApiCourseToAppCourseRef(apiCourse).slug : null
+        })
+        .filter((s): s is string => s != null)
+      setProgressLoadedSlugs((prev) => new Set([...prev, ...timeoutSlugs]))
     }, 60000)
     Promise.all(
       courseIds.map(async (courseId) => {
@@ -791,13 +790,10 @@ export function ProfilePage() {
       })
       .finally(() => {
         window.clearTimeout(progressLoadMaxWait)
-        setIsProgressLoading(false)
       })
     return () => {
       cancelled = true
       window.clearTimeout(progressLoadMaxWait)
-      // не сбрасываем isProgressLoading в false при cleanup — иначе между размонтированием
-      // и следующим запуском эффекта на один кадр показывается 0%; новый запуск сразу ставит true
     }
   }, [user, token, allKnownCourses, removedCourseIds, progressRefreshTrigger])
 
@@ -885,9 +881,7 @@ export function ProfilePage() {
                   key={course.slug}
                   course={course}
                   progress={progress}
-                  progressLoading={
-                    isProgressLoading || !progressLoadedSlugs.has(course.slug)
-                  }
+                  progressLoading={!progressLoadedSlugs.has(course.slug)}
                   onRemove={() => removeCourse(course)}
                   isRemoving={removingCourseId === course.courseId}
                   removeDisabled={
