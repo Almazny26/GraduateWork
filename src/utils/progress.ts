@@ -11,4 +11,3 @@ export function percentToReps(percent: number, quantity: number): number {
   const safePercent = Math.min(100, Math.max(0, percent))
   return Math.round((safePercent / 100) * safeQuantity)
 }
-

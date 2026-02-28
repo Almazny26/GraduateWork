@@ -50,7 +50,10 @@ export function CoursePage() {
       .getCourses()
       .then((data) => {
         setApiCourses(data)
-        logInfo('CoursePage', 'load course list success', { count: data.length, slug })
+        logInfo('CoursePage', 'load course list success', {
+          count: data.length,
+          slug,
+        })
       })
       .catch((error) => {
         setApiCourses(null)
@@ -61,15 +64,19 @@ export function CoursePage() {
         })
       })
       .finally(() => setApiLoading(false))
-  }, [])
+  }, [slug])
 
   const apiCourse = useMemo(() => {
     if (!slug || !apiCourses) return null
-    return apiCourses.find((item) => mapApiCourseToAppCourseRef(item).slug === slug) ?? null
+    return (
+      apiCourses.find(
+        (item) => mapApiCourseToAppCourseRef(item).slug === slug
+      ) ?? null
+    )
   }, [slug, apiCourses])
   const mappedCourse = useMemo(
     () => (apiCourse ? mapApiCourseToAppCourseRef(apiCourse) : null),
-    [apiCourse],
+    [apiCourse]
   )
 
   useEffect(() => {
@@ -91,7 +98,30 @@ export function CoursePage() {
     }
   }, [apiCourse])
 
-  const isSelectedByUser = !!(user && apiCourse && user.selectedCourses.includes(apiCourse._id))
+  const isSelectedByUser = !!(
+    user &&
+    apiCourse &&
+    user.selectedCourses.includes(apiCourse._id)
+  )
+
+  useEffect(() => {
+    if (!pendingAddCourse || !user || !token) return
+    if (!apiCourse?._id || isSelectedByUser) {
+      setPendingAddCourse(false)
+      return
+    }
+    fitnessApi
+      .addCourseToUser(apiCourse._id, token)
+      .then(() => refreshMe())
+      .finally(() => setPendingAddCourse(false))
+  }, [
+    pendingAddCourse,
+    user,
+    token,
+    apiCourse?._id,
+    isSelectedByUser,
+    refreshMe,
+  ])
 
   if (!slug) {
     return <Navigate to="/" replace />
@@ -115,20 +145,30 @@ export function CoursePage() {
     if (addCourseLoading) return
 
     setAddCourseLoading(true)
-    logInfo('CoursePage', 'add course started', { slug, courseId: apiCourse._id })
+    logInfo('CoursePage', 'add course started', {
+      slug,
+      courseId: apiCourse._id,
+    })
     try {
       await fitnessApi.addCourseToUser(apiCourse._id, token)
       await refreshMe()
       setPendingAddCourse(false)
       toast.success('Курс добавлен в ваш профиль')
-      logInfo('CoursePage', 'add course success', { slug, courseId: apiCourse._id })
+      logInfo('CoursePage', 'add course success', {
+        slug,
+        courseId: apiCourse._id,
+      })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось добавить курс'
+      const message =
+        error instanceof Error ? error.message : 'Не удалось добавить курс'
       if (message.toLowerCase().includes('уже')) {
         await refreshMe()
         setPendingAddCourse(false)
         toast('Курс уже был добавлен')
-        logInfo('CoursePage', 'add course already added', { slug, courseId: apiCourse._id })
+        logInfo('CoursePage', 'add course already added', {
+          slug,
+          courseId: apiCourse._id,
+        })
       } else {
         toast.error(message)
         logError('CoursePage', 'add course failed', {
@@ -141,18 +181,6 @@ export function CoursePage() {
       setAddCourseLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (!pendingAddCourse || !user || !token) return
-    if (!apiCourse?._id || isSelectedByUser) {
-      setPendingAddCourse(false)
-      return
-    }
-    fitnessApi
-      .addCourseToUser(apiCourse._id, token)
-      .then(() => refreshMe())
-      .finally(() => setPendingAddCourse(false))
-  }, [pendingAddCourse, user, token, apiCourse?._id, isSelectedByUser, refreshMe])
 
   if (apiLoading) {
     return (
@@ -230,9 +258,7 @@ export function CoursePage() {
                     'linear-gradient(152.61deg, rgba(21.46, 23.48, 31.57, 1), rgba(30.28, 33.45, 46.14, 1))',
                 }}
               >
-                <div
-                  className="flex flex-row justify-start items-center gap-[25px] flex-1 min-w-0 w-full box-border"
-                >
+                <div className="flex flex-row justify-start items-center gap-[25px] flex-1 min-w-0 w-full box-border">
                   {/* Цифра: Roboto Medium 75px, 135%, цвет #BCEC30 */}
                   <span
                     className="shrink-0 leading-[1.35]"
@@ -296,9 +322,7 @@ export function CoursePage() {
               backgroundColor: 'rgba(188, 236, 48, 1)',
             }}
           >
-            <div
-              className="w-full min-w-0 max-w-[283px] flex flex-col justify-start items-start gap-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:items-center sm:gap-x-8 sm:gap-y-4 lg:gap-x-12 lg:gap-y-6"
-            >
+            <div className="w-full min-w-0 max-w-[283px] flex flex-col justify-start items-start gap-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:items-center sm:gap-x-8 sm:gap-y-4 lg:gap-x-12 lg:gap-y-6">
               {courseContent.directions.map((name) => (
                 <div
                   key={name}
@@ -321,7 +345,6 @@ export function CoursePage() {
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Group 1597880544: 1160×588 - по макету node 31-1394; 102px от верхнего блока */}
@@ -369,7 +392,13 @@ export function CoursePage() {
               src="/images/black_line.svg?v=4"
               alt=""
               className="absolute"
-              style={{ left: '212px', top: '88px', width: '56px', height: '36px', opacity: 1 }}
+              style={{
+                left: '212px',
+                top: '88px',
+                width: '56px',
+                height: '36px',
+                opacity: 1,
+              }}
             />
           </div>
 
@@ -442,218 +471,221 @@ export function CoursePage() {
             </div>
           </div>
         </div>
-        <div
-          className="hidden md:block"
-        >
+        <div className="hidden md:block">
           <div
-          className="relative w-full max-w-[1160px] overflow-hidden"
-          style={{ minHeight: 588 }}
-          onMouseEnter={() => setShowcaseHovered(true)}
-          onMouseLeave={() => setShowcaseHovered(false)}
-        >
-          {/* Rectangle 111003296 / 111003295: 1160×486, radius 30, shadow, white */}
-          <div
-            className="absolute left-0 w-full rounded-[30px] overflow-hidden"
-            style={{
-              top: 102,
-              width: 1160,
-              height: 486,
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-              boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
-            }}
-          />
-
-          {/* Frame 2043683032: 437×406, (40,142) - текст с сервера только в левой зоне, парень и линии справа на месте */}
-          <div
-            className="absolute flex flex-col justify-start items-start pointer-events-auto z-10"
-            style={{
-              left: 40,
-              top: 142,
-              width: 660,
-              maxWidth: 660,
-              height: 406,
-              gap: 28,
-              overflow: 'hidden',
-            }}
+            className="relative w-full max-w-[1160px] overflow-hidden"
+            style={{ minHeight: 588 }}
+            onMouseEnter={() => setShowcaseHovered(true)}
+            onMouseLeave={() => setShowcaseHovered(false)}
           >
-            {/* Заголовок: уменьшенный размер для длинных названий с сервера */}
-            <h2
-              className="text-left break-words shrink-0"
-              style={{
-                width: '100%',
-                maxWidth: 660,
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: 32,
-                lineHeight: '110%',
-                letterSpacing: 0,
-              }}
-            >
-              {courseContent.heroTitle}
-            </h2>
-            {/* Список: колонка, каждый пункт с переносом текста на следующую строку */}
+            {/* Rectangle 111003296 / 111003295: 1160×486, radius 30, shadow, white */}
             <div
-              className="flex flex-col gap-y-2 overflow-hidden min-h-0 flex-1 w-full"
+              className="absolute left-0 w-full rounded-[30px] overflow-hidden"
               style={{
-                maxWidth: 660,
-                marginLeft: 5,
-                opacity: 0.6,
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: 18,
-                lineHeight: '110%',
-                letterSpacing: 0,
-                textAlign: 'left',
-              }}
-            >
-              {courseContent.heroBullets.map((line) => (
-                <div key={line} className="flex flex-row items-start gap-3 min-w-0 w-full">
-                  <span
-                    className="rounded-full shrink-0 w-[6px] h-[6px] mt-[6px]"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
-                    aria-hidden
-                  />
-                  <span className="break-words min-w-0 flex-1">{line}</span>
-                </div>
-              ))}
-            </div>
-            {/* Кнопка всегда внизу блока */}
-            <button
-              type="button"
-              onClick={handleAddCourse}
-              disabled={addCourseLoading}
-              className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)]"
-              style={{
-                width: 437,
-                height: 52,
-                gap: 10,
-                padding: '16px 26px',
-                borderRadius: 46,
-                backgroundColor: 'rgba(188, 236, 48, 1)',
-                color: 'rgba(0, 0, 0, 1)',
-                fontFamily: 'Roboto, sans-serif',
-                fontWeight: 400,
-                fontSize: 18,
-              }}
-            >
-              {!user
-                ? 'Войдите, чтобы добавить курс'
-                : isSelectedByUser
-                  ? 'Курс уже добавлен'
-                  : addCourseLoading
-                    ? 'Добавляем...'
-                    : 'Добавить курс'}
-            </button>
-          </div>
-
-          {/* Конструкция (парень, силует, линии): под текстом (z-10), остаётся на месте */}
-          <div
-            className="absolute inset-0 pointer-events-none z-0"
-            style={{
-              transform: 'translateX(40px) scale(1.06)',
-              transformOrigin: '800px 317px',
-            }}
-          >
-            {/* Обводка (vector_men): не видна в макете, оставлена для анимации */}
-            <div
-              className="absolute pointer-events-none z-0 opacity-0"
-              style={{
-                left: 635.19,
-                top: 25.4,
-                width: 487,
-                height: 542.49,
-                transform: 'rotate(-2.99deg)',
-                transformOrigin: 'top left',
-                backgroundColor: 'rgb(217, 217, 217)',
-                borderRadius: 2,
-              }}
-              aria-hidden
-              data-animation-layer="outline"
-            />
-
-            {/* Синий силует: прямо за парнем (по центру), поверх зелёной линии */}
-            <div
-              className="absolute pointer-events-none z-[1]"
-              style={{
-                left: 526,
-                top: 52,
-                width: 565.51,
-                height: 567.28,
-                transform: showcaseHovered
-                  ? 'scale(1.08) rotate(-2.99deg)'
-                  : 'rotate(-2.99deg)',
-                transformOrigin: 'top left',
-                transition: 'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
-                filter: showcaseHovered
-                  ? 'drop-shadow(0 16px 30px rgba(0, 0, 0, 0.22))'
-                  : 'drop-shadow(0 5px 12px rgba(0, 0, 0, 0.13))',
-              }}
-              data-animation-layer="silhouette"
-            >
-              <img
-                src="/images/men_1.png"
-                alt=""
-                className="w-full h-full object-contain object-center"
-              />
-            </div>
-
-            {/* Векторы: чёрная + зелёная линия на заднем плане (за силуетом и парнем) */}
-            <div
-              className="absolute pointer-events-none z-0 overflow-visible"
-              style={{
-                left: 20,
                 top: 102,
                 width: 1160,
                 height: 486,
-                borderRadius: 46,
+                backgroundColor: 'rgba(255, 255, 255, 1)',
+                boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
               }}
-              aria-hidden
-              data-animation-layer="vectors"
+            />
+
+            {/* Frame 2043683032: 437×406, (40,142) - текст с сервера только в левой зоне, парень и линии справа на месте */}
+            <div
+              className="absolute flex flex-col justify-start items-start pointer-events-auto z-10"
+              style={{
+                left: 40,
+                top: 142,
+                width: 660,
+                maxWidth: 660,
+                height: 406,
+                gap: 28,
+                overflow: 'hidden',
+              }}
             >
-              <img
-                src="/images/vectors_group.svg"
-                alt=""
-                className="w-full h-full object-cover object-left-top"
-                style={{ objectPosition: '-55px -22px' }}
-              />
+              {/* Заголовок: уменьшенный размер для длинных названий с сервера */}
+              <h2
+                className="text-left break-words shrink-0"
+                style={{
+                  width: '100%',
+                  maxWidth: 660,
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: 32,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                }}
+              >
+                {courseContent.heroTitle}
+              </h2>
+              {/* Список: колонка, каждый пункт с переносом текста на следующую строку */}
+              <div
+                className="flex flex-col gap-y-2 overflow-hidden min-h-0 flex-1 w-full"
+                style={{
+                  maxWidth: 660,
+                  marginLeft: 5,
+                  opacity: 0.6,
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: 18,
+                  lineHeight: '110%',
+                  letterSpacing: 0,
+                  textAlign: 'left',
+                }}
+              >
+                {courseContent.heroBullets.map((line) => (
+                  <div
+                    key={line}
+                    className="flex flex-row items-start gap-3 min-w-0 w-full"
+                  >
+                    <span
+                      className="rounded-full shrink-0 w-[6px] h-[6px] mt-[6px]"
+                      style={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
+                      aria-hidden
+                    />
+                    <span className="break-words min-w-0 flex-1">{line}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Кнопка всегда внизу блока */}
+              <button
+                type="button"
+                onClick={handleAddCourse}
+                disabled={addCourseLoading}
+                className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)]"
+                style={{
+                  width: 437,
+                  height: 52,
+                  gap: 10,
+                  padding: '16px 26px',
+                  borderRadius: 46,
+                  backgroundColor: 'rgba(188, 236, 48, 1)',
+                  color: 'rgba(0, 0, 0, 1)',
+                  fontFamily: 'Roboto, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 18,
+                }}
+              >
+                {!user
+                  ? 'Войдите, чтобы добавить курс'
+                  : isSelectedByUser
+                    ? 'Курс уже добавлен'
+                    : addCourseLoading
+                      ? 'Добавляем...'
+                      : 'Добавить курс'}
+              </button>
             </div>
 
-            {/* Парень: на переднем плане */}
+            {/* Конструкция (парень, силует, линии): под текстом (z-10), остаётся на месте */}
             <div
-              className="absolute pointer-events-none z-[2]"
+              className="absolute inset-0 pointer-events-none z-0"
               style={{
-                left: 553,
-                top: 48.9,
-                width: 519.47,
-                height: 539.54,
-                transform: showcaseHovered
-                  ? 'scale(1.08) rotate(-2.99deg)'
-                  : 'rotate(-2.99deg)',
-                transformOrigin: 'top left',
-                transition: 'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
-                filter: showcaseHovered
-                  ? 'drop-shadow(0 28px 46px rgba(0, 0, 0, 0.3))'
-                  : 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15))',
+                transform: 'translateX(40px) scale(1.06)',
+                transformOrigin: '800px 317px',
               }}
             >
-              <img
-                src="/images/man.png"
-                alt=""
-                className="w-full h-full object-contain object-center"
-                style={{ objectFit: 'contain' }}
-                onError={(e) => {
-                  const img = e.currentTarget
-                  if (img.getAttribute('data-fallback')) return
-                  img.setAttribute('data-fallback', '1')
-                  img.src = mappedCourse.image
+              {/* Обводка (vector_men): не видна в макете, оставлена для анимации */}
+              <div
+                className="absolute pointer-events-none z-0 opacity-0"
+                style={{
+                  left: 635.19,
+                  top: 25.4,
+                  width: 487,
+                  height: 542.49,
+                  transform: 'rotate(-2.99deg)',
+                  transformOrigin: 'top left',
+                  backgroundColor: 'rgb(217, 217, 217)',
+                  borderRadius: 2,
                 }}
+                aria-hidden
+                data-animation-layer="outline"
               />
+
+              {/* Синий силует: прямо за парнем (по центру), поверх зелёной линии */}
+              <div
+                className="absolute pointer-events-none z-[1]"
+                style={{
+                  left: 526,
+                  top: 52,
+                  width: 565.51,
+                  height: 567.28,
+                  transform: showcaseHovered
+                    ? 'scale(1.08) rotate(-2.99deg)'
+                    : 'rotate(-2.99deg)',
+                  transformOrigin: 'top left',
+                  transition:
+                    'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
+                  filter: showcaseHovered
+                    ? 'drop-shadow(0 16px 30px rgba(0, 0, 0, 0.22))'
+                    : 'drop-shadow(0 5px 12px rgba(0, 0, 0, 0.13))',
+                }}
+                data-animation-layer="silhouette"
+              >
+                <img
+                  src="/images/men_1.png"
+                  alt=""
+                  className="w-full h-full object-contain object-center"
+                />
+              </div>
+
+              {/* Векторы: чёрная + зелёная линия на заднем плане (за силуетом и парнем) */}
+              <div
+                className="absolute pointer-events-none z-0 overflow-visible"
+                style={{
+                  left: 20,
+                  top: 102,
+                  width: 1160,
+                  height: 486,
+                  borderRadius: 46,
+                }}
+                aria-hidden
+                data-animation-layer="vectors"
+              >
+                <img
+                  src="/images/vectors_group.svg"
+                  alt=""
+                  className="w-full h-full object-cover object-left-top"
+                  style={{ objectPosition: '-55px -22px' }}
+                />
+              </div>
+
+              {/* Парень: на переднем плане */}
+              <div
+                className="absolute pointer-events-none z-[2]"
+                style={{
+                  left: 553,
+                  top: 48.9,
+                  width: 519.47,
+                  height: 539.54,
+                  transform: showcaseHovered
+                    ? 'scale(1.08) rotate(-2.99deg)'
+                    : 'rotate(-2.99deg)',
+                  transformOrigin: 'top left',
+                  transition:
+                    'transform 560ms cubic-bezier(0.16, 1, 0.3, 1), filter 560ms ease-out',
+                  filter: showcaseHovered
+                    ? 'drop-shadow(0 28px 46px rgba(0, 0, 0, 0.3))'
+                    : 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15))',
+                }}
+              >
+                <img
+                  src="/images/man.png"
+                  alt=""
+                  className="w-full h-full object-contain object-center"
+                  style={{ objectFit: 'contain' }}
+                  onError={(e) => {
+                    const img = e.currentTarget
+                    if (img.getAttribute('data-fallback')) return
+                    img.setAttribute('data-fallback', '1')
+                    img.src = mappedCourse.image
+                  }}
+                />
+              </div>
             </div>
-          </div>
           </div>
         </div>
       </section>

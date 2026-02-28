@@ -2,22 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* подсказка на заголовках карточек при наведении */
-.card-title-glow {
-  display: inline-block;
-  border: 1.5px solid transparent;
-  border-radius: 10px;
-  padding: 2px 8px;
-  transition: border-color 300ms ease-out, box-shadow 300ms ease-out;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .card-hover-group:hover .card-title-glow {
-    border-color: rgba(188, 236, 48, 1);
-    box-shadow: 0 0 0 2px rgba(188, 236, 48, 0.3);
-  }
-}
-
 /* скроллбар в списке уроков в модалке выбора урока */
 .lesson-picker-scroll {
   scrollbar-width: thin;
@@ -84,15 +68,26 @@
 body,
 body *,
 body *:hover {
-  cursor: url('/images/cursor.svg') 0 0, auto !important;
+  cursor:
+    url('/images/cursor.svg') 0 0,
+    auto !important;
 }
 body {
-  font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Roboto',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 /* при наведении на кнопки - чуть увеличиваю и делаю прозрачнее */
 button:not(:disabled) {
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out, background-color 0.3s ease-out, color 0.3s ease-out, border-color 0.3s ease-out;
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out,
+    background-color 0.3s ease-out,
+    color 0.3s ease-out,
+    border-color 0.3s ease-out;
 }
 button:not(:disabled):hover {
   transform: scale(1.03);
@@ -101,39 +96,82 @@ button:not(:disabled):hover {
 
 /* анимации на больших карточках курсов (йога, стретчинг и т.д.) при ховере */
 @keyframes skillcard-step {
-  0% { transform: translateY(0); }
-  20% { transform: translateY(-8px); }
-  40% { transform: translateY(-16px); }
-  60% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-8px);
+  }
+  40% {
+    transform: translateY(-16px);
+  }
+  60% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 @keyframes skillcard-step-letter {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-6px); }
-  50% { transform: translateY(-12px); }
-  75% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  75% {
+    transform: translateY(-6px);
+  }
 }
 @keyframes skillcard-breathe {
-  0%, 100% { transform: scale(1); }
-  40% { transform: scale(1.06); }
-  80% { transform: scale(1.02); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  80% {
+    transform: scale(1.02);
+  }
 }
 @keyframes skillcard-pump {
-  0%, 100% { transform: scale(1); }
-  30% { transform: scale(1.08); }
-  60% { transform: scale(1.04); }
-  100% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.08);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1.05);
+  }
 }
 @keyframes skillcard-float {
-  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-  50% { transform: translateY(-8px) scale(1.02); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+  }
 }
 
 .group:hover .skillcard-title--step {
   animation: skillcard-step 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .group:hover .skillcard-title--step .skillcard-letter {
-  animation: skillcard-step-letter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation: skillcard-step-letter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)
+    backwards;
 }
 .group:hover .skillcard-title--bodyflex {
   animation: skillcard-breathe 1.2s ease-in-out;
@@ -143,59 +181,6 @@ button:not(:disabled):hover {
 }
 .group:hover .skillcard-title--yoga {
   animation: skillcard-float 2s ease-in-out infinite;
-}
-
-@keyframes sfp-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.sfp-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(245, 245, 245, 1) 0%,
-    rgba(233, 233, 233, 1) 30%,
-    rgba(245, 245, 245, 1) 60%
-  );
-  background-size: 200% 100%;
-  animation: sfp-shimmer 1.35s linear infinite;
-}
-
-/* Загрузка курсов профиля: точки и свечение текста */
-@keyframes sfp-loading-dot {
-  0%, 80%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.5;
-  }
-  40% {
-    transform: translateY(-6px) scale(1.2);
-    opacity: 1;
-  }
-}
-
-@keyframes sfp-loading-glow {
-  0%, 100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.sfp-profile-loading-dots span {
-  display: inline-block;
-  animation: sfp-loading-dot 1.2s ease-in-out infinite both;
-}
-.sfp-profile-loading-dots span:nth-child(1) { animation-delay: 0s; }
-.sfp-profile-loading-dots span:nth-child(2) { animation-delay: 0.15s; }
-.sfp-profile-loading-dots span:nth-child(3) { animation-delay: 0.3s; }
-
-.sfp-loading-glow {
-  animation: sfp-loading-glow 2s ease-in-out infinite;
 }
 
 /* Полоска прогресса на карточке курса: анимация при загрузке */
@@ -252,7 +237,11 @@ button:not(:disabled):hover {
   .lesson-picker-modal .lesson-picker-title {
     width: 346px;
     font-size: 32px;
-    font-family: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:
+      'Roboto',
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
     font-weight: 400;
     letter-spacing: 0;
     line-height: 110%;

@@ -195,7 +195,7 @@ export function getLessonsByCourseSlug(slug: string): Lesson[] {
 
 export function getLessonByCourseAndLessonId(
   slug: string,
-  lessonId: string,
+  lessonId: string
 ): Lesson | undefined {
   return getLessonsByCourseSlug(slug).find((lesson) => lesson.id === lessonId)
 }

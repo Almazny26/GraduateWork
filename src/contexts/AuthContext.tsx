@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- export useAuth hook and User type */
 import {
   createContext,
   useCallback,
@@ -91,7 +92,9 @@ function normalizeSelectedCourseIds(raw: unknown): string[] {
 function extractSelectedCourses(payload: unknown): string[] {
   const records = collectNestedRecords(payload)
   for (const record of records) {
-    const fromSelectedCourses = normalizeSelectedCourseIds(record.selectedCourses)
+    const fromSelectedCourses = normalizeSelectedCourseIds(
+      record.selectedCourses
+    )
     if (fromSelectedCourses.length > 0) return fromSelectedCourses
   }
 
@@ -168,7 +171,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   const login = useCallback((u: User, authToken: string) => {
-    logInfo('AuthContext', 'login success', { email: u.email, selectedCourses: u.selectedCourses.length })
+    logInfo('AuthContext', 'login success', {
+      email: u.email,
+      selectedCourses: u.selectedCourses.length,
+    })
     setUser(u)
     setToken(authToken)
     setLoginModalOpen(false)

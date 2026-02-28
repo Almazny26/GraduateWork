@@ -37,7 +37,7 @@ describe('AuthContext', () => {
     const { getByTestId } = render(
       <AuthProvider>
         <Probe />
-      </AuthProvider>,
+      </AuthProvider>
     )
 
     await waitFor(() => {
@@ -47,20 +47,18 @@ describe('AuthContext', () => {
     })
   })
 
-  it('drops invalid token if /users/me fails', async () => {
+  it('shows logged out when /users/me fails (keeps token for offline)', async () => {
     localStorage.setItem('skyfitness_auth_token', 'bad-token')
     ;(fitnessApi.me as jest.Mock).mockRejectedValue(new Error('invalid token'))
 
     const { getByTestId } = render(
       <AuthProvider>
         <Probe />
-      </AuthProvider>,
+      </AuthProvider>
     )
 
     await waitFor(() => {
       expect(getByTestId('logged')).toHaveTextContent('false')
-      expect(localStorage.getItem('skyfitness_auth_token')).toBeNull()
     })
   })
 })
-

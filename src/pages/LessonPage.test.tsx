@@ -18,6 +18,7 @@ jest.mock('@/api/fitness', () => ({
     getWorkoutById: jest.fn(),
     getWorkoutProgress: jest.fn(),
     saveWorkoutProgress: jest.fn(),
+    getCourseWorkouts: jest.fn(),
   },
 }))
 
@@ -54,6 +55,9 @@ describe('LessonPage progress flow', () => {
       workoutCompleted: false,
       progressData: [0, 0, 0],
     })
+    ;(fitnessApi.getCourseWorkouts as jest.Mock).mockResolvedValue([
+      { _id: 'w1', name: 'Урок 1. База', video: '', exercises: [] },
+    ])
     ;(fitnessApi.saveWorkoutProgress as jest.Mock).mockResolvedValue({})
   })
 
@@ -61,9 +65,12 @@ describe('LessonPage progress flow', () => {
     render(
       <MemoryRouter initialEntries={['/course/yoga/lesson/w1']}>
         <Routes>
-          <Route path="/course/:slug/lesson/:lessonId" element={<LessonPage />} />
+          <Route
+            path="/course/:slug/lesson/:lessonId"
+            element={<LessonPage />}
+          />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     )
 
     await waitFor(() => expect(fitnessApi.getWorkoutById).toHaveBeenCalled())
@@ -86,9 +93,8 @@ describe('LessonPage progress flow', () => {
         'course-yoga-id',
         'w1',
         [10, 20, 5],
-        'jwt-token',
+        'jwt-token'
       )
     })
   })
 })
-

@@ -63,7 +63,7 @@ describe('CoursePage API actions', () => {
         <Routes>
           <Route path="/course/:slug" element={<CoursePage />} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     )
 
     await waitFor(() => expect(fitnessApi.getCourses).toHaveBeenCalled())
@@ -72,7 +72,10 @@ describe('CoursePage API actions', () => {
     fireEvent.click(addButtons[0])
 
     await waitFor(() => {
-      expect(fitnessApi.addCourseToUser).toHaveBeenCalledWith('course-yoga-id', 'jwt-token')
+      expect(fitnessApi.addCourseToUser).toHaveBeenCalledWith(
+        'course-yoga-id',
+        'jwt-token'
+      )
       expect(refreshMe).toHaveBeenCalled()
     })
   })
@@ -91,13 +94,14 @@ describe('CoursePage API actions', () => {
         <Routes>
           <Route path="/course/:slug" element={<CoursePage />} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     )
 
-    const buttons = screen.getAllByRole('button', { name: /войдите, чтобы добавить курс/i })
+    const buttons = await screen.findAllByRole('button', {
+      name: 'Войдите, чтобы добавить курс',
+    })
     fireEvent.click(buttons[0])
     expect(openLoginModal).toHaveBeenCalled()
     expect(fitnessApi.addCourseToUser).not.toHaveBeenCalled()
   })
 })
-

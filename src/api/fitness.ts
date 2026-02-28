@@ -82,13 +82,16 @@ async function request<T>(
   options?: {
     body?: unknown
     token?: string
-  },
+  }
 ): Promise<T> {
   let response: Response | null = null
   for (let attempt = 0; attempt <= API_RETRY_COUNT; attempt += 1) {
     const requestUrl = `${API_BASE_URL}${path}`
     const controller = new AbortController()
-    const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      API_TIMEOUT_MS
+    )
     logInfo('API', 'request start', { method, path, attempt, requestUrl })
     if (options?.body !== undefined) {
       logInfo('API', 'request body', {
@@ -102,7 +105,10 @@ async function request<T>(
       response = await fetch(requestUrl, {
         method,
         headers: buildHeaders(options?.token),
-        body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+        body:
+          options?.body !== undefined
+            ? JSON.stringify(options.body)
+            : undefined,
         signal: controller.signal,
       })
       if (response.ok) {
@@ -118,7 +124,8 @@ async function request<T>(
       const isAbortError =
         error instanceof DOMException && error.name === 'AbortError'
       const isNetworkError = error instanceof TypeError
-      const canRetry = attempt < API_RETRY_COUNT && (isAbortError || isNetworkError)
+      const canRetry =
+        attempt < API_RETRY_COUNT && (isAbortError || isNetworkError)
 
       if (canRetry) {
         logWarn('API', 'request retry', {
@@ -133,7 +140,7 @@ async function request<T>(
       if (isAbortError) {
         logError('API', 'request timeout', { method, path, attempt })
         throw new Error(
-          'Сервер долго отвечает. Попробуйте еще раз через несколько секунд.',
+          'Сервер долго отвечает. Попробуйте еще раз через несколько секунд.'
         )
       }
 
@@ -163,7 +170,8 @@ async function request<T>(
   }
 
   if (path === '/courses' && response.ok) {
-    const preview = rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText
+    const preview =
+      rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText
     logInfo('API', 'courses response body', {
       len: rawText.length,
       isArray: Array.isArray(payload),
@@ -179,7 +187,12 @@ async function request<T>(
       else if (typeof p.error === 'string') apiMessage = p.error
       else if (typeof p.msg === 'string') apiMessage = p.msg
     }
-    if (!apiMessage && typeof rawText === 'string' && rawText.trim().length > 0 && rawText.length < 500) {
+    if (
+      !apiMessage &&
+      typeof rawText === 'string' &&
+      rawText.trim().length > 0 &&
+      rawText.length < 500
+    ) {
       try {
         const parsed = JSON.parse(rawText) as Record<string, unknown>
         if (typeof parsed?.message === 'string') apiMessage = parsed.message
@@ -187,7 +200,11 @@ async function request<T>(
         apiMessage = rawText.trim()
       }
     }
-    if (!apiMessage && response.status === 404 && (path.includes('/auth/login') || path.includes('/auth/register'))) {
+    if (
+      !apiMessage &&
+      response.status === 404 &&
+      (path.includes('/auth/login') || path.includes('/auth/register'))
+    ) {
       apiMessage = path.includes('/auth/register')
         ? 'Пользователь с таким email уже существует или неверные данные.'
         : 'Пользователь не найден или неверный пароль.'
@@ -214,7 +231,7 @@ async function request<T>(
     }
 
     throw new Error(
-      `Ошибка API ${response.status}. Проверьте VITE_API_BASE_URL и доступность сервера.`,
+      `Ошибка API ${response.status}. Проверьте VITE_API_BASE_URL и доступность сервера.`
     )
   }
 
@@ -276,36 +293,31 @@ export const fitnessApi = {
     request<ApiCourseProgress>(
       `/users/me/progress?courseId=${encodeURIComponent(courseId)}`,
       'GET',
-      { token },
+      { token }
     ),
 
   getWorkoutProgress: (courseId: string, workoutId: string, token: string) =>
     request<ApiWorkoutProgressByWorkout>(
       `/users/me/progress?courseId=${encodeURIComponent(courseId)}&workoutId=${encodeURIComponent(workoutId)}`,
       'GET',
-      { token },
+      { token }
     ),
 
   saveWorkoutProgress: (
     courseId: string,
     workoutId: string,
     progressData: number[],
-    token: string,
+    token: string
   ) =>
-    request<unknown>(
-      `/courses/${courseId}/workouts/${workoutId}`,
-      'PATCH',
-      {
-        token,
-        body: { progressData },
-      },
-    ),
+    request<unknown>(`/courses/${courseId}/workouts/${workoutId}`, 'PATCH', {
+      token,
+      body: { progressData },
+    }),
 
   resetWorkoutProgress: (courseId: string, workoutId: string, token: string) =>
     request<{ message: string }>(
       `/courses/${courseId}/workouts/${workoutId}/reset`,
       'PATCH',
-      { token },
+      { token }
     ),
 }
-

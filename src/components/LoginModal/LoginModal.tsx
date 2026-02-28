@@ -1,3 +1,4 @@
+import './LoginModal.css'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
@@ -85,7 +86,9 @@ function normalizeSelectedCourseIds(raw: unknown): string[] {
 function extractSelectedCourses(payload: unknown): string[] {
   const records = collectNestedRecords(payload)
   for (const record of records) {
-    const fromSelectedCourses = normalizeSelectedCourseIds(record.selectedCourses)
+    const fromSelectedCourses = normalizeSelectedCourseIds(
+      record.selectedCourses
+    )
     if (fromSelectedCourses.length > 0) return fromSelectedCourses
   }
   for (const record of records) {
@@ -166,7 +169,8 @@ export function LoginModal({ open, onClose }: Props) {
     }
     const prevOverflow = document.body.style.overflow
     const prevPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth
     document.addEventListener('keydown', handleEscape)
     document.body.style.overflow = 'hidden'
     if (scrollbarWidth > 0) {
@@ -216,18 +220,21 @@ export function LoginModal({ open, onClose }: Props) {
           selectedCourses: extractSelectedCourses(me),
           avatarUrl: photoMiniImg,
         },
-        token,
+        token
       )
       clearFormState()
       onClose()
       navigate('/profile')
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Ошибка авторизации'
+      const message =
+        error instanceof Error ? error.message : 'Ошибка авторизации'
       const isWrongPassword =
         message.toLowerCase().includes('неверный') &&
         message.toLowerCase().includes('пароль')
       setLoginError(
-        isWrongPassword ? 'Пароль введен неверно,\nпопробуйте еще раз.' : message,
+        isWrongPassword
+          ? 'Пароль введен неверно,\nпопробуйте еще раз.'
+          : message
       )
     } finally {
       setIsLoginSubmitting(false)
@@ -267,7 +274,7 @@ export function LoginModal({ open, onClose }: Props) {
           selectedCourses: extractSelectedCourses(me),
           avatarUrl: photoMiniImg,
         },
-        token,
+        token
       )
       clearFormState()
       onClose()
@@ -281,7 +288,7 @@ export function LoginModal({ open, onClose }: Props) {
       setRegisterError(
         isExistingEmail
           ? 'Данная почта уже используется. Попробуйте войти.'
-          : msg,
+          : msg
       )
     } finally {
       setIsRegisterSubmitting(false)
@@ -299,7 +306,9 @@ export function LoginModal({ open, onClose }: Props) {
     <div
       ref={overlayRef}
       className={`fixed inset-0 z-[1000] flex items-center justify-center p-4 transition-opacity duration-300 ${
-        isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        isVisible
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
       }`}
       style={{ background: 'rgba(0, 0, 0, 0.5)' }}
       onClick={handleOverlayClick}
@@ -322,7 +331,10 @@ export function LoginModal({ open, onClose }: Props) {
         />
 
         {mode === 'login' ? (
-          <form onSubmit={handleLoginSubmit} className="w-[280px] flex flex-col gap-[10px]">
+          <form
+            onSubmit={handleLoginSubmit}
+            className="w-[280px] flex flex-col gap-[10px]"
+          >
             <input
               id="login-title"
               type="email"
@@ -372,7 +384,10 @@ export function LoginModal({ open, onClose }: Props) {
               type="submit"
               disabled={isLoginSubmitting}
               className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
-              style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
+              style={{
+                backgroundColor: 'rgba(188, 236, 48, 1)',
+                fontFamily: 'Roboto, sans-serif',
+              }}
             >
               {isLoginSubmitting ? 'Входим...' : 'Войти'}
             </button>
@@ -391,7 +406,10 @@ export function LoginModal({ open, onClose }: Props) {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleRegisterSubmit} className="w-[280px] flex flex-col gap-[10px]">
+          <form
+            onSubmit={handleRegisterSubmit}
+            className="w-[280px] flex flex-col gap-[10px]"
+          >
             <input
               id="login-title"
               type="email"
@@ -403,7 +421,13 @@ export function LoginModal({ open, onClose }: Props) {
               }}
               placeholder="Эл. почта"
               className={inputClassName(
-                !!(canShowRegisterError && registerSubmitAttempted && registerError && (registerError.includes('почта') || registerError.includes('уже используется'))),
+                !!(
+                  canShowRegisterError &&
+                  registerSubmitAttempted &&
+                  registerError &&
+                  (registerError.includes('почта') ||
+                    registerError.includes('уже используется'))
+                )
               )}
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
               autoComplete="email"
@@ -436,30 +460,41 @@ export function LoginModal({ open, onClose }: Props) {
             />
 
             <div
-              className={canShowRegisterError && registerSubmitAttempted && registerError ? 'min-h-[34px]' : 'min-h-0'}
+              className={
+                canShowRegisterError && registerSubmitAttempted && registerError
+                  ? 'min-h-[34px]'
+                  : 'min-h-0'
+              }
             >
-              {canShowRegisterError && registerSubmitAttempted && registerError && (
-                <p
-                  className="text-center text-[14px] leading-[1.1] text-[#DB0030]"
-                  style={{
-                    fontFamily: 'Roboto, sans-serif',
-                    fontWeight: 400,
-                    letterSpacing: 0,
-                    textAlign: 'center',
-                  }}
-                >
-                  {registerError}
-                </p>
-              )}
+              {canShowRegisterError &&
+                registerSubmitAttempted &&
+                registerError && (
+                  <p
+                    className="text-center text-[14px] leading-[1.1] text-[#DB0030]"
+                    style={{
+                      fontFamily: 'Roboto, sans-serif',
+                      fontWeight: 400,
+                      letterSpacing: 0,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {registerError}
+                  </p>
+                )}
             </div>
 
             <button
               type="submit"
               disabled={isRegisterSubmitting}
               className={`w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60 ${
-                canShowRegisterError && registerSubmitAttempted && registerError ? 'mt-[34px]' : 'mt-[24px]'
+                canShowRegisterError && registerSubmitAttempted && registerError
+                  ? 'mt-[34px]'
+                  : 'mt-[24px]'
               }`}
-              style={{ backgroundColor: 'rgba(188, 236, 48, 1)', fontFamily: 'Roboto, sans-serif' }}
+              style={{
+                backgroundColor: 'rgba(188, 236, 48, 1)',
+                fontFamily: 'Roboto, sans-serif',
+              }}
             >
               {isRegisterSubmitting ? 'Регистрируем...' : 'Зарегистрироваться'}
             </button>

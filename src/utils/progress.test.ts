@@ -18,4 +18,3 @@ describe('progress utils', () => {
     expect(percentToReps(50, 0)).toBe(1)
   })
 })
-

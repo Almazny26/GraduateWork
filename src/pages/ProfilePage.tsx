@@ -3,7 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
-import { fitnessApi, type ApiCourse, type ApiWorkout, type ApiWorkoutProgress } from '@/api/fitness'
+import '@/components/CourseCard/CourseCard.css'
+import {
+  fitnessApi,
+  type ApiCourse,
+  type ApiWorkout,
+  type ApiWorkoutProgress,
+} from '@/api/fitness'
 import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
 import { logError, logInfo } from '@/utils/logger'
 import { ProfileCoursesLoading } from '@/components/Loading'
@@ -53,115 +59,150 @@ function ProfileCourseCard({
         className="relative flex flex-col items-center overflow-visible rounded-[30px] bg-white pb-[15px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] w-full min-h-[649px]"
         style={{ gap: 24 }}
       >
-      <div className="relative w-full h-[325px] overflow-hidden rounded-t-[30px]">
-        <img
-          src={course.image}
-          alt=""
-          className="w-full h-full object-cover object-top"
-        />
-        <button
-          type="button"
-          disabled={removeDisabled}
-          className="absolute rounded-full flex items-center justify-center sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110 shrink-0"
-          style={{
-            top: 20,
-            right: 20,
-            width: 32,
-            height: 32,
-            background: 'transparent',
-            cursor: "url('/images/cursor.svg') 0 0, auto",
-            opacity: removeDisabled ? 0.6 : 1,
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove?.()
-          }}
-          onMouseEnter={(e) => {
-            setTooltipPos({ x: e.clientX, y: e.clientY })
-            setTooltipVisible(true)
-          }}
-          onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
-          onMouseLeave={() => setTooltipVisible(false)}
-          aria-label="Удалить курс"
-        >
-          <img src="/images/minus_svg.svg" alt="" className="w-full h-full object-contain pointer-events-none" style={{ filter: 'brightness(0) invert(1)' }} />
-        </button>
-      </div>
-      <div className="flex flex-col gap-[20px] sm:gap-[40px] px-6 w-full items-start">
-        <div className="flex flex-col w-full max-w-[300px]" style={{ gap: 20 }}>
-          <h3
-            className="w-full sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]"
+        <div className="relative w-full h-[325px] overflow-hidden rounded-t-[30px]">
+          <img
+            src={course.image}
+            alt=""
+            className="w-full h-full object-cover object-top"
+          />
+          <button
+            type="button"
+            disabled={removeDisabled}
+            className="absolute rounded-full flex items-center justify-center sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-110 shrink-0"
             style={{
+              top: 20,
+              right: 20,
+              width: 32,
+              height: 32,
+              background: 'transparent',
+              cursor: "url('/images/cursor.svg') 0 0, auto",
+              opacity: removeDisabled ? 0.6 : 1,
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemove?.()
+            }}
+            onMouseEnter={(e) => {
+              setTooltipPos({ x: e.clientX, y: e.clientY })
+              setTooltipVisible(true)
+            }}
+            onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setTooltipVisible(false)}
+            aria-label="Удалить курс"
+          >
+            <img
+              src="/images/minus_svg.svg"
+              alt=""
+              className="w-full h-full object-contain pointer-events-none"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
+          </button>
+        </div>
+        <div className="flex flex-col gap-[20px] sm:gap-[40px] px-6 w-full items-start">
+          <div
+            className="flex flex-col w-full max-w-[300px]"
+            style={{ gap: 20 }}
+          >
+            <h3
+              className="w-full sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]"
+              style={{
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 500,
+                fontSize: '32px',
+                lineHeight: '110%',
+                letterSpacing: 0,
+                textAlign: 'left',
+                color: 'rgba(0, 0, 0, 1)',
+              }}
+            >
+              <span className="card-title-glow">{course.title}</span>
+            </h3>
+            <div className="flex flex-col gap-[6px]">
+              <div className="flex flex-wrap gap-[6px]">
+                <span
+                  className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <img
+                    src="/images/calendar-icon.svg"
+                    alt=""
+                    className="w-[18px] h-[18px]"
+                  />
+                  25 дней
+                </span>
+                <span
+                  className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <img
+                    src="/images/time-icon.svg"
+                    alt=""
+                    className="w-[18px] h-[18px]"
+                  />
+                  20-50 мин/день
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-[6px]">
+                <span
+                  className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <img
+                    src="/images/signal-icon.svg"
+                    alt=""
+                    className="w-[18px] h-[18px]"
+                  />
+                  Сложность
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-[10px] w-full max-w-[300px]">
+            <p
+              className="text-[18px] leading-[1.1] text-black text-left flex items-center gap-2"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
+            >
+              Прогресс{' '}
+              {progressLoading ? (
+                <span
+                  className="relative inline-block w-[18px] h-[18px] shrink-0"
+                  aria-hidden
+                >
+                  <span className="absolute inset-0 rounded-full border-2 border-[#D9D9D9] border-t-[#00C1FF] border-r-[#00C1FF] animate-spin" />
+                </span>
+              ) : (
+                `${progress}%`
+              )}
+            </p>
+            <div className="h-[6px] w-full max-w-[300px] rounded-[50px] bg-[#D9D9D9] overflow-hidden">
+              {progressLoading ? (
+                <div className="profile-progress-loading-bar h-full rounded-[50px]" />
+              ) : (
+                <div
+                  className="h-full rounded-[50px] transition-all duration-300"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'rgba(0, 193, 255, 1)',
+                  }}
+                />
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onStart?.()}
+            disabled={startDisabled}
+            className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-[1.03]"
+            style={{
+              backgroundColor: '#BCEC30',
               fontFamily: 'Roboto, sans-serif',
-              fontWeight: 500,
-              fontSize: '32px',
-              lineHeight: '110%',
-              letterSpacing: 0,
-              textAlign: 'left',
-              color: 'rgba(0, 0, 0, 1)',
+              padding: '16px 26px',
+              opacity: startDisabled ? 0.65 : 1,
             }}
           >
-            <span className="card-title-glow">{course.title}</span>
-          </h3>
-          <div className="flex flex-col gap-[6px]">
-            <div className="flex flex-wrap gap-[6px]">
-              <span className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                <img src="/images/calendar-icon.svg" alt="" className="w-[18px] h-[18px]" />
-                25 дней
-              </span>
-              <span className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                <img src="/images/time-icon.svg" alt="" className="w-[18px] h-[18px]" />
-                20-50 мин/день
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-[6px]">
-              <span className="inline-flex items-center gap-[6px] rounded-[50px] bg-[#F7F7F7] px-[10px] py-[10px] text-[16px] leading-[1.1] text-[#202020]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                <img src="/images/signal-icon.svg" alt="" className="w-[18px] h-[18px]" />
-                Сложность
-              </span>
-            </div>
-          </div>
+            {startLoading ? 'Загружаем...' : progressLabel}
+          </button>
         </div>
-        <div className="flex flex-col gap-[10px] w-full max-w-[300px]">
-          <p className="text-[18px] leading-[1.1] text-black text-left flex items-center gap-2" style={{ fontFamily: 'Roboto, sans-serif' }}>
-            Прогресс{' '}
-            {progressLoading ? (
-              <span className="relative inline-block w-[18px] h-[18px] shrink-0" aria-hidden>
-                <span className="absolute inset-0 rounded-full border-2 border-[#D9D9D9] border-t-[#00C1FF] border-r-[#00C1FF] animate-spin" />
-              </span>
-            ) : (
-              `${progress}%`
-            )}
-          </p>
-          <div className="h-[6px] w-full max-w-[300px] rounded-[50px] bg-[#D9D9D9] overflow-hidden">
-            {progressLoading ? (
-              <div className="profile-progress-loading-bar h-full rounded-[50px]" />
-            ) : (
-              <div
-                className="h-full rounded-[50px] transition-all duration-300"
-                style={{
-                  width: `${progress}%`,
-                  background: 'rgba(0, 193, 255, 1)',
-                }}
-              />
-            )}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => onStart?.()}
-          disabled={startDisabled}
-          className="w-full max-w-[300px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black font-normal sm:hover:opacity-90 sm:transition-transform sm:duration-300 sm:ease-out sm:hover:scale-[1.03]"
-          style={{
-            backgroundColor: '#BCEC30',
-            fontFamily: 'Roboto, sans-serif',
-            padding: '16px 26px',
-            opacity: startDisabled ? 0.65 : 1,
-          }}
-        >
-          {startLoading ? 'Загружаем...' : progressLabel}
-        </button>
-      </div>
       </article>
       {isRemoving && (
         <div className="absolute inset-0 z-[40] rounded-[30px] bg-black/20 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
@@ -205,7 +246,9 @@ function ProfileCourseCard({
 export function ProfilePage() {
   const navigate = useNavigate()
   const { user, token, logout, openLoginModal, refreshMe } = useAuth()
-  const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>({}) // slug -> процент
+  const [courseProgressMap, setCourseProgressMap] = useState<
+    Record<string, number>
+  >({}) // slug -> процент
   const [apiCourses, setApiCourses] = useState<ApiCourse[]>([])
   const [coursesById, setCoursesById] = useState<Record<string, ApiCourse>>({})
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
@@ -213,11 +256,16 @@ export function ProfilePage() {
   const [removingCourseId, setRemovingCourseId] = useState<string | null>(null)
   const [startingCourseId, setStartingCourseId] = useState<string | null>(null)
   const [removedCourseIds, setRemovedCourseIds] = useState<string[]>([])
-  const [courseWorkoutsMap, setCourseWorkoutsMap] = useState<Record<string, PickerLesson[]>>({})
-  const [lessonPickerCourse, setLessonPickerCourse] = useState<ProfileCourse | null>(null)
+  const [courseWorkoutsMap, setCourseWorkoutsMap] = useState<
+    Record<string, PickerLesson[]>
+  >({})
+  const [lessonPickerCourse, setLessonPickerCourse] =
+    useState<ProfileCourse | null>(null)
   const [lessonPickerVisible, setLessonPickerVisible] = useState(false)
   const [isLessonPickerLoading, setIsLessonPickerLoading] = useState(false)
-  const [lessonPickerLoadError, setLessonPickerLoadError] = useState<string | null>(null)
+  const [lessonPickerLoadError, setLessonPickerLoadError] = useState<
+    string | null
+  >(null)
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
   const lessonListRef = useRef<HTMLDivElement>(null)
   const lessonPickerCloseTimerRef = useRef<number | null>(null)
@@ -227,6 +275,10 @@ export function ProfilePage() {
   const [hasOverflow, setHasOverflow] = useState(false)
   const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
   const [isProgressLoading, setIsProgressLoading] = useState(true)
+  // по каким курсам уже пришёл прогресс из API (чтобы не показывать 0% до загрузки)
+  const [progressLoadedSlugs, setProgressLoadedSlugs] = useState<Set<string>>(
+    () => new Set()
+  )
 
   useEffect(() => {
     let hiddenAt: number | null = null
@@ -238,7 +290,7 @@ export function ProfilePage() {
         if (hiddenAt != null && Date.now() - hiddenAt > 1500) {
           timeoutId = window.setTimeout(
             () => setProgressRefreshTrigger((k) => k + 1),
-            300,
+            300
           )
         }
         hiddenAt = null
@@ -281,10 +333,19 @@ export function ProfilePage() {
     const requestId = ++lessonPickerRequestIdRef.current
     if (lessons.length === 0) {
       try {
-        const workouts = await fitnessApi.getCourseWorkouts(course.courseId, token)
+        const workouts = await fitnessApi.getCourseWorkouts(
+          course.courseId,
+          token
+        )
         if (requestId !== lessonPickerRequestIdRef.current) return
-        lessons = workouts.map((item: ApiWorkout) => ({ id: item._id, title: item.name }))
-        setCourseWorkoutsMap((prev) => ({ ...prev, [course.courseId]: lessons }))
+        lessons = workouts.map((item: ApiWorkout) => ({
+          id: item._id,
+          title: item.name,
+        }))
+        setCourseWorkoutsMap((prev) => ({
+          ...prev,
+          [course.courseId]: lessons,
+        }))
       } catch {
         if (requestId !== lessonPickerRequestIdRef.current) return
         lessons = []
@@ -306,15 +367,23 @@ export function ProfilePage() {
     try {
       await fitnessApi.resetCourseProgress(course.courseId, token)
       setCourseProgressMap((prev) => ({ ...prev, [course.slug]: 0 }))
-      logInfo('ProfilePage', 'reset course progress success', { courseId: course.courseId })
+      logInfo('ProfilePage', 'reset course progress success', {
+        courseId: course.courseId,
+      })
     } catch {
-      logError('ProfilePage', 'reset course progress failed', { courseId: course.courseId })
+      logError('ProfilePage', 'reset course progress failed', {
+        courseId: course.courseId,
+      })
     }
   }
 
   // открываю пикер урока и потом перехожу на урок
   const startCourse = async (course: ProfileCourse, progress: number) => {
-    if (startingCourseId === course.courseId || removingCourseId === course.courseId) return
+    if (
+      startingCourseId === course.courseId ||
+      removingCourseId === course.courseId
+    )
+      return
     setStartingCourseId(course.courseId)
     try {
       if (progress >= 100) {
@@ -334,10 +403,13 @@ export function ProfilePage() {
       await fitnessApi.deleteCourseFromUser(course.courseId, token)
       setRemovedCourseIds((prev) => [...prev, course.courseId])
       toast.success('Курс удален из профиля')
-      logInfo('ProfilePage', 'remove course success', { courseId: course.courseId })
+      logInfo('ProfilePage', 'remove course success', {
+        courseId: course.courseId,
+      })
       refreshMe()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось удалить курс'
+      const message =
+        error instanceof Error ? error.message : 'Не удалось удалить курс'
       if (
         message.toLowerCase().includes('не был добавлен') ||
         message.toLowerCase().includes('уже удал')
@@ -359,8 +431,10 @@ export function ProfilePage() {
 
   useEffect(() => {
     if (!user) return
-    setRemovedCourseIds((prev) => prev.filter((id) => user.selectedCourses.includes(id)))
-  }, [user?.selectedCourses])
+    setRemovedCourseIds((prev) =>
+      prev.filter((id) => user.selectedCourses.includes(id))
+    )
+  }, [user, user?.selectedCourses])
 
   const closeLessonPicker = () => {
     setLessonPickerVisible(false)
@@ -381,7 +455,8 @@ export function ProfilePage() {
     if (!lessonPickerCourse) return
     const prevOverflow = document.body.style.overflow
     const prevPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`
@@ -398,11 +473,13 @@ export function ProfilePage() {
       .filter((lesson) => selectedLessonIds.includes(lesson.id))
       .map((lesson) => lesson.id)
     const selectedId = orderedSelection[0]
-    const firstSelected = pickerLessons.find((lesson) => lesson.id === selectedId)
+    const firstSelected = pickerLessons.find(
+      (lesson) => lesson.id === selectedId
+    )
     if (!firstSelected) return
     const lessonIdsParam = encodeURIComponent(orderedSelection.join(','))
     navigate(
-      `/course/${lessonPickerCourse.slug}/lesson/${firstSelected.id}?lessonIds=${lessonIdsParam}`,
+      `/course/${lessonPickerCourse.slug}/lesson/${firstSelected.id}?lessonIds=${lessonIdsParam}`
     )
     closeLessonPicker()
   }
@@ -411,7 +488,7 @@ export function ProfilePage() {
     setSelectedLessonIds((prev) =>
       prev.includes(lessonId)
         ? prev.filter((id) => id !== lessonId)
-        : [...prev, lessonId],
+        : [...prev, lessonId]
     )
   }
 
@@ -436,7 +513,10 @@ export function ProfilePage() {
 
     const computedThumbHeight = Math.max(
       116,
-      Math.min(viewportHeight, (viewportHeight / contentHeight) * viewportHeight),
+      Math.min(
+        viewportHeight,
+        (viewportHeight / contentHeight) * viewportHeight
+      )
     )
     const maxScroll = Math.max(1, contentHeight - viewportHeight)
     const maxThumbTop = Math.max(0, viewportHeight - computedThumbHeight)
@@ -449,10 +529,11 @@ export function ProfilePage() {
     () => [
       ...apiCourses,
       ...Object.values(coursesById).filter(
-        (courseFromMap) => !apiCourses.some((course) => course._id === courseFromMap._id),
+        (courseFromMap) =>
+          !apiCourses.some((course) => course._id === courseFromMap._id)
       ),
     ],
-    [apiCourses, coursesById],
+    [apiCourses, coursesById]
   )
 
   const effectiveSelectedCourses = user
@@ -460,23 +541,24 @@ export function ProfilePage() {
     : []
 
   const purchasedWithCourse = user
-    ? effectiveSelectedCourses
+    ? (effectiveSelectedCourses
         .map((courseId) => {
           const normalizedCourseId = courseId.trim().toLowerCase()
           const apiCourse =
             allKnownCourses.find((item) => item._id === courseId) ??
             allKnownCourses.find(
-              (item) => mapApiCourseToAppCourseRef(item).slug === normalizedCourseId,
+              (item) =>
+                mapApiCourseToAppCourseRef(item).slug === normalizedCourseId
             )
           if (!apiCourse) return null
           const mappedCourse = mapApiCourseToAppCourseRef(apiCourse)
           const progress = courseProgressMap[mappedCourse.slug] ?? 0
           return { course: mappedCourse, progress }
         })
-        .filter(Boolean) as { course: ProfileCourse; progress: number }[]
+        .filter(Boolean) as { course: ProfileCourse; progress: number }[])
     : []
   const pickerLessons = lessonPickerCourse
-    ? courseWorkoutsMap[lessonPickerCourse.courseId] ?? []
+    ? (courseWorkoutsMap[lessonPickerCourse.courseId] ?? [])
     : []
   const lessonSeriesTitle = `${lessonPickerCourse?.title ?? ''} на каждый день`
 
@@ -507,7 +589,9 @@ export function ProfilePage() {
       .getCourses()
       .then((courses) => {
         setApiCourses(courses)
-        logInfo('ProfilePage', 'load profile courses success', { count: courses.length })
+        logInfo('ProfilePage', 'load profile courses success', {
+          count: courses.length,
+        })
       })
       .catch((error) => {
         setApiCourses([])
@@ -528,34 +612,35 @@ export function ProfilePage() {
       ...Object.keys(coursesById),
     ])
     const missingIds = user.selectedCourses.filter(
-      (courseId) => courseId && !knownIds.has(courseId),
+      (courseId) => courseId && !knownIds.has(courseId)
     )
     if (missingIds.length === 0) return
 
-    Promise.allSettled(missingIds.map((courseId) => fitnessApi.getCourseById(courseId))).then(
-      (results) => {
-        const loaded = results
-          .filter(
-            (result): result is PromiseFulfilledResult<ApiCourse> =>
-              result.status === 'fulfilled',
-          )
-          .map((result) => result.value)
-        if (loaded.length === 0) return
+    Promise.allSettled(
+      missingIds.map((courseId) => fitnessApi.getCourseById(courseId))
+    ).then((results) => {
+      const loaded = results
+        .filter(
+          (result): result is PromiseFulfilledResult<ApiCourse> =>
+            result.status === 'fulfilled'
+        )
+        .map((result) => result.value)
+      if (loaded.length === 0) return
 
-        setCoursesById((prev) => {
-          const next = { ...prev }
-          loaded.forEach((course) => {
-            next[course._id] = course
-          })
-          return next
+      setCoursesById((prev) => {
+        const next = { ...prev }
+        loaded.forEach((course) => {
+          next[course._id] = course
         })
-      },
-    )
+        return next
+      })
+    })
   }, [user, apiCourses, coursesById])
 
   // грузим прогресс по каждому курсу; не сбрасываем загрузку пока нет курсов - иначе мелькает 0%
   useEffect(() => {
-    const courseIds = user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
+    const courseIds =
+      user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
     if (!user || !token) {
       setIsProgressLoading(false)
       return
@@ -567,6 +652,7 @@ export function ProfilePage() {
     }
     let cancelled = false
     setIsProgressLoading(true)
+    setProgressLoadedSlugs(new Set())
     const progressLoadMaxWait = window.setTimeout(() => {
       if (!cancelled) setIsProgressLoading(false)
     }, 60000)
@@ -582,55 +668,76 @@ export function ProfilePage() {
           ])
 
           const workoutsList = Array.isArray(workouts) ? workouts : []
-          const workoutsById = new Map(workoutsList.map((workout) => [workout._id, workout]))
-          let workoutsProgress = progress && Array.isArray(progress.workoutsProgress)
-            ? progress.workoutsProgress
-            : []
+          const workoutsById = new Map(
+            workoutsList.map((workout) => [workout._id, workout])
+          )
+          let workoutsProgress =
+            progress && Array.isArray(progress.workoutsProgress)
+              ? progress.workoutsProgress
+              : []
 
           if (workoutsProgress.length === 0 && workoutsList.length > 0) {
             const fallbackProgress = await Promise.all(
               workoutsList.map((workout) =>
                 fitnessApi
                   .getWorkoutProgress(courseId, workout._id, token)
-                  .catch(() => null),
-              ),
+                  .catch(() => null)
+              )
             )
             workoutsProgress = fallbackProgress.filter(
-              (item): item is NonNullable<typeof item> => item !== null,
+              (item): item is NonNullable<typeof item> => item !== null
             )
           }
 
           const progressByWorkoutId = new Map(
-            workoutsProgress.map((wp) => [wp.workoutId, wp]),
+            workoutsProgress.map((wp) => [wp.workoutId, wp])
           )
 
-          function getWorkoutPercent(workout: { _id: string; exercises?: { quantity?: number }[] }, workoutProgress: ApiWorkoutProgress | undefined): number {
+          function getWorkoutPercent(
+            workout: { _id: string; exercises?: { quantity?: number }[] },
+            workoutProgress: ApiWorkoutProgress | undefined
+          ): number {
             if (!workoutProgress) return 0
             if (workoutProgress.workoutCompleted) return 100
             const progressData = Array.isArray(workoutProgress.progressData)
               ? workoutProgress.progressData
               : []
-            if (!Array.isArray(workout.exercises) || workout.exercises.length === 0) {
-              const hasAnyProgress = progressData.some((value) => Number(value) > 0)
+            if (
+              !Array.isArray(workout.exercises) ||
+              workout.exercises.length === 0
+            ) {
+              const hasAnyProgress = progressData.some(
+                (value) => Number(value) > 0
+              )
               return hasAnyProgress ? 1 : 0
             }
-            const exercisePercents = workout.exercises.map((exercise, index) => {
-              const reps = Number(progressData[index] ?? 0)
-              const target = Math.max(1, exercise?.quantity ?? 1)
-              const percent = Math.round((reps / target) * 100)
-              return Math.min(100, Math.max(0, percent))
-            })
+            const exercisePercents = workout.exercises.map(
+              (exercise, index) => {
+                const reps = Number(progressData[index] ?? 0)
+                const target = Math.max(1, exercise?.quantity ?? 1)
+                const percent = Math.round((reps / target) * 100)
+                return Math.min(100, Math.max(0, percent))
+              }
+            )
             if (exercisePercents.length === 0) return 0
             return Math.round(
               exercisePercents.reduce((sum, value) => sum + value, 0) /
-                exercisePercents.length,
+                exercisePercents.length
             )
           }
 
-          const allWorkoutIds = Array.isArray(apiCourse.workouts) ? apiCourse.workouts : workoutsList.map((w) => w._id)
+          const allWorkoutIds = Array.isArray(apiCourse.workouts)
+            ? apiCourse.workouts
+            : workoutsList.map((w) => w._id)
           const values = allWorkoutIds.map((workoutId) => {
-            const workout = workoutsById.get(workoutId) ?? { _id: workoutId, exercises: [] as { quantity?: number }[] }
-            return getWorkoutPercent(workout, progressByWorkoutId.get(workoutId))
+            const workout = workoutsById.get(workoutId) ?? {
+              _id: workoutId,
+              exercises: [] as { quantity?: number }[],
+            }
+            return getWorkoutPercent(
+              workout,
+              progressByWorkoutId.get(workoutId)
+            )
           })
           const rawAvg =
             values.length > 0
@@ -641,26 +748,46 @@ export function ProfilePage() {
           return [mapped.slug, avg] as const
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err)
-          if (msg.includes('не был добавлен') || msg.includes('не был добавлен этот курс')) {
+          if (
+            msg.includes('не был добавлен') ||
+            msg.includes('не был добавлен этот курс')
+          ) {
             return [mapped.slug, 0] as const
           }
-          if (msg.includes('404') || msg.includes('Not Found') || msg.includes('не найден')) {
+          if (
+            msg.includes('404') ||
+            msg.includes('Not Found') ||
+            msg.includes('не найден')
+          ) {
             return [mapped.slug, 0] as const
           }
-          logError('ProfilePage', 'load course progress failed', { courseId, error: msg })
+          logError('ProfilePage', 'load course progress failed', {
+            courseId,
+            error: msg,
+          })
           return [mapped.slug, 0] as const
         }
-      }),
+      })
     )
       .then((pairs) => {
         if (cancelled) return
-        const next = pairs.filter(Boolean) as ReadonlyArray<readonly [string, number]>
+        const next = pairs.filter(Boolean) as ReadonlyArray<
+          readonly [string, number]
+        >
         if (next.length > 0) {
-          setCourseProgressMap((prev) => ({ ...prev, ...Object.fromEntries(next) }))
+          const slugs = next.map(([slug]) => slug)
+          setCourseProgressMap((prev) => ({
+            ...prev,
+            ...Object.fromEntries(next),
+          }))
+          setProgressLoadedSlugs((prev) => new Set([...prev, ...slugs]))
         }
       })
       .catch((err) => {
-        if (!cancelled) logError('ProfilePage', 'load course progress failed', { error: err instanceof Error ? err.message : String(err) })
+        if (!cancelled)
+          logError('ProfilePage', 'load course progress failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
       })
       .finally(() => {
         window.clearTimeout(progressLoadMaxWait)
@@ -669,7 +796,8 @@ export function ProfilePage() {
     return () => {
       cancelled = true
       window.clearTimeout(progressLoadMaxWait)
-      setIsProgressLoading(false)
+      // не сбрасываем isProgressLoading в false при cleanup — иначе между размонтированием
+      // и следующим запуском эффекта на один кадр показывается 0%; новый запуск сразу ставит true
     }
   }, [user, token, allKnownCourses, removedCourseIds, progressRefreshTrigger])
 
@@ -703,7 +831,10 @@ export function ProfilePage() {
                   <div className="flex flex-col gap-[20px] w-full items-start">
                     <p
                       className="text-left font-normal text-[24px] sm:text-[32px] leading-[1.1] text-black max-w-[300px]"
-                      style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}
+                      style={{
+                        fontFamily: 'Roboto, sans-serif',
+                        fontWeight: 500,
+                      }}
                     >
                       {user.name}
                     </p>
@@ -719,7 +850,10 @@ export function ProfilePage() {
                       type="button"
                       onClick={handleLogout}
                       className="box-border flex flex-row justify-center items-center gap-[10px] rounded-[46px] border border-black w-[283px] h-[50px] sm:w-[192px] sm:h-[53px] text-[16px] sm:text-[18px] leading-[1.1] text-black font-normal hover:bg-black/5 transition-colors px-[26px] py-[16px]"
-                      style={{ fontFamily: 'Roboto, sans-serif', borderWidth: 1 }}
+                      style={{
+                        fontFamily: 'Roboto, sans-serif',
+                        borderWidth: 1,
+                      }}
                     >
                       Выйти
                     </button>
@@ -740,7 +874,9 @@ export function ProfilePage() {
             <div className="flex flex-row flex-wrap gap-6 sm:gap-[40px] overflow-visible">
               {isLoadingCourses && <ProfileCoursesLoading />}
               {!isLoadingCourses && profileLoadError && (
-                <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
+                <p
+                  style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}
+                >
                   {profileLoadError}
                 </p>
               )}
@@ -749,24 +885,30 @@ export function ProfilePage() {
                   key={course.slug}
                   course={course}
                   progress={progress}
-                  progressLoading={isProgressLoading}
+                  progressLoading={
+                    isProgressLoading || !progressLoadedSlugs.has(course.slug)
+                  }
                   onRemove={() => removeCourse(course)}
                   isRemoving={removingCourseId === course.courseId}
                   removeDisabled={
-                    removingCourseId === course.courseId || startingCourseId === course.courseId
+                    removingCourseId === course.courseId ||
+                    startingCourseId === course.courseId
                   }
                   onStart={() => startCourse(course, progress)}
                   startDisabled={
-                    removingCourseId === course.courseId || startingCourseId === course.courseId
+                    removingCourseId === course.courseId ||
+                    startingCourseId === course.courseId
                   }
                   startLoading={startingCourseId === course.courseId}
                 />
               ))}
-              {!isLoadingCourses && !profileLoadError && purchasedWithCourse.length === 0 && (
-                <p style={{ fontFamily: 'Roboto, sans-serif' }}>
-                  Курсы пока не добавлены.
-                </p>
-              )}
+              {!isLoadingCourses &&
+                !profileLoadError &&
+                purchasedWithCourse.length === 0 && (
+                  <p style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    Курсы пока не добавлены.
+                  </p>
+                )}
             </div>
           </section>
         </div>
@@ -828,7 +970,8 @@ export function ProfilePage() {
                 minHeight: 35,
                 margin: 0,
                 color: 'rgba(0, 0, 0, 1)',
-                fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontFamily:
+                  '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
                 lineHeight: '110%',
@@ -839,11 +982,11 @@ export function ProfilePage() {
             </h3>
 
             <div className="lesson-picker-content flex flex-col w-full gap-[34px]">
-            <div
-              ref={lessonListRef}
-              onScroll={updateCustomScrollbar}
-              className="relative w-[283px] h-[360px] sm:w-full lesson-picker-list lesson-picker-scroll-hide flex flex-col justify-start items-start sm:items-start sm:gap-[10px] overflow-y-scroll overflow-x-hidden box-border sm:box-content pr-[26px] sm:pr-0"
-            >
+              <div
+                ref={lessonListRef}
+                onScroll={updateCustomScrollbar}
+                className="relative w-[283px] h-[360px] sm:w-full lesson-picker-list lesson-picker-scroll-hide flex flex-col justify-start items-start sm:items-start sm:gap-[10px] overflow-y-scroll overflow-x-hidden box-border sm:box-content pr-[26px] sm:pr-0"
+              >
                 {isLessonPickerLoading && (
                   <div className="w-full h-full flex items-center justify-center">
                     <ProfileCoursesLoading label="Загружаем список уроков" />
@@ -860,7 +1003,8 @@ export function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (lessonPickerCourse) void openLessonPicker(lessonPickerCourse)
+                        if (lessonPickerCourse)
+                          void openLessonPicker(lessonPickerCourse)
                       }}
                       className="rounded-[46px] bg-[#BCEC30] text-[16px] leading-[1.1] text-black hover:opacity-90 transition-opacity"
                       style={{
@@ -959,50 +1103,52 @@ export function ProfilePage() {
                       </label>
                     </div>
                   ))}
-              {hasOverflow && (
-                <>
-                  <div
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      width: 6,
-                      height: '100%',
-                      borderRadius: 10,
-                      background: 'rgba(247, 247, 247, 1)',
-                    }}
-                  />
-                  <div
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: thumbTop,
-                      right: 0,
-                      width: 6,
-                      height: thumbHeight,
-                      borderRadius: 10,
-                      background: 'rgba(0, 0, 0, 1)',
-                      transition: 'top 120ms linear, height 120ms linear',
-                    }}
-                  />
-                </>
-              )}
-            </div>
+                {hasOverflow && (
+                  <>
+                    <div
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: 6,
+                        height: '100%',
+                        borderRadius: 10,
+                        background: 'rgba(247, 247, 247, 1)',
+                      }}
+                    />
+                    <div
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        top: thumbTop,
+                        right: 0,
+                        width: 6,
+                        height: thumbHeight,
+                        borderRadius: 10,
+                        background: 'rgba(0, 0, 0, 1)',
+                        transition: 'top 120ms linear, height 120ms linear',
+                      }}
+                    />
+                  </>
+                )}
+              </div>
 
-            <div className="w-full flex items-center justify-center">
-              <button
-                type="button"
-                onClick={startSelectedLesson}
-                className="lesson-picker-btn rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
-                style={{
-                  fontFamily: 'Roboto, sans-serif',
-                }}
-                disabled={isLessonPickerLoading || selectedLessonIds.length === 0}
-              >
-                {isLessonPickerLoading ? 'Загружаем...' : 'Начать'}
-              </button>
-            </div>
+              <div className="w-full flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={startSelectedLesson}
+                  className="lesson-picker-btn rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
+                  style={{
+                    fontFamily: 'Roboto, sans-serif',
+                  }}
+                  disabled={
+                    isLessonPickerLoading || selectedLessonIds.length === 0
+                  }
+                >
+                  {isLessonPickerLoading ? 'Загружаем...' : 'Начать'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

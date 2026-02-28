@@ -1,3 +1,5 @@
+import './Loading.css'
+
 // полноэкранный оверлей со спиннером пока грузится что-то
 type PageLoadingOverlayProps = {
   visible: boolean

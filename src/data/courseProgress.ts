@@ -18,7 +18,10 @@ export function getCourseProgressMap(): Record<string, number> {
     if (!raw) return { ...DEFAULT_COURSE_PROGRESS }
     const parsed = JSON.parse(raw) as Record<string, unknown>
     const normalized = Object.fromEntries(
-      Object.entries(parsed).map(([slug, value]) => [slug, clampPercent(Number(value))]),
+      Object.entries(parsed).map(([slug, value]) => [
+        slug,
+        clampPercent(Number(value)),
+      ])
     )
     return { ...DEFAULT_COURSE_PROGRESS, ...normalized }
   } catch {
@@ -38,4 +41,3 @@ export function setCourseProgressBySlug(slug: string, progress: number): void {
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
 }
-

@@ -1,0 +1,17 @@
+/* Подсказка на заголовках карточек при наведении */
+.card-title-glow {
+  display: inline-block;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 2px 8px;
+  transition:
+    border-color 300ms ease-out,
+    box-shadow 300ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-hover-group:hover .card-title-glow {
+    border-color: rgba(188, 236, 48, 1);
+    box-shadow: 0 0 0 2px rgba(188, 236, 48, 0.3);
+  }
+}

@@ -57,12 +57,11 @@ export function mapApiCourseToAppCourseRef(course: ApiCourse): AppCourseRef {
   const slugFromEN = toSlugFromNameEN(course.nameEN)
   const visualByEN = getVisualCourseBySlug(slugFromEN)
   const normalizedNameRU = normalizeCourseNameRU(course.nameRU)
-  const visualByRU =
-    normalizedNameRU
-      ? COURSES.find(
-          (item) => normalizeCourseNameRU(item.title) === normalizedNameRU,
-        )
-      : undefined
+  const visualByRU = normalizedNameRU
+    ? COURSES.find(
+        (item) => normalizeCourseNameRU(item.title) === normalizedNameRU
+      )
+    : undefined
 
   const visual = visualByEN ?? visualByRU
   const slug = visual?.slug ?? slugFromEN
@@ -72,7 +71,7 @@ export function mapApiCourseToAppCourseRef(course: ApiCourse): AppCourseRef {
     slug,
     title: course.nameRU,
     image: visual?.image ?? '/images/card-yoga.png',
-    imageSkillCard: visual?.imageSkillCard ?? visual?.image ?? '/images/card-yoga.png',
+    imageSkillCard:
+      visual?.imageSkillCard ?? visual?.image ?? '/images/card-yoga.png',
   }
 }
-

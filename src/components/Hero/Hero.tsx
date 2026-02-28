@@ -1,3 +1,5 @@
+import './Hero.css'
+
 // блок с заголовком и зелёным пузырём на главной
 export function Hero() {
   return (
@@ -18,9 +20,10 @@ export function Hero() {
           качество жизни
         </span>
         <span className="hidden sm:inline">
-          <span className="sm:whitespace-nowrap">Начните заниматься спортом</span>
-          <br />
-          и улучшите качество жизни
+          <span className="sm:whitespace-nowrap">
+            Начните заниматься спортом
+          </span>
+          <br />и улучшите качество жизни
         </span>
       </h1>
       <div className="relative shrink-0 hidden sm:block">

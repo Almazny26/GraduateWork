@@ -31,7 +31,7 @@ type SelectedLessonItem = {
 // начальные проценты по упражнениям (все 0 или одно значение)
 function createExerciseProgress(
   items: ExerciseItem[],
-  value: number,
+  value: number
 ): Record<string, number> {
   return Object.fromEntries(items.map((item) => [item.id, value]))
 }
@@ -56,13 +56,18 @@ export function LessonPage() {
   const [progressModalOpen, setProgressModalOpen] = useState(false)
   const [progressModalVisible, setProgressModalVisible] = useState(false)
   const [progressSavedModalOpen, setProgressSavedModalOpen] = useState(false)
-  const [progressSavedModalVisible, setProgressSavedModalVisible] = useState(false)
+  const [progressSavedModalVisible, setProgressSavedModalVisible] =
+    useState(false)
   const [isLessonLoading, setIsLessonLoading] = useState(true)
   const [lessonLoadError, setLessonLoadError] = useState<string | null>(null)
-  const [exerciseProgress, setExerciseProgress] = useState<Record<string, number>>({})
+  const [exerciseProgress, setExerciseProgress] = useState<
+    Record<string, number>
+  >({})
   const [draftProgress, setDraftProgress] = useState<Record<string, string>>({})
   const [isSavingProgress, setIsSavingProgress] = useState(false)
-  const [selectedLessons, setSelectedLessons] = useState<SelectedLessonItem[]>([])
+  const [selectedLessons, setSelectedLessons] = useState<SelectedLessonItem[]>(
+    []
+  )
   const progressListRef = useRef<HTMLDivElement>(null)
   const [progressScroll, setProgressScroll] = useState({
     hasOverflow: false,
@@ -84,7 +89,8 @@ export function LessonPage() {
 
   // открываю модалку прогресса и подставляю текущие значения в инпуты
   const openProgressModal = () => {
-    if (isLessonLoading || exerciseItems.length === 0 || isSavingProgress) return
+    if (isLessonLoading || exerciseItems.length === 0 || isSavingProgress)
+      return
     if (progressModalUnmountTimerRef.current) {
       window.clearTimeout(progressModalUnmountTimerRef.current)
       progressModalUnmountTimerRef.current = null
@@ -95,8 +101,8 @@ export function LessonPage() {
           const percent = exerciseProgress[item.id] ?? 0
           const reps = percentToReps(percent, item.quantity)
           return [item.id, reps === 0 ? '' : String(reps)]
-        }),
-      ),
+        })
+      )
     )
     setProgressModalOpen(true)
   }
@@ -131,7 +137,7 @@ export function LessonPage() {
       exerciseItems.map((item, index) => [
         item.id,
         repsToPercent(progressData[index] ?? 0, item.quantity),
-      ]),
+      ])
     ) as Record<string, number>
     setExerciseProgress(nextExerciseProgress)
     logInfo('LessonPage', 'save progress started', {
@@ -144,8 +150,17 @@ export function LessonPage() {
 
     try {
       if (courseId && lessonId && token) {
-        await fitnessApi.saveWorkoutProgress(courseId, lessonId, progressData, token)
-        logInfo('LessonPage', 'save progress success', { slug, lessonId, courseId })
+        await fitnessApi.saveWorkoutProgress(
+          courseId,
+          lessonId,
+          progressData,
+          token
+        )
+        logInfo('LessonPage', 'save progress success', {
+          slug,
+          lessonId,
+          courseId,
+        })
         saveSucceeded = true
       }
     } catch (error) {
@@ -155,7 +170,9 @@ export function LessonPage() {
         courseId,
         error: error instanceof Error ? error.message : String(error),
       })
-      toast.error('Не удалось сохранить прогресс. Проверьте интернет и попробуйте снова.')
+      toast.error(
+        'Не удалось сохранить прогресс. Проверьте интернет и попробуйте снова.'
+      )
     } finally {
       setIsSavingProgress(false)
     }
@@ -196,7 +213,8 @@ export function LessonPage() {
     if (!progressModalOpen && !progressSavedModalOpen) return
     const prevOverflow = document.body.style.overflow
     const prevPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`
@@ -241,7 +259,7 @@ export function LessonPage() {
       .then(async (courses) => {
         if (cancelled) return
         const matchedCourse = courses.find(
-          (apiCourse) => mapApiCourseToAppCourseRef(apiCourse).slug === slug,
+          (apiCourse) => mapApiCourseToAppCourseRef(apiCourse).slug === slug
         )
         if (!matchedCourse) {
           if (cancelled) return
@@ -255,25 +273,37 @@ export function LessonPage() {
         setCourseId(matchedCourse._id)
         const [workout, courseWorkouts] = await Promise.all([
           fitnessApi.getWorkoutById(lessonId, token),
-          fitnessApi.getCourseWorkouts(matchedCourse._id, token).catch(() => []),
+          fitnessApi
+            .getCourseWorkouts(matchedCourse._id, token)
+            .catch(() => []),
         ])
         if (cancelled) return
         const queueSource =
           selectedLessonIdsFromQuery.length > 0
-            ? courseWorkouts.filter((item) => selectedLessonIdsFromQuery.includes(item._id))
+            ? courseWorkouts.filter((item) =>
+                selectedLessonIdsFromQuery.includes(item._id)
+              )
             : [workout]
-        const queue = queueSource.map((item) => ({ id: item._id, title: item.name }))
-        setSelectedLessons(queue.length > 0 ? queue : [{ id: workout._id, title: workout.name }])
-        const mappedItems: ExerciseItem[] = workout.exercises.map((exercise, index) => {
-          const target = Math.max(1, exercise.quantity)
-          return {
-            id: exercise._id,
-            key: (['forward', 'backward', 'knees'][index % 3] ?? 'forward') as ExerciseDef['key'],
-            label: exercise.name,
-            question: `Сколько раз вы сделали "${exercise.name}"? Цель: ${target}.`,
-            quantity: target,
+        const queue = queueSource.map((item) => ({
+          id: item._id,
+          title: item.name,
+        }))
+        setSelectedLessons(
+          queue.length > 0 ? queue : [{ id: workout._id, title: workout.name }]
+        )
+        const mappedItems: ExerciseItem[] = workout.exercises.map(
+          (exercise, index) => {
+            const target = Math.max(1, exercise.quantity)
+            return {
+              id: exercise._id,
+              key: (['forward', 'backward', 'knees'][index % 3] ??
+                'forward') as ExerciseDef['key'],
+              label: exercise.name,
+              question: `Сколько раз вы сделали "${exercise.name}"? Цель: ${target}.`,
+              quantity: target,
+            }
           }
-        })
+        )
         setExerciseItems(mappedItems)
         setLessonTitle(workout.name)
         setLessonVideoUrl(workout.video)
@@ -286,7 +316,7 @@ export function LessonPage() {
           const workoutProgress = await fitnessApi.getWorkoutProgress(
             matchedCourse._id,
             lessonId,
-            token,
+            token
           )
           if (cancelled) return
           const progressByItem = Object.fromEntries(
@@ -294,10 +324,10 @@ export function LessonPage() {
               const reps = workoutProgress.progressData[index] ?? 0
               const percent = Math.min(
                 100,
-                Math.max(0, repsToPercent(reps, item.quantity)),
+                Math.max(0, repsToPercent(reps, item.quantity))
               )
               return [item.id, percent]
-            }),
+            })
           ) as Record<string, number>
           setExerciseProgress(progressByItem)
         } catch {
@@ -371,7 +401,10 @@ export function LessonPage() {
 
       const thumbHeight = Math.max(
         116,
-        Math.min(viewportHeight, (viewportHeight / contentHeight) * viewportHeight),
+        Math.min(
+          viewportHeight,
+          (viewportHeight / contentHeight) * viewportHeight
+        )
       )
       const maxScrollTop = Math.max(1, contentHeight - viewportHeight)
       const maxThumbTop = Math.max(0, viewportHeight - thumbHeight)
@@ -405,16 +438,18 @@ export function LessonPage() {
     }
   }, [progressModalOpen])
 
-  const hasExistingProgress = Object.values(exerciseProgress).some((value) => value > 0)
+  const hasExistingProgress = Object.values(exerciseProgress).some(
+    (value) => value > 0
+  )
   const desktopColumns = [0, 1, 2].map((colIndex) =>
-    exerciseItems.filter((_, index) => index % 3 === colIndex),
+    exerciseItems.filter((_, index) => index % 3 === colIndex)
   )
   const isProgressActionDisabled =
     isLessonLoading || isSavingProgress || exerciseItems.length === 0
   const lessonHeading = courseRef?.title ?? 'Тренировка'
   const lessonQueueParam = useMemo(
     () => selectedLessons.map((lesson) => lesson.id).join(','),
-    [selectedLessons],
+    [selectedLessons]
   )
 
   const videoPreviewThumbnail = useMemo(() => {
@@ -432,7 +467,9 @@ export function LessonPage() {
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[35px] sm:pt-[49px] pb-12">
         <div className="max-w-[1160px] flex flex-col gap-[24px] sm:gap-[40px]">
-          {isLessonLoading && <ProfileCoursesLoading label="Загружаем тренировку" />}
+          {isLessonLoading && (
+            <ProfileCoursesLoading label="Загружаем тренировку" />
+          )}
           {!isLessonLoading && lessonLoadError && (
             <p style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}>
               {lessonLoadError}
@@ -548,7 +585,8 @@ export function LessonPage() {
                     width: '100%',
                     maxWidth: 283,
                     color: 'rgba(0, 0, 0, 1)',
-                    fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontFamily:
+                      '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: 32,
@@ -653,7 +691,8 @@ export function LessonPage() {
                     width: '100%',
                     maxWidth: 403,
                     color: 'rgba(0, 0, 0, 1)',
-                    fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontFamily:
+                      '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: 'clamp(28px, 3.2vw, 32px)',
@@ -678,7 +717,11 @@ export function LessonPage() {
                       {columnItems.map((item) => {
                         const progress = exerciseProgress[item.id] ?? 0
                         return (
-                          <div key={item.id} className="flex flex-col" style={{ gap: 10 }}>
+                          <div
+                            key={item.id}
+                            className="flex flex-col"
+                            style={{ gap: 10 }}
+                          >
                             <span
                               style={{
                                 color: 'rgba(0, 0, 0, 1)',
@@ -742,11 +785,12 @@ export function LessonPage() {
                   opacity: isProgressActionDisabled ? 0.65 : 1,
                 }}
               >
-                {hasExistingProgress ? 'Обновить свой прогресс' : 'Заполнить свой прогресс'}
+                {hasExistingProgress
+                  ? 'Обновить свой прогресс'
+                  : 'Заполнить свой прогресс'}
               </button>
             </div>
           </section>
-
         </div>
       </main>
       {progressModalOpen && (
@@ -759,11 +803,16 @@ export function LessonPage() {
         >
           <div
             className={`progress-modal bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] rounded-[20px] flex flex-col justify-start items-center transition-all duration-300 ease-out ${
-              progressModalVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
+              progressModalVisible
+                ? 'opacity-100 translate-y-0 scale-100'
+                : 'opacity-0 translate-y-2 scale-95'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full flex flex-col progress-modal-content" style={{ flex: 1, minHeight: 0 }}>
+            <div
+              className="w-full flex flex-col progress-modal-content"
+              style={{ flex: 1, minHeight: 0 }}
+            >
               <h3
                 className="text-[32px]"
                 style={{
@@ -772,7 +821,8 @@ export function LessonPage() {
                   color: 'rgba(0, 0, 0, 1)',
                   backgroundClip: 'unset',
                   WebkitBackgroundClip: 'unset',
-                  fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontFamily:
+                    '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
                   fontWeight: 400,
                   lineHeight: '110%',
                   letterSpacing: 0,
@@ -787,11 +837,22 @@ export function LessonPage() {
                 <div
                   ref={progressListRef}
                   className="progress-modal-scroll lesson-picker-scroll-hide overflow-y-auto overflow-x-hidden min-w-0 flex flex-col justify-start items-center"
-                  style={{ height: 'calc(100% - 12px)', minHeight: 0, paddingRight: 20 }}
+                  style={{
+                    height: 'calc(100% - 12px)',
+                    minHeight: 0,
+                    paddingRight: 20,
+                  }}
                 >
-                  <div className="progress-modal-scroll-inner flex flex-col w-full" style={{ gap: 20 }}>
+                  <div
+                    className="progress-modal-scroll-inner flex flex-col w-full"
+                    style={{ gap: 20 }}
+                  >
                     {exerciseItems.map((item) => (
-                      <div key={item.id} className="flex flex-col min-w-0" style={{ gap: 10 }}>
+                      <div
+                        key={item.id}
+                        className="flex flex-col min-w-0"
+                        style={{ gap: 10 }}
+                      >
                         <label
                           className="text-[16px] sm:text-[18px] break-words"
                           style={{
@@ -905,7 +966,9 @@ export function LessonPage() {
         >
           <div
             className={`w-full max-w-[343px] h-[252px] rounded-[30px] bg-white shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] flex flex-col justify-start items-center gap-[34px] p-[40px] transition-all duration-200 ease-out ${
-              progressSavedModalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              progressSavedModalVisible
+                ? 'opacity-100 scale-100'
+                : 'opacity-0 scale-95'
             }`}
             onClick={(e) => e.stopPropagation()}
           >

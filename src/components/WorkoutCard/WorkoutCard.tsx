@@ -1,3 +1,5 @@
+import './WorkoutCard.css'
+
 // одна строка в списке уроков - название и стрелка, по клику переход на урок
 type WorkoutCardProps = {
   name: string

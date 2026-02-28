@@ -34,15 +34,24 @@ describe('ProfilePage API actions', () => {
         description: 'desc',
         directions: [],
         fitting: [],
-        workouts: [],
+        workouts: ['w1'],
       },
     ])
     ;(fitnessApi.getCourseProgress as jest.Mock).mockResolvedValue({
       courseId: 'course-yoga-id',
-      courseCompleted: false,
-      workoutsProgress: [{ workoutId: 'w1', workoutCompleted: true, progressData: [1] }],
+      courseCompleted: true,
+      workoutsProgress: [
+        { workoutId: 'w1', workoutCompleted: true, progressData: [15, 30, 20] },
+      ],
     })
-    ;(fitnessApi.getCourseWorkouts as jest.Mock).mockResolvedValue([])
+    ;(fitnessApi.getCourseWorkouts as jest.Mock).mockResolvedValue([
+      {
+        _id: 'w1',
+        name: 'Урок 1',
+        video: '',
+        exercises: [{ quantity: 15 }, { quantity: 30 }, { quantity: 20 }],
+      },
+    ])
   })
 
   it('removes course via API', async () => {
@@ -63,23 +72,24 @@ describe('ProfilePage API actions', () => {
     render(
       <MemoryRouter>
         <ProfilePage />
-      </MemoryRouter>,
+      </MemoryRouter>
     )
 
-    const removeBtn = await screen.findByRole('button', { name: 'Удалить курс' })
+    const removeBtn = await screen.findByRole('button', {
+      name: 'Удалить курс',
+    })
     fireEvent.click(removeBtn)
 
     await waitFor(() => {
-      expect(fitnessApi.deleteCourseFromUser).toHaveBeenCalledWith('course-yoga-id', 'jwt-token')
+      expect(fitnessApi.deleteCourseFromUser).toHaveBeenCalledWith(
+        'course-yoga-id',
+        'jwt-token'
+      )
       expect(refreshMe).toHaveBeenCalled()
     })
   })
 
   it('resets course progress when pressing "Начать заново"', async () => {
-    localStorage.setItem(
-      'skyfitnesspro-course-progress',
-      JSON.stringify({ yoga: 100 }),
-    )
     ;(useAuth as jest.Mock).mockReturnValue({
       user: {
         name: 'user',
@@ -96,18 +106,25 @@ describe('ProfilePage API actions', () => {
     render(
       <MemoryRouter>
         <ProfilePage />
-      </MemoryRouter>,
+      </MemoryRouter>
     )
 
-    const resetBtn = await screen.findByRole('button', { name: 'Начать заново' })
+    await waitFor(
+      () => expect(fitnessApi.getCourseProgress).toHaveBeenCalled(),
+      { timeout: 3000 }
+    )
+    const resetBtn = await screen.findByRole(
+      'button',
+      { name: 'Начать заново' },
+      { timeout: 5000 }
+    )
     fireEvent.click(resetBtn)
 
     await waitFor(() => {
       expect(fitnessApi.resetCourseProgress).toHaveBeenCalledWith(
         'course-yoga-id',
-        'jwt-token',
+        'jwt-token'
       )
     })
   })
 })
-

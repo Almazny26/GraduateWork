@@ -11,7 +11,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { logError, logInfo } from '@/utils/logger'
 
 // порядок курсов как в макете (йога, стретчинг и т.д.)
-const COURSE_ORDER_BY_SLUG = new Map(COURSES.map((course, index) => [course.slug, index]))
+const COURSE_ORDER_BY_SLUG = new Map(
+  COURSES.map((course, index) => [course.slug, index])
+)
 
 export function HomePage() {
   const { user, token, openLoginModal, refreshMe } = useAuth()
@@ -80,7 +82,8 @@ export function HomePage() {
       toast.success('Курс добавлен в ваш профиль')
       logInfo('HomePage', 'add course success', { courseId })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось добавить курс'
+      const message =
+        error instanceof Error ? error.message : 'Не удалось добавить курс'
       if (message.toLowerCase().includes('уже')) {
         await refreshMe()
         toast('Курс уже был добавлен')
@@ -101,14 +104,20 @@ export function HomePage() {
       <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] pb-0 sm:pb-14 overflow-visible">
         {isLoadingCourses && <CourseGridSkeleton />}
         {!isLoadingCourses && coursesLoadError && (
-          <p className="text-[18px] text-red-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
+          <p
+            className="text-[18px] text-red-600"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+          >
             {coursesLoadError}
           </p>
         )}
         {!isLoadingCourses && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
             {cardCourses.map((course) => (
-              <div key={course.courseId} className="overflow-visible sm:p-2 sm:-m-2">
+              <div
+                key={course.courseId}
+                className="overflow-visible sm:p-2 sm:-m-2"
+              >
                 <CourseCard
                   title={course.title}
                   imageSrc={course.image}
@@ -122,42 +131,45 @@ export function HomePage() {
           </div>
         )}
         {!isLoadingCourses && !coursesLoadError && cardCourses.length === 0 && (
-          <p className="pt-6 text-[18px] opacity-70" style={{ fontFamily: 'Roboto, sans-serif' }}>
+          <p
+            className="pt-6 text-[18px] opacity-70"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+          >
             Курсы не найдены.
           </p>
         )}
       </section>
       <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-6 sm:pt-0 pb-12 sm:pb-16">
         <div className="w-full max-w-[343px] sm:max-w-none mx-auto flex justify-end sm:justify-center">
-        <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault()
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
-          className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
-          style={{
-            width: 127,
-            height: 52,
-            gap: 8,
-            padding: '16px 26px',
-            background: 'rgba(188, 236, 48, 1)',
-            color: 'rgba(0, 0, 0, 1)',
-            fontFamily: 'Roboto, sans-serif',
-            fontWeight: 400,
-            fontSize: '18px',
-            lineHeight: '110%',
-            letterSpacing: 0,
-            textAlign: 'center',
-          }}
-        >
-          <span className="inline-flex flex-row items-baseline gap-1">
-            Наверх
-            <span className="inline-block -translate-y-1" aria-hidden>
-              ↑
+          <a
+            href="#top"
+            onClick={(e) => {
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
+            style={{
+              width: 127,
+              height: 52,
+              gap: 8,
+              padding: '16px 26px',
+              background: 'rgba(188, 236, 48, 1)',
+              color: 'rgba(0, 0, 0, 1)',
+              fontFamily: 'Roboto, sans-serif',
+              fontWeight: 400,
+              fontSize: '18px',
+              lineHeight: '110%',
+              letterSpacing: 0,
+              textAlign: 'center',
+            }}
+          >
+            <span className="inline-flex flex-row items-baseline gap-1">
+              Наверх
+              <span className="inline-block -translate-y-1" aria-hidden>
+                ↑
+              </span>
             </span>
-          </span>
-        </a>
+          </a>
         </div>
       </footer>
     </div>

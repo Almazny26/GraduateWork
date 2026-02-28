@@ -15,7 +15,8 @@ describe('fitnessApi', () => {
   it('sends login request with correct method/body', async () => {
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ token: 'jwt-token' }),
+      status: 200,
+      text: async () => JSON.stringify({ token: 'jwt-token' }),
     })
 
     const response = await fitnessApi.login('user@example.com', 'Pass@!1')
@@ -34,7 +35,9 @@ describe('fitnessApi', () => {
   it('adds bearer token for protected endpoints', async () => {
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ email: 'user@example.com', selectedCourses: [] }),
+      status: 200,
+      text: async () =>
+        JSON.stringify({ email: 'user@example.com', selectedCourses: [] }),
     })
 
     await fitnessApi.me('token-123')
@@ -46,12 +49,12 @@ describe('fitnessApi', () => {
   it('throws API message on non-2xx response', async () => {
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
-      json: async () => ({ message: 'Неверный пароль' }),
+      status: 401,
+      text: async () => JSON.stringify({ message: 'Неверный пароль' }),
     })
 
     await expect(fitnessApi.login('user@example.com', 'wrong')).rejects.toThrow(
-      'Неверный пароль',
+      'Неверный пароль'
     )
   })
 })
-

@@ -74,4 +74,3 @@ describe('api mappers', () => {
     expect(mapped.imageSkillCard).toBe('/images/card-yoga.png')
   })
 })
-
