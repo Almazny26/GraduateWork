@@ -1,17 +1,8 @@
 import './CourseCard.css'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { CourseCardProps } from './types'
 
-type CourseCardProps = {
-  title: string
-  imageSrc: string
-  slug: string
-  onAddCourse?: () => void | Promise<void>
-  addDisabled?: boolean
-  isAdded?: boolean
-}
-
-// карточка курса на главной и на странице курса, кнопка добавить курс
 export function CourseCard({
   title,
   imageSrc,

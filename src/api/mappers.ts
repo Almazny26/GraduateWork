@@ -1,5 +1,8 @@
-import type { ApiCourse } from '@/api/fitness'
+import type { ApiCourse } from '@/api/types'
+import type { AppCourseRef } from '@/common/types'
 import { COURSES } from '@/data/courses'
+
+export type { AppCourseRef } from '@/common/types'
 
 // разные написания слага с бэка приводим к одному
 const COURSE_SLUG_ALIASES: Record<string, string> = {
@@ -42,14 +45,6 @@ export function toSlugFromNameEN(nameEN: string): string {
 
 export function getVisualCourseBySlug(slug: string) {
   return COURSES.find((course) => course.slug === slug)
-}
-
-export type AppCourseRef = {
-  courseId: string
-  slug: string
-  title: string
-  image: string
-  imageSkillCard: string
 }
 
 // курс с API превращаю в то что нужно для карточек (slug, картинка и т.д.)

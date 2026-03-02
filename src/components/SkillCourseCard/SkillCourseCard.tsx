@@ -1,12 +1,5 @@
 import './SkillCourseCard.css'
-
-// большая карточка курса на главной (картинка + заголовок сверху), при ховере текст двигается
-type SkillCourseCardProps = {
-  imageSrc: string
-  mobileImageSrc?: string
-  title: string
-  slug?: string
-}
+import type { SkillCourseCardProps } from './types'
 
 export function SkillCourseCard({
   imageSrc,

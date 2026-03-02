@@ -208,7 +208,7 @@ button:not(:disabled):hover {
   animation: profile-progress-loading 1.4s ease-in-out infinite;
 }
 
-/* Модалка «Выберите тренировку»: мобильный по умолчанию, десктоп по референсу Frame382121 */
+/* Модалка «Выберите тренировку» */
 .lesson-picker-modal {
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@ button:not(:disabled):hover {
   }
 }
 
-/* Модалка «Мой прогресс»: мобильный по умолчанию, десктоп 426×595.5 */
+/* Модалка «Мой прогресс» */
 .progress-modal {
   width: min(343px, calc(100vw - 24px));
   height: 572px;

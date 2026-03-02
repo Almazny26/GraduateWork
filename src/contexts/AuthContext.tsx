@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { AUTH_TOKEN_STORAGE_KEY, fitnessApi } from '@/api/fitness'
+import type { AuthContextValue, User } from '@/common/types'
 import { logError, logInfo, logWarn } from '@/utils/logger'
 
 const STORAGE_KEY = 'skyfitness_user'
@@ -106,25 +107,7 @@ function extractSelectedCourses(payload: unknown): string[] {
   return []
 }
 
-export type User = {
-  name: string
-  login: string
-  email: string
-  selectedCourses: string[]
-  avatarUrl?: string
-}
-
-type AuthContextValue = {
-  user: User | null
-  token: string | null
-  isLoggedIn: boolean
-  login: (user: User, token: string) => void
-  logout: () => void
-  refreshMe: () => Promise<void>
-  loginModalOpen: boolean
-  openLoginModal: () => void
-  closeLoginModal: () => void
-}
+export type { User } from '@/common/types'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 

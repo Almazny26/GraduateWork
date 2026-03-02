@@ -1,10 +1,5 @@
 import './Loading.css'
-
-// полноэкранный оверлей со спиннером пока грузится что-то
-type PageLoadingOverlayProps = {
-  visible: boolean
-  label?: string
-}
+import type { PageLoadingOverlayProps } from './types'
 
 export function PageLoadingOverlay({
   visible,

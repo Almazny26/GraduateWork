@@ -3,11 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi } from '@/api/fitness'
-
+import type { AuthMode, LoginModalProps } from './types'
 import photoMiniImg from '@/assets/photo_mini.png'
-
-type Props = { open: boolean; onClose: () => void }
-type AuthMode = 'login' | 'register'
 
 // тут тоже достаю email/selectedCourses из ответа API (как в AuthContext)
 function toRecord(value: unknown): Record<string, unknown> | null {
@@ -99,7 +96,7 @@ function extractSelectedCourses(payload: unknown): string[] {
 }
 
 // модалка входа/регистрации, после успеха вызываем login() из контекста
-export function LoginModal({ open, onClose }: Props) {
+export function LoginModal({ open, onClose }: LoginModalProps) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [shouldRender, setShouldRender] = useState(open)
