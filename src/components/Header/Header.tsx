@@ -110,7 +110,7 @@ export function Header() {
               onClick={() =>
                 dropdownOpen ? closeDropdown() : setDropdownOpen(true)
               }
-              className="flex flex-row items-center gap-2 sm:gap-4 rounded-[46px] hover:opacity-90 transition-opacity py-1 pr-2 pl-1"
+              className="flex flex-row items-center gap-2 sm:gap-4 rounded-[46px] sm:hover:opacity-90 transition-opacity py-1 pr-2 pl-1"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               <img
@@ -184,7 +184,7 @@ export function Header() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex justify-center items-center rounded-[46px] border text-[18px] leading-[1.1] text-black hover:bg-black/5 transition-colors"
+                    className="flex justify-center items-center rounded-[46px] border text-[18px] leading-[1.1] text-black sm:hover:bg-black/5 transition-colors"
                     style={{
                       width: 206,
                       height: 52,
@@ -203,7 +203,7 @@ export function Header() {
           <button
             type="button"
             onClick={openLoginModal}
-            className="flex flex-row justify-center items-center gap-2 rounded-[46px] hover:opacity-90 hover:scale-[1.03] transition-opacity duration-300 ease-out shrink-0 w-[83px] sm:w-[103px] h-[36px] sm:h-[52px] px-4 sm:px-[26px] py-2 sm:py-4"
+            className="flex flex-row justify-center items-center gap-2 rounded-[46px] sm:hover:opacity-90 sm:hover:scale-[1.03] transition-opacity duration-300 ease-out shrink-0 w-[83px] sm:w-[103px] h-[36px] sm:h-[52px] px-4 sm:px-[26px] py-2 sm:py-4"
             style={{
               background: 'rgba(188, 236, 48, 1)',
               color: 'rgba(0, 0, 0, 1)',

@@ -35,7 +35,7 @@ export function SelectedLessonsList({
               className={`rounded-[14px] border px-4 py-3 text-[16px] leading-[1.1] transition-colors ${
                 isCurrent
                   ? 'border-[#BCEC30] bg-[#F6FFD8]'
-                  : 'border-black/10 bg-white hover:bg-black/5'
+                  : 'border-black/10 bg-white sm:hover:bg-black/5'
               }`}
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >

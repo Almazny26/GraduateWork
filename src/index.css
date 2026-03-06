@@ -80,8 +80,8 @@ body {
     sans-serif;
 }
 
-/* при наведении на кнопки - чуть увеличиваю и делаю прозрачнее */
-button:not(:disabled) {
+/* при наведении на кнопки - чуть увеличиваю и делаю прозрачнее (только десктоп) */
+button:not(:disabled):not(.card-add-btn) {
   transition:
     transform 0.3s ease-out,
     opacity 0.3s ease-out,
@@ -89,9 +89,11 @@ button:not(:disabled) {
     color 0.3s ease-out,
     border-color 0.3s ease-out;
 }
-button:not(:disabled):hover {
-  transform: scale(1.03);
-  opacity: 0.9;
+@media (min-width: 640px) {
+  button:not(:disabled):not(.no-scale-hover):hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
 }
 
 /* анимации на больших карточках курсов (йога, стретчинг и т.д.) при ховере */
@@ -166,21 +168,23 @@ button:not(:disabled):hover {
   }
 }
 
-.group:hover .skillcard-title--step {
-  animation: skillcard-step 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.group:hover .skillcard-title--step .skillcard-letter {
-  animation: skillcard-step-letter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)
-    backwards;
-}
-.group:hover .skillcard-title--bodyflex {
-  animation: skillcard-breathe 1.2s ease-in-out;
-}
-.group:hover .skillcard-title--fitness {
-  animation: skillcard-pump 0.5s ease-out forwards;
-}
-.group:hover .skillcard-title--yoga {
-  animation: skillcard-float 2s ease-in-out infinite;
+@media (min-width: 640px) {
+  .group:hover .skillcard-title--step {
+    animation: skillcard-step 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .group:hover .skillcard-title--step .skillcard-letter {
+    animation: skillcard-step-letter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)
+      backwards;
+  }
+  .group:hover .skillcard-title--bodyflex {
+    animation: skillcard-breathe 1.2s ease-in-out;
+  }
+  .group:hover .skillcard-title--fitness {
+    animation: skillcard-pump 0.5s ease-out forwards;
+  }
+  .group:hover .skillcard-title--yoga {
+    animation: skillcard-float 2s ease-in-out infinite;
+  }
 }
 
 /* Полоска прогресса на карточке курса: анимация при загрузке */

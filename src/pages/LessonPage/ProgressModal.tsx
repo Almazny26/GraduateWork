@@ -215,7 +215,7 @@ export function ProgressModal({
           type="button"
           onClick={onSave}
           disabled={isSaving}
-          className="progress-modal-save-btn flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity disabled:opacity-60 w-[263px] h-[52px] self-center gap-2.5 px-[26px] py-4 bg-[rgba(188,236,48,1)] text-black font-normal text-lg leading-[1.1] text-center"
+          className="progress-modal-save-btn flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-opacity disabled:opacity-60 w-[263px] h-[52px] self-center gap-2.5 px-[26px] py-4 bg-[rgba(188,236,48,1)] text-black font-normal text-lg leading-[1.1] text-center"
           style={{ fontFamily: 'Roboto, sans-serif' }}
         >
           {isSaving ? 'Сохраняем...' : 'Сохранить'}

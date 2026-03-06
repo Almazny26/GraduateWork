@@ -128,7 +128,7 @@ export function LessonPickerModal({
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="rounded-[46px] bg-[#BCEC30] text-[16px] leading-[1.1] text-black hover:opacity-90 transition-opacity"
+                  className="rounded-[46px] bg-[#BCEC30] text-[16px] leading-[1.1] text-black sm:hover:opacity-90 transition-opacity"
                   style={{
                     minWidth: 180,
                     height: 44,
@@ -260,7 +260,7 @@ export function LessonPickerModal({
             <button
               type="button"
               onClick={onStart}
-              className="lesson-picker-btn rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
+              className="lesson-picker-btn rounded-[46px] bg-[#BCEC30] text-[18px] leading-[1.1] text-black sm:hover:opacity-90 sm:hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
               disabled={isLoading || selectedLessonIds.length === 0}
             >

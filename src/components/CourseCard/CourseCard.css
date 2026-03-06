@@ -9,9 +9,57 @@
     box-shadow 300ms ease-out;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 640px) {
   .card-hover-group:hover .card-title-glow {
     border-color: rgba(188, 236, 48, 1);
     box-shadow: 0 0 0 2px rgba(188, 236, 48, 0.3);
+  }
+}
+
+/* на мобильной и на тач-устройствах у кнопки «Добавить курс» без эффекта наведения */
+@media (max-width: 639px), (hover: none) {
+  .card-add-btn,
+  .card-add-btn:hover,
+  .card-add-btn:active,
+  .card-add-btn:focus {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+}
+
+/* тултип «Добавить курс» не показываем на тач-устройствах (там нет наведения) */
+@media (hover: none) {
+  .card-add-tooltip {
+    display: none !important;
+  }
+}
+
+/* лоадер и переход плюс → лоадер → галочка */
+.card-add-btn-icon-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-add-btn-icon-wrap .card-add-btn-icon {
+  transition: opacity 0.2s ease-out, transform 0.25s ease-out;
+}
+
+.card-add-btn-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: rgba(188, 236, 48, 1);
+  border-radius: 50%;
+  animation: card-add-spin 0.7s linear infinite;
+}
+
+@keyframes card-add-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

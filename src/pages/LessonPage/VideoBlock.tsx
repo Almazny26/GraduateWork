@@ -26,10 +26,12 @@ export function VideoBlock({
       : null
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-5 w-full min-w-0">
       <div
-        className="relative w-[343px] sm:w-full max-w-[343px] sm:max-w-[1160px] h-[189px] sm:h-auto lg:h-[639px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC]"
-        style={{ minHeight: 189 }}
+        className="relative w-full mx-auto max-w-[1160px] rounded-[9px] sm:rounded-[30px] overflow-hidden shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)] bg-[#ECECEC] aspect-video min-h-[189px]"
+        style={{
+          maxWidth: 'clamp(343px, 90vw, 1160px)',
+        }}
       >
         {!showVideo && videoPreviewThumbnail && (
           <div
@@ -54,7 +56,7 @@ export function VideoBlock({
             type="button"
             onClick={() => lessonVideoUrl && onShowVideo()}
             disabled={!lessonVideoUrl || isLessonLoading}
-            className="absolute inset-0 z-10 flex items-center justify-center disabled:opacity-60 transition-transform duration-200 hover:scale-105"
+            className="absolute inset-0 z-10 flex items-center justify-center disabled:opacity-60 transition-transform duration-200 sm:hover:scale-105"
             aria-label="Запустить видео"
           >
             <img
@@ -62,7 +64,7 @@ export function VideoBlock({
               alt=""
               width={46}
               height={46}
-              className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain transition-transform duration-200 hover:scale-110"
+              className="w-[46px] h-[46px] sm:w-[156px] sm:h-[156px] object-contain transition-transform duration-200 sm:hover:scale-110"
             />
           </button>
         ) : (

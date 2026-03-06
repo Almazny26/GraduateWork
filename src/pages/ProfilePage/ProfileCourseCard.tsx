@@ -35,8 +35,8 @@ export function ProfileCourseCard({
 
   return (
     <div
-      className={`relative w-[343px] sm:w-[360px] min-h-[649px] shrink-0 group overflow-visible card-hover-group transition-opacity duration-300 ${
-        isRemoving ? 'opacity-80' : 'opacity-100'
+      className={`relative w-[343px] sm:w-[360px] min-h-[649px] shrink-0 overflow-visible transition-opacity duration-300 ${
+        isRemoving ? 'opacity-80' : 'opacity-100 group card-hover-group'
       }`}
       style={{ cursor: "url('/images/cursor.svg') 0 0, auto" }}
     >
@@ -65,6 +65,7 @@ export function ProfileCourseCard({
             }}
             onClick={(e) => {
               e.stopPropagation()
+              setTooltipVisible(false)
               onRemove?.()
             }}
             onMouseEnter={(e) => {
@@ -197,7 +198,7 @@ export function ProfileCourseCard({
           </div>
         </div>
       )}
-      {tooltipVisible && (
+      {tooltipVisible && !isRemoving && (
         <div
           className="fixed z-[100] flex flex-row items-center justify-center box-border pointer-events-none"
           style={{

@@ -588,7 +588,7 @@ export function ProfilePage() {
               e.preventDefault()
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
-            className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
+            className="flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] shrink-0"
             style={{
               width: 127,
               height: 52,

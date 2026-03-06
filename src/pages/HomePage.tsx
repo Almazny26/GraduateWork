@@ -112,11 +112,17 @@ export function HomePage() {
           </p>
         )}
         {!isLoadingCourses && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
+          <div
+            className="grid gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible"
+            style={{
+              gridTemplateColumns:
+                'repeat(auto-fill, minmax(min(343px, 100%), 1fr))',
+            }}
+          >
             {cardCourses.map((course) => (
               <div
                 key={course.courseId}
-                className="overflow-visible sm:p-2 sm:-m-2"
+                className="min-w-0 overflow-visible sm:p-2 sm:-m-2"
               >
                 <CourseCard
                   title={course.title}
@@ -147,7 +153,7 @@ export function HomePage() {
               e.preventDefault()
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
-            className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
+            className="flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] shrink-0"
             style={{
               width: 127,
               height: 52,

@@ -104,7 +104,7 @@ export function ExercisesListMobile({
           type="button"
           onClick={onOpenProgressModal}
           disabled={disabled}
-          className="w-[283px] h-[52px] flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity"
+          className="w-[283px] h-[52px] flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-opacity"
           style={{
             padding: '16px 26px',
             background: 'rgba(188, 236, 48, 1)',
@@ -200,7 +200,7 @@ export function ExercisesListDesktop({
           type="button"
           onClick={onOpenProgressModal}
           disabled={disabled}
-          className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-opacity max-w-[283px] sm:max-w-[274px]"
+          className="flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-opacity max-w-[283px] sm:max-w-[274px]"
           style={{
             width: '100%',
             height: 52,

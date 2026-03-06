@@ -123,7 +123,7 @@ export function CourseHeroSection({
         <div className="relative z-[90] w-full rounded-[30px] bg-white px-6 pb-6 pt-[30px] shadow-[0px_4px_67px_-12px_rgba(0,0,0,0.13)]">
           <div className="flex flex-col gap-6">
             <h2
-              className="text-left max-w-[240px]"
+              className="text-left w-full"
               style={{
                 color: 'rgba(0, 0, 0, 1)',
                 fontFamily: 'Roboto',
@@ -165,7 +165,7 @@ export function CourseHeroSection({
               addCourseLoading={addCourseLoading}
               isSelectedByUser={isSelectedByUser}
               isLoggedIn={isLoggedIn}
-              className="w-full h-[52px] rounded-[46px] hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out flex items-center justify-center px-4 min-w-0 overflow-hidden"
+              className="w-full h-[52px] rounded-[46px] sm:hover:opacity-90 sm:hover:scale-[1.03] transition-all duration-300 ease-out flex items-center justify-center px-4 min-w-0 overflow-hidden"
             />
           </div>
         </div>
@@ -254,7 +254,7 @@ export function CourseHeroSection({
               isSelectedByUser={isSelectedByUser}
               isLoggedIn={isLoggedIn}
               fontSize={18}
-              className="flex flex-row justify-center items-center shrink-0 hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)] w-[437px] h-[52px] gap-2.5 px-[26px] py-4 rounded-[46px]"
+              className="flex flex-row justify-center items-center shrink-0 sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] sm:hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)] w-[437px] h-[52px] gap-2.5 px-[26px] py-4 rounded-[46px]"
             />
           </div>
 

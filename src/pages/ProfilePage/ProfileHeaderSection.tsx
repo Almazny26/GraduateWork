@@ -47,7 +47,7 @@ export function ProfileHeaderSection({ user, onLogout }: Props) {
               <button
                 type="button"
                 onClick={onLogout}
-                className="box-border flex flex-row justify-center items-center gap-[10px] rounded-[46px] border border-black w-[283px] h-[50px] sm:w-[192px] sm:h-[53px] text-[16px] sm:text-[18px] leading-[1.1] text-black font-normal hover:bg-black/5 transition-colors px-[26px] py-[16px]"
+                className="box-border flex flex-row justify-center items-center gap-[10px] rounded-[46px] border border-black w-[283px] h-[50px] sm:w-[192px] sm:h-[53px] text-[16px] sm:text-[18px] leading-[1.1] text-black font-normal sm:hover:bg-black/5 transition-colors px-[26px] py-[16px]"
                 style={{
                   fontFamily: 'Roboto, sans-serif',
                   borderWidth: 1,
