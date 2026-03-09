@@ -1,305 +1,158 @@
+import axios, { type AxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '@/api/config'
-import { logError, logInfo, logWarn } from '@/utils/logger'
+import type {
+  ApiCourse,
+  ApiCourseProgress,
+  ApiUserMe,
+  ApiWorkout,
+  ApiWorkoutProgressByWorkout,
+} from '@/api/types'
 
-// ключ в localStorage под токен
-export const AUTH_TOKEN_STORAGE_KEY = 'skyfitness_auth_token'
+export { AUTH_TOKEN_STORAGE_KEY } from '@/api/authStorage'
+export type {
+  ApiCourse,
+  ApiUserMe,
+  ApiWorkout,
+  ApiWorkoutProgress,
+} from '@/api/types'
 
-export type ApiUserMe = {
-  email: string
-  selectedCourses: string[]
-}
-
-export type ApiCourse = {
-  _id: string
-  nameRU: string
-  nameEN: string
-  description: string
-  directions: string[]
-  fitting: string[]
-  workouts: string[]
-  difficulty?: string
-  durationInDays?: number
-  dailyDurationInMinutes?: {
-    from: number
-    to: number
-  }
-}
-
-export type ApiWorkoutExercise = {
-  _id: string
-  name: string
-  quantity: number
-}
-
-export type ApiWorkout = {
-  _id: string
-  name: string
-  video: string
-  exercises: ApiWorkoutExercise[]
-}
-
-export type ApiWorkoutProgress = {
-  workoutId: string
-  workoutCompleted: boolean
-  progressData: number[]
-}
-
-export type ApiCourseProgress = {
-  courseId: string
-  courseCompleted: boolean
-  workoutsProgress: ApiWorkoutProgress[]
-}
-
-export type ApiWorkoutProgressByWorkout = {
-  workoutId: string
-  workoutCompleted: boolean
-  progressData: number[]
-}
-
-type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 const API_TIMEOUT_MS = 45000
-const API_RETRY_COUNT = 1 // один повтор при таймауте/сети
 
-function buildHeaders(token?: string): HeadersInit {
-  const headers: Record<string, string> = {}
-  if (token) headers.Authorization = `Bearer ${token}`
-  return headers
-}
-
-// в логах пароль не светим
-function sanitizeRequestBody(path: string, body: unknown): unknown {
-  if (!body || typeof body !== 'object') return body
-  const data = body as Record<string, unknown>
-  if (path.includes('/auth/login') || path.includes('/auth/register')) {
-    return { ...data, password: '***' }
+function getApiMessage(response: { data?: unknown; status: number }, path: string): string | null {
+  const data = response.data
+  if (typeof data === 'object' && data !== null) {
+    const p = data as Record<string, unknown>
+    if (typeof p.message === 'string') return p.message
+    if (typeof p.error === 'string') return p.error
+    if (typeof p.msg === 'string') return p.msg
   }
-  return data
+  if (response.status === 404 && (path.includes('/auth/login') || path.includes('/auth/register'))) {
+    return path.includes('/auth/register')
+      ? 'Пользователь с таким email уже существует или неверные данные.'
+      : 'Пользователь не найден или неверный пароль.'
+  }
+  return null
 }
+
+const client = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: API_TIMEOUT_MS,
+})
+
+client.interceptors.request.use((cfg) => {
+  if (cfg.headers && cfg.data !== undefined) {
+    delete cfg.headers['Content-Type']
+    delete cfg.headers['content-type']
+    cfg.headers['Content-Type'] = 'text/plain; charset=utf-8'
+  }
+  return cfg
+})
 
 async function request<T>(
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  method: HttpMethod,
-  options?: {
-    body?: unknown
-    token?: string
-  }
+  config?: { body?: unknown; token?: string }
 ): Promise<T> {
-  let response: Response | null = null
-  for (let attempt = 0; attempt <= API_RETRY_COUNT; attempt += 1) {
-    const requestUrl = `${API_BASE_URL}${path}`
-    const controller = new AbortController()
-    const timeoutId = window.setTimeout(
-      () => controller.abort(),
-      API_TIMEOUT_MS
-    )
-    logInfo('API', 'request start', { method, path, attempt, requestUrl })
-    if (options?.body !== undefined) {
-      logInfo('API', 'request body', {
-        method,
-        path,
-        body: sanitizeRequestBody(path, options.body),
-      })
+  const token = config?.token
+  const headers: Record<string, string> = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  try {
+    const axiosConfig: AxiosRequestConfig = {
+      method,
+      url: path,
+      headers: Object.keys(headers).length ? headers : undefined,
+      data:
+        config?.body !== undefined ? JSON.stringify(config.body) : undefined,
     }
 
-    try {
-      response = await fetch(requestUrl, {
-        method,
-        headers: buildHeaders(options?.token),
-        body:
-          options?.body !== undefined
-            ? JSON.stringify(options.body)
-            : undefined,
-        signal: controller.signal,
-      })
-      if (response.ok) {
-        logInfo('API', 'request success', {
-          method,
-          path,
-          status: response.status,
-          attempt,
-        })
-      }
-      break
-    } catch (error) {
-      const isAbortError =
-        error instanceof DOMException && error.name === 'AbortError'
-      const isNetworkError = error instanceof TypeError
-      const canRetry =
-        attempt < API_RETRY_COUNT && (isAbortError || isNetworkError)
+    const res = await client.request<T>(axiosConfig)
+    return res.data as T
+  } catch (err) {
+    const isTimeout = axios.isAxiosError(err) && err.code === 'ECONNABORTED'
 
-      if (canRetry) {
-        logWarn('API', 'request retry', {
-          method,
-          path,
-          attempt,
-          reason: isAbortError ? 'abort' : 'network',
-        })
-        continue
+    if (axios.isAxiosError(err) && err.response) {
+      const apiMessage = getApiMessage(
+        { data: err.response.data, status: err.response.status },
+        path
+      )
+      if (apiMessage) throw new Error(apiMessage)
+      const rawText =
+        typeof err.response.data === 'string'
+          ? err.response.data
+          : JSON.stringify(err.response.data)
+      if (rawText.trim()) {
+        throw new Error(`Ошибка API ${err.response.status}: ${rawText.trim()}`)
       }
-
-      if (isAbortError) {
-        logError('API', 'request timeout', { method, path, attempt })
-        throw new Error(
-          'Сервер долго отвечает. Попробуйте еще раз через несколько секунд.'
-        )
-      }
-
-      logError('API', 'request failed', {
-        method,
-        path,
-        attempt,
-        error: error instanceof Error ? error.message : String(error),
-      })
-      throw error
-    } finally {
-      window.clearTimeout(timeoutId)
+      throw new Error(
+        `Ошибка API ${err.response.status}. Проверьте VITE_API_BASE_URL и доступность сервера.`
+      )
     }
-  }
 
-  if (!response) {
+    if (isTimeout) {
+      throw new Error(
+        'Сервер долго отвечает. Попробуйте еще раз через несколько секунд.'
+      )
+    }
+
     throw new Error('Не удалось выполнить запрос к API.')
   }
-
-  let payload: unknown = null
-  let rawText = ''
-  try {
-    rawText = await response.text()
-    payload = rawText ? JSON.parse(rawText) : null
-  } catch {
-    payload = null
-  }
-
-  if (path === '/courses' && response.ok) {
-    const preview =
-      rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText
-    logInfo('API', 'courses response body', {
-      len: rawText.length,
-      isArray: Array.isArray(payload),
-      preview: preview.slice(0, 120),
-    })
-  }
-
-  if (!response.ok) {
-    let apiMessage: string | null = null
-    if (typeof payload === 'object' && payload !== null) {
-      const p = payload as Record<string, unknown>
-      if (typeof p.message === 'string') apiMessage = p.message
-      else if (typeof p.error === 'string') apiMessage = p.error
-      else if (typeof p.msg === 'string') apiMessage = p.msg
-    }
-    if (
-      !apiMessage &&
-      typeof rawText === 'string' &&
-      rawText.trim().length > 0 &&
-      rawText.length < 500
-    ) {
-      try {
-        const parsed = JSON.parse(rawText) as Record<string, unknown>
-        if (typeof parsed?.message === 'string') apiMessage = parsed.message
-      } catch {
-        apiMessage = rawText.trim()
-      }
-    }
-    if (
-      !apiMessage &&
-      response.status === 404 &&
-      (path.includes('/auth/login') || path.includes('/auth/register'))
-    ) {
-      apiMessage = path.includes('/auth/register')
-        ? 'Пользователь с таким email уже существует или неверные данные.'
-        : 'Пользователь не найден или неверный пароль.'
-    }
-
-    if (apiMessage) {
-      logWarn('API', 'request api-error message', {
-        method,
-        path,
-        status: response.status,
-        message: apiMessage,
-      })
-      throw new Error(apiMessage)
-    }
-
-    if (rawText.trim()) {
-      logWarn('API', 'request api-error raw', {
-        method,
-        path,
-        status: response.status,
-        rawText,
-      })
-      throw new Error(`Ошибка API ${response.status}: ${rawText.trim()}`)
-    }
-
-    throw new Error(
-      `Ошибка API ${response.status}. Проверьте VITE_API_BASE_URL и доступность сервера.`
-    )
-  }
-
-  if (path.includes('/users/me') || path.includes('/users/me/courses')) {
-    logInfo('API', 'response payload', {
-      method,
-      path,
-      payload,
-    })
-  }
-
-  return payload as T
 }
 
 export const fitnessApi = {
   register: (email: string, password: string) =>
-    request<{ message: string }>('/auth/register', 'POST', {
+    request<{ message: string }>('POST', '/auth/register', {
       body: { email, password },
     }),
 
   login: (email: string, password: string) =>
-    request<{ token: string }>('/auth/login', 'POST', {
+    request<{ token: string }>('POST', '/auth/login', {
       body: { email, password },
     }),
 
-  me: (token: string) => request<ApiUserMe>('/users/me', 'GET', { token }),
+  me: (token: string) => request<ApiUserMe>('GET', '/users/me', { token }),
 
   getCourses: async (): Promise<ApiCourse[]> => {
-    const data = await request<ApiCourse[] | null>('/courses', 'GET')
+    const data = await request<ApiCourse[] | null>('GET', '/courses')
     return Array.isArray(data) ? data : []
   },
 
   getCourseById: (courseId: string) =>
-    request<ApiCourse>(`/courses/${courseId}`, 'GET'),
+    request<ApiCourse>('GET', `/courses/${courseId}`),
 
   getCourseWorkouts: (courseId: string, token: string) =>
-    request<ApiWorkout[]>(`/courses/${courseId}/workouts`, 'GET', { token }),
+    request<ApiWorkout[]>('GET', `/courses/${courseId}/workouts`, { token }),
 
   addCourseToUser: (courseId: string, token: string) =>
-    request<{ message: string }>('/users/me/courses', 'POST', {
+    request<{ message: string }>('POST', '/users/me/courses', {
       token,
       body: { courseId },
     }),
 
   deleteCourseFromUser: (courseId: string, token: string) =>
-    request<{ message: string }>(`/users/me/courses/${courseId}`, 'DELETE', {
+    request<{ message: string }>('DELETE', `/users/me/courses/${courseId}`, {
       token,
     }),
 
   resetCourseProgress: (courseId: string, token: string) =>
-    request<{ message: string }>(`/courses/${courseId}/reset`, 'PATCH', {
+    request<{ message: string }>('PATCH', `/courses/${courseId}/reset`, {
       token,
     }),
 
   getWorkoutById: (workoutId: string, token: string) =>
-    request<ApiWorkout>(`/workouts/${workoutId}`, 'GET', { token }),
+    request<ApiWorkout>('GET', `/workouts/${workoutId}`, { token }),
 
   getCourseProgress: (courseId: string, token: string) =>
     request<ApiCourseProgress>(
-      `/users/me/progress?courseId=${encodeURIComponent(courseId)}`,
       'GET',
+      `/users/me/progress?courseId=${encodeURIComponent(courseId)}`,
       { token }
     ),
 
   getWorkoutProgress: (courseId: string, workoutId: string, token: string) =>
     request<ApiWorkoutProgressByWorkout>(
-      `/users/me/progress?courseId=${encodeURIComponent(courseId)}&workoutId=${encodeURIComponent(workoutId)}`,
       'GET',
+      `/users/me/progress?courseId=${encodeURIComponent(courseId)}&workoutId=${encodeURIComponent(workoutId)}`,
       { token }
     ),
 
@@ -309,15 +162,15 @@ export const fitnessApi = {
     progressData: number[],
     token: string
   ) =>
-    request<unknown>(`/courses/${courseId}/workouts/${workoutId}`, 'PATCH', {
+    request<unknown>('PATCH', `/courses/${courseId}/workouts/${workoutId}`, {
       token,
       body: { progressData },
     }),
 
   resetWorkoutProgress: (courseId: string, workoutId: string, token: string) =>
     request<{ message: string }>(
-      `/courses/${courseId}/workouts/${workoutId}/reset`,
       'PATCH',
+      `/courses/${courseId}/workouts/${workoutId}/reset`,
       { token }
     ),
 }

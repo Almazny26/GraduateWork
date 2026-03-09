@@ -8,9 +8,7 @@ import { COURSES } from '@/data/courses'
 import { fitnessApi, type ApiCourse } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef } from '@/api/mappers'
 import { useAuth } from '@/contexts/AuthContext'
-import { logError, logInfo } from '@/utils/logger'
 
-// порядок курсов как в макете (йога, стретчинг и т.д.)
 const COURSE_ORDER_BY_SLUG = new Map(
   COURSES.map((course, index) => [course.slug, index])
 )
@@ -22,29 +20,22 @@ export function HomePage() {
   const [coursesLoadError, setCoursesLoadError] = useState<string | null>(null)
   const [addingCourseId, setAddingCourseId] = useState<string | null>(null)
 
-  // при загрузке страницы тянем список курсов с API
   useEffect(() => {
     setIsLoadingCourses(true)
     setCoursesLoadError(null)
-    logInfo('HomePage', 'load courses started')
     fitnessApi
       .getCourses()
       .then((data) => {
         const list = Array.isArray(data) ? data : []
         setCourses(list)
-        logInfo('HomePage', 'load courses success', { count: list.length })
       })
-      .catch((error) => {
+      .catch(() => {
         setCourses([])
         setCoursesLoadError('Не удалось загрузить курсы с сервера')
-        logError('HomePage', 'load courses failed', {
-          error: error instanceof Error ? error.message : String(error),
-        })
       })
       .finally(() => setIsLoadingCourses(false))
   }, [])
 
-  // курсы для карточек в нужном порядке
   const cardCourses = useMemo(() => {
     const mapped = courses.map((course) => mapApiCourseToAppCourseRef(course))
     return mapped.sort((a, b) => {
@@ -57,7 +48,6 @@ export function HomePage() {
     })
   }, [courses])
 
-  // добавление курса в профиль по клику на плюс
   const handleAddCourseFromCard = async (courseId: string) => {
     if (!user || !token) {
       toast('Войдите, чтобы добавить курс')
@@ -75,22 +65,18 @@ export function HomePage() {
     if (addingCourseId === courseId) return
 
     setAddingCourseId(courseId)
-    logInfo('HomePage', 'add course started', { courseId })
     try {
       await fitnessApi.addCourseToUser(courseId, token)
       await refreshMe()
       toast.success('Курс добавлен в ваш профиль')
-      logInfo('HomePage', 'add course success', { courseId })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Не удалось добавить курс'
       if (message.toLowerCase().includes('уже')) {
         await refreshMe()
         toast('Курс уже был добавлен')
-        logInfo('HomePage', 'add course already added', { courseId })
       } else {
         toast.error(message)
-        logError('HomePage', 'add course failed', { courseId, message })
       }
     } finally {
       setAddingCourseId(null)
@@ -112,11 +98,17 @@ export function HomePage() {
           </p>
         )}
         {!isLoadingCourses && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible">
+          <div
+            className="grid gap-6 sm:gap-x-[40px] sm:gap-y-[76px] w-full max-w-[1160px] min-w-0 overflow-visible"
+            style={{
+              gridTemplateColumns:
+                'repeat(auto-fill, minmax(min(343px, 100%), 1fr))',
+            }}
+          >
             {cardCourses.map((course) => (
               <div
                 key={course.courseId}
-                className="overflow-visible sm:p-2 sm:-m-2"
+                className="min-w-0 overflow-visible sm:p-2 sm:-m-2"
               >
                 <CourseCard
                   title={course.title}
@@ -147,7 +139,7 @@ export function HomePage() {
               e.preventDefault()
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
-            className="flex flex-row justify-center items-center rounded-[46px] hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.03] shrink-0"
+            className="flex flex-row justify-center items-center rounded-[46px] sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] shrink-0"
             style={{
               width: 127,
               height: 52,

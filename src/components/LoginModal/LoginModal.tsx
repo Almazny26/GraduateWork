@@ -3,13 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi } from '@/api/fitness'
-
+import type { AuthMode, LoginModalProps } from './types'
 import photoMiniImg from '@/assets/photo_mini.png'
 
-type Props = { open: boolean; onClose: () => void }
-type AuthMode = 'login' | 'register'
-
-// тут тоже достаю email/selectedCourses из ответа API (как в AuthContext)
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (typeof value !== 'object' || value === null) return null
   return value as Record<string, unknown>
@@ -98,12 +94,11 @@ function extractSelectedCourses(payload: unknown): string[] {
   return []
 }
 
-// модалка входа/регистрации, после успеха вызываем login() из контекста
-export function LoginModal({ open, onClose }: Props) {
+export function LoginModal({ open, onClose }: LoginModalProps) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [shouldRender, setShouldRender] = useState(open)
-  const [isVisible, setIsVisible] = useState(false) // для анимации появления
+  const [isVisible, setIsVisible] = useState(false)
   const [mode, setMode] = useState<AuthMode>('login')
   const [loginValue, setLoginValue] = useState('')
   const [emailValue, setEmailValue] = useState('')
@@ -115,6 +110,8 @@ export function LoginModal({ open, onClose }: Props) {
   const [registerSubmitAttempted, setRegisterSubmitAttempted] = useState(false)
   const [isLoginSubmitting, setIsLoginSubmitting] = useState(false)
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false)
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<number | null>(null)
 
@@ -129,6 +126,8 @@ export function LoginModal({ open, onClose }: Props) {
     setRegisterSubmitAttempted(false)
     setIsLoginSubmitting(false)
     setIsRegisterSubmitting(false)
+    setShowLoginPassword(false)
+    setShowRegisterPassword(false)
   }
 
   const switchMode = (nextMode: AuthMode) => {
@@ -136,6 +135,8 @@ export function LoginModal({ open, onClose }: Props) {
     setLoginError('')
     setRegisterError('')
     setCanShowRegisterError(false)
+    setShowLoginPassword(false)
+    setShowRegisterPassword(false)
   }
 
   useEffect(() => {
@@ -349,19 +350,34 @@ export function LoginModal({ open, onClose }: Props) {
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
               autoComplete="email"
             />
-            <input
-              type="password"
-              value={password}
-              disabled={isLoginSubmitting}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                if (loginError) setLoginError('')
-              }}
-              placeholder="Пароль"
-              className={inputClassName(!!loginError)}
-              style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <input
+                type={showLoginPassword ? 'text' : 'password'}
+                value={password}
+                disabled={isLoginSubmitting}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (loginError) setLoginError('')
+                }}
+                placeholder="Пароль"
+                className={`${inputClassName(!!loginError)} pr-12`}
+                style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword((v) => !v)}
+                className="no-scale-hover absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded border-0 bg-transparent text-black/50 sm:hover:text-black focus:outline-none"
+                aria-label={showLoginPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                tabIndex={-1}
+              >
+                {showLoginPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </div>
 
             <div className="min-h-[14px]">
               {loginError && (
@@ -383,7 +399,7 @@ export function LoginModal({ open, onClose }: Props) {
             <button
               type="submit"
               disabled={isLoginSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black sm:hover:opacity-90 sm:hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{
                 backgroundColor: 'rgba(188, 236, 48, 1)',
                 fontFamily: 'Roboto, sans-serif',
@@ -399,7 +415,7 @@ export function LoginModal({ open, onClose }: Props) {
                 switchMode('register')
               }}
               disabled={isLoginSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black sm:hover:bg-black/5 sm:hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Зарегистрироваться
@@ -432,21 +448,36 @@ export function LoginModal({ open, onClose }: Props) {
               style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
               autoComplete="email"
             />
+            <div className="relative">
+              <input
+                type={showRegisterPassword ? 'text' : 'password'}
+                value={password}
+                disabled={isRegisterSubmitting}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (registerError) setRegisterError('')
+                }}
+                placeholder="Пароль"
+                className={`${inputClassName(false)} pr-12`}
+                style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowRegisterPassword((v) => !v)}
+                className="no-scale-hover absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded border-0 bg-transparent text-black/50 sm:hover:text-black focus:outline-none"
+                aria-label={showRegisterPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                tabIndex={-1}
+              >
+                {showRegisterPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </div>
             <input
-              type="password"
-              value={password}
-              disabled={isRegisterSubmitting}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                if (registerError) setRegisterError('')
-              }}
-              placeholder="Пароль"
-              className={inputClassName(false)}
-              style={{ fontFamily: 'Roboto, sans-serif', fontSize: 18 }}
-              autoComplete="new-password"
-            />
-            <input
-              type="password"
+              type={showRegisterPassword ? 'text' : 'password'}
               value={repeatPassword}
               disabled={isRegisterSubmitting}
               onChange={(e) => {
@@ -486,7 +517,7 @@ export function LoginModal({ open, onClose }: Props) {
             <button
               type="submit"
               disabled={isRegisterSubmitting}
-              className={`w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black hover:opacity-90 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60 ${
+              className={`w-full h-[52px] flex justify-center items-center rounded-[46px] text-[18px] leading-[1.1] text-black sm:hover:opacity-90 sm:hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60 ${
                 canShowRegisterError && registerSubmitAttempted && registerError
                   ? 'mt-[34px]'
                   : 'mt-[24px]'
@@ -506,7 +537,7 @@ export function LoginModal({ open, onClose }: Props) {
                 switchMode('login')
               }}
               disabled={isRegisterSubmitting}
-              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black hover:bg-black/5 hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
+              className="w-full h-[52px] flex justify-center items-center rounded-[46px] border border-black text-[18px] leading-[1.1] text-black sm:hover:bg-black/5 sm:hover:scale-[1.03] transition-all duration-300 ease-out disabled:opacity-60"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
               Войти

@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components -- export useAuth hook and User type */
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -8,11 +8,10 @@ import {
   type ReactNode,
 } from 'react'
 import { AUTH_TOKEN_STORAGE_KEY, fitnessApi } from '@/api/fitness'
-import { logError, logInfo, logWarn } from '@/utils/logger'
+import type { AuthContextValue, User } from '@/common/types'
 
 const STORAGE_KEY = 'skyfitness_user'
 
-// из ответа API достаём email и делаем логин из части до @
 function parseAuthIdentity(email: unknown) {
   if (typeof email !== 'string') {
     return { email: '', login: 'user' }
@@ -32,7 +31,6 @@ function toRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
-// рекурсивно ищем объекты в ответе (user, data, result и т.д.)
 function collectNestedRecords(root: unknown): Record<string, unknown>[] {
   const first = toRecord(root)
   if (!first) return []
@@ -57,7 +55,6 @@ function collectNestedRecords(root: unknown): Record<string, unknown>[] {
   return result
 }
 
-// email может быть вложен в разные поля ответа
 function extractApiEmail(payload: unknown): string {
   const records = collectNestedRecords(payload)
   for (const record of records) {
@@ -66,7 +63,6 @@ function extractApiEmail(payload: unknown): string {
   return ''
 }
 
-// selectedCourses с бэка привожу к массиву id
 function normalizeSelectedCourseIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
 
@@ -106,29 +102,10 @@ function extractSelectedCourses(payload: unknown): string[] {
   return []
 }
 
-export type User = {
-  name: string
-  login: string
-  email: string
-  selectedCourses: string[]
-  avatarUrl?: string
-}
-
-type AuthContextValue = {
-  user: User | null
-  token: string | null
-  isLoggedIn: boolean
-  login: (user: User, token: string) => void
-  logout: () => void
-  refreshMe: () => Promise<void>
-  loginModalOpen: boolean
-  openLoginModal: () => void
-  closeLoginModal: () => void
-}
+export type { User } from '@/common/types'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-// при загрузке страницы читаю юзера из localStorage
 function loadUser(): User | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -171,17 +148,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   const login = useCallback((u: User, authToken: string) => {
-    logInfo('AuthContext', 'login success', {
-      email: u.email,
-      selectedCourses: u.selectedCourses.length,
-    })
     setUser(u)
     setToken(authToken)
     setLoginModalOpen(false)
   }, [])
 
   const logout = useCallback(() => {
-    logInfo('AuthContext', 'logout')
     setUser(null)
     setToken(null)
   }, [])
@@ -190,7 +162,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const activeToken = loadToken()
     if (!activeToken) return
     try {
-      logInfo('AuthContext', 'refreshMe started')
       const me = await fitnessApi.me(activeToken)
       const identity = parseAuthIdentity(extractApiEmail(me))
       const selectedCourses = extractSelectedCourses(me)
@@ -201,19 +172,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         selectedCourses,
       })
       setToken(activeToken)
-      logInfo('AuthContext', 'refreshMe success', {
-        email: identity.email,
-        selectedCourses: selectedCourses.length,
-      })
     } catch (error) {
-      logError('AuthContext', 'refreshMe failed', {
-        error: error instanceof Error ? error.message : String(error),
-      })
       throw error
     }
   }, [])
 
-  // при первом заходе если есть токен - подтягиваю данные юзера с API
   useEffect(() => {
     const activeToken = loadToken()
     if (!activeToken) return
@@ -229,15 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           selectedCourses,
         })
         setToken(activeToken)
-        logInfo('AuthContext', 'bootstrap me success', {
-          email: identity.email,
-          selectedCourses: selectedCourses.length,
-        })
       })
-      .catch(() => {
-        // если API недоступен при загрузке - не выкидываю из сессии, оставляю что в localStorage
-        logWarn('AuthContext', 'bootstrap me failed, keep local session')
-      })
+      .catch(() => {})
   }, [])
 
   const openLoginModal = useCallback(() => setLoginModalOpen(true), [])

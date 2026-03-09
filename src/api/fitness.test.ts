@@ -1,57 +1,73 @@
 import { fitnessApi } from '@/api/fitness'
 
+declare global {
+  var __axiosRequestMock: jest.Mock | undefined
+}
+
+jest.mock('axios', () => {
+  const requestMock = jest.fn()
+  globalThis.__axiosRequestMock = requestMock
+  return {
+    __esModule: true,
+    default: {
+      create: () => ({
+        request: requestMock,
+        interceptors: {
+          request: { use: (fn: (c: unknown) => unknown) => fn },
+        },
+      }),
+      isAxiosError: (e: unknown) =>
+        typeof e === 'object' && e !== null && 'isAxiosError' in e,
+    },
+  }
+})
+
+const getMock = () => globalThis.__axiosRequestMock!
+
 describe('fitnessApi', () => {
-  const originalFetch = global.fetch
-
   beforeEach(() => {
-    global.fetch = jest.fn()
-  })
-
-  afterEach(() => {
-    jest.resetAllMocks()
-    global.fetch = originalFetch
+    getMock().mockReset()
   })
 
   it('sends login request with correct method/body', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
+    getMock().mockResolvedValue({
+      data: { token: 'jwt-token' },
       status: 200,
-      text: async () => JSON.stringify({ token: 'jwt-token' }),
     })
 
     const response = await fitnessApi.login('user@example.com', 'Pass@!1')
 
     expect(response).toEqual({ token: 'jwt-token' })
-    expect(global.fetch).toHaveBeenCalledTimes(1)
-    const [url, options] = (global.fetch as jest.Mock).mock.calls[0]
-    expect(url).toContain('/auth/login')
-    expect(options.method).toBe('POST')
-    expect(JSON.parse(options.body)).toEqual({
+    expect(getMock()).toHaveBeenCalledTimes(1)
+    const [config] = getMock().mock.calls[0]
+    expect(config.url).toContain('/auth/login')
+    expect(config.method).toBe('POST')
+    expect(JSON.parse(config.data as string)).toEqual({
       email: 'user@example.com',
       password: 'Pass@!1',
     })
   })
 
   it('adds bearer token for protected endpoints', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
+    getMock().mockResolvedValue({
+      data: { email: 'user@example.com', selectedCourses: [] },
       status: 200,
-      text: async () =>
-        JSON.stringify({ email: 'user@example.com', selectedCourses: [] }),
     })
 
     await fitnessApi.me('token-123')
 
-    const [, options] = (global.fetch as jest.Mock).mock.calls[0]
-    expect(options.headers.Authorization).toBe('Bearer token-123')
+    const [config] = getMock().mock.calls[0]
+    expect(config.headers.Authorization).toBe('Bearer token-123')
   })
 
   it('throws API message on non-2xx response', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: false,
-      status: 401,
-      text: async () => JSON.stringify({ message: 'Неверный пароль' }),
-    })
+    const err = new Error('bad') as Error & {
+      response?: { data: unknown; status: number }
+      isAxiosError?: boolean
+    }
+    err.response = { data: { message: 'Неверный пароль' }, status: 401 }
+    err.isAxiosError = true
+    getMock().mockRejectedValue(err)
 
     await expect(fitnessApi.login('user@example.com', 'wrong')).rejects.toThrow(
       'Неверный пароль'
