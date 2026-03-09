@@ -26,11 +26,11 @@ export function CourseCard({
           boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
         }}
       >
-        <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[343/325] sm:aspect-[360/325] bg-white">
+        <div className="w-full overflow-hidden relative rounded-[30px] aspect-[343/325] sm:aspect-[360/325] bg-white">
           <img
             src={imageSrc}
             alt=""
-            className="w-full h-full object-contain sm:object-cover object-top bg-white"
+            className="w-full h-full object-cover object-top bg-white"
             width={360}
             height={325}
           />
