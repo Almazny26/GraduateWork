@@ -1,5 +1,3 @@
-// типы ответов API фитнес-сервера
-
 export type ApiUserMe = {
   email: string
   selectedCourses: string[]

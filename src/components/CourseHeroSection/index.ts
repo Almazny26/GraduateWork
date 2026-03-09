@@ -1,0 +1,1 @@
+export { CourseHeroSection } from './CourseHeroSection'

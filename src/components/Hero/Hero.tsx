@@ -1,6 +1,5 @@
 import './Hero.css'
 
-// блок с заголовком и зелёным пузырём на главной
 export function Hero() {
   return (
     <section className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[40px] sm:pt-[60px] flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-8 min-w-0">
@@ -27,7 +26,6 @@ export function Hero() {
         </span>
       </h1>
       <div className="relative shrink-0 hidden sm:block">
-        {/* Frame 2043682951: 288×102, flex row center, gap 10, padding 16 20, radius 5, #BCEC30 */}
         <div
           className="relative font-sans flex flex-row justify-center items-center rounded-[5px]"
           style={{
@@ -53,7 +51,6 @@ export function Hero() {
             <br />
             тело за полгода!
           </p>
-          {/* Хвостик пузыря вниз и вправо */}
           <span
             className="absolute w-0 h-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent"
             style={{

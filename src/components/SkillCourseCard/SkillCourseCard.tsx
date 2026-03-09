@@ -8,7 +8,6 @@ export function SkillCourseCard({
 }: SkillCourseCardProps) {
   return (
     <>
-      {/* Mobile */}
       <div className="sm:hidden relative w-[343px] max-w-[343px] h-[389px] rounded-[30px] overflow-hidden cursor-default bg-[rgba(173,97,255,1)]">
         <img
           src={mobileImageSrc || imageSrc}
@@ -19,7 +18,6 @@ export function SkillCourseCard({
         />
       </div>
 
-      {/* Desktop (unchanged behavior) */}
       <div className="hidden sm:block group relative w-full max-w-[1160px] rounded-[30px] overflow-hidden aspect-[1160/310] cursor-default">
         <img
           src={imageSrc}

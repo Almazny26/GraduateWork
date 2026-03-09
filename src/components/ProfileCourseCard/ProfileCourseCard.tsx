@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ProfileCourse } from './types'
+import type { ProfileCourse } from '@/pages/ProfilePage/types'
 
 export type ProfileCourseCardProps = {
   course: ProfileCourse

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { SelectedLessonItem } from './types'
+import type { SelectedLessonItem } from '@/pages/LessonPage/types'
 
 type Props = {
   slug: string | undefined

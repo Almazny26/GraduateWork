@@ -1,4 +1,4 @@
-import type { ExerciseItem } from './types'
+import type { ExerciseItem } from '@/pages/LessonPage/types'
 
 type Props = {
   lessonTitle: string

@@ -3,19 +3,17 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
-// шапка: лого, слоган на главной, кнопка входа или меню юзера
 export function Header() {
   const { user, logout, openLoginModal } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [dropdownAnimated, setDropdownAnimated] = useState(false) // для плавного появления/скрытия
+  const [dropdownAnimated, setDropdownAnimated] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const closeTimeoutRef = useRef<number | null>(null) // таймер перед закрытием, чтобы успела анимация
+  const closeTimeoutRef = useRef<number | null>(null)
   const showTagline =
     location.pathname === '/' || /^\/course\/[^/]+\/?$/.test(location.pathname)
 
-  // закрытие с анимацией: сначала уезжает вверх, потом размонтируем
   const closeDropdown = useCallback(() => {
     if (closeTimeoutRef.current) {
       window.clearTimeout(closeTimeoutRef.current)
@@ -32,7 +30,6 @@ export function Header() {
     }
   }, [dropdownAnimated])
 
-  // клик вне меню - закрыть
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -46,7 +43,6 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [closeDropdown])
 
-  // при открытии дропдауна через кадр включаем анимацию (иначе не видно выезд)
   useEffect(() => {
     if (!dropdownOpen) {
       setDropdownAnimated(false)

@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 
-// точка входа, роутер оборачивает всё приложение
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter

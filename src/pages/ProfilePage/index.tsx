@@ -11,12 +11,11 @@ import {
   type ApiWorkoutProgress,
 } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef } from '@/api/mappers'
-import { logError, logInfo } from '@/utils/logger'
 import { ProfileCoursesLoading } from '@/components/Loading'
-import type { PickerLesson, ProfileCourse } from './ProfilePage/types'
-import { LessonPickerModal } from './ProfilePage/LessonPickerModal'
-import { ProfileCourseCard } from './ProfilePage/ProfileCourseCard'
-import { ProfileHeaderSection } from './ProfilePage/ProfileHeaderSection'
+import { LessonPickerModal } from '@/components/LessonPickerModal'
+import { ProfileCourseCard } from '@/components/ProfileCourseCard'
+import { ProfileHeaderSection } from '@/components/ProfileHeaderSection'
+import type { PickerLesson, ProfileCourse } from './types'
 
 export function ProfilePage() {
   const navigate = useNavigate()
@@ -45,7 +44,6 @@ export function ProfilePage() {
   const lessonPickerCloseTimerRef = useRef<number | null>(null)
   const lessonPickerRequestIdRef = useRef(0)
   const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
-  // по каким курсам уже пришёл прогресс из API (чтобы не показывать 0% до загрузки)
   const [progressLoadedSlugs, setProgressLoadedSlugs] = useState<Set<string>>(
     () => new Set()
   )
@@ -130,23 +128,15 @@ export function ProfilePage() {
     setIsLessonPickerLoading(false)
   }
 
-  // сброс прогресса по курсу (кнопка «Начать заново»)
   const resetCourseProgress = async (course: ProfileCourse) => {
     if (!token) return
     try {
       await fitnessApi.resetCourseProgress(course.courseId, token)
       setCourseProgressMap((prev) => ({ ...prev, [course.slug]: 0 }))
-      logInfo('ProfilePage', 'reset course progress success', {
-        courseId: course.courseId,
-      })
     } catch {
-      logError('ProfilePage', 'reset course progress failed', {
-        courseId: course.courseId,
-      })
     }
   }
 
-  // открываю пикер урока и потом перехожу на урок
   const startCourse = async (course: ProfileCourse, progress: number) => {
     if (
       startingCourseId === course.courseId ||
@@ -172,9 +162,6 @@ export function ProfilePage() {
       await fitnessApi.deleteCourseFromUser(course.courseId, token)
       setRemovedCourseIds((prev) => [...prev, course.courseId])
       toast.success('Курс удален из профиля')
-      logInfo('ProfilePage', 'remove course success', {
-        courseId: course.courseId,
-      })
       refreshMe()
     } catch (error) {
       const message =
@@ -189,10 +176,6 @@ export function ProfilePage() {
       } else {
         toast.error(message)
       }
-      logError('ProfilePage', 'remove course failed', {
-        courseId: course.courseId,
-        message,
-      })
     } finally {
       setRemovingCourseId(null)
     }
@@ -219,22 +202,6 @@ export function ProfilePage() {
       lessonPickerCloseTimerRef.current = null
     }, 240)
   }
-
-  useEffect(() => {
-    if (!lessonPickerCourse) return
-    const prevOverflow = document.body.style.overflow
-    const prevPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth
-    document.body.style.overflow = 'hidden'
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`
-    }
-    return () => {
-      document.body.style.overflow = prevOverflow
-      document.body.style.paddingRight = prevPaddingRight
-    }
-  }, [lessonPickerCourse])
 
   const startSelectedLesson = () => {
     if (!lessonPickerCourse || selectedLessonIds.length === 0) return
@@ -309,21 +276,12 @@ export function ProfilePage() {
   useEffect(() => {
     setIsLoadingCourses(true)
     setProfileLoadError(null)
-    logInfo('ProfilePage', 'load profile courses started')
     fitnessApi
       .getCourses()
-      .then((courses) => {
-        setApiCourses(courses)
-        logInfo('ProfilePage', 'load profile courses success', {
-          count: courses.length,
-        })
-      })
-      .catch((error) => {
+      .then((courses) => setApiCourses(courses))
+      .catch(() => {
         setApiCourses([])
         setProfileLoadError('Не удалось загрузить курсы профиля')
-        logError('ProfilePage', 'load profile courses failed', {
-          error: error instanceof Error ? error.message : String(error),
-        })
       })
       .finally(() => setIsLoadingCourses(false))
   }, [])
@@ -362,7 +320,6 @@ export function ProfilePage() {
     })
   }, [user, apiCourses, coursesById])
 
-  // грузим прогресс по каждому курсу
   useEffect(() => {
     const courseIds =
       user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
@@ -486,10 +443,6 @@ export function ProfilePage() {
           ) {
             return [mapped.slug, 0] as const
           }
-          logError('ProfilePage', 'load course progress failed', {
-            courseId,
-            error: msg,
-          })
           return [mapped.slug, 0] as const
         }
       })
@@ -508,12 +461,7 @@ export function ProfilePage() {
           setProgressLoadedSlugs((prev) => new Set([...prev, ...slugs]))
         }
       })
-      .catch((err) => {
-        if (!cancelled)
-          logError('ProfilePage', 'load course progress failed', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-      })
+      .catch(() => {})
       .finally(() => {
         window.clearTimeout(progressLoadMaxWait)
       })
@@ -532,7 +480,6 @@ export function ProfilePage() {
         <div className="flex flex-col gap-[24px] sm:gap-[60px] max-w-[1160px]">
           <ProfileHeaderSection user={user} onLogout={handleLogout} />
 
-          {/* Блок «Мои курсы» */}
           <section className="flex flex-col gap-[40px]">
             <h2
               className="text-left font-normal text-[24px] sm:text-[40px] leading-[1.1] text-black max-w-[810px]"

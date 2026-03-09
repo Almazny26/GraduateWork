@@ -6,7 +6,6 @@ import { fitnessApi } from '@/api/fitness'
 import type { AuthMode, LoginModalProps } from './types'
 import photoMiniImg from '@/assets/photo_mini.png'
 
-// тут тоже достаю email/selectedCourses из ответа API (как в AuthContext)
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (typeof value !== 'object' || value === null) return null
   return value as Record<string, unknown>
@@ -95,12 +94,11 @@ function extractSelectedCourses(payload: unknown): string[] {
   return []
 }
 
-// модалка входа/регистрации, после успеха вызываем login() из контекста
 export function LoginModal({ open, onClose }: LoginModalProps) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [shouldRender, setShouldRender] = useState(open)
-  const [isVisible, setIsVisible] = useState(false) // для анимации появления
+  const [isVisible, setIsVisible] = useState(false)
   const [mode, setMode] = useState<AuthMode>('login')
   const [loginValue, setLoginValue] = useState('')
   const [emailValue, setEmailValue] = useState('')

@@ -1,4 +1,3 @@
-/* Подсказка на заголовках карточек при наведении */
 .card-title-glow {
   display: inline-block;
   border: 1.5px solid transparent;
@@ -16,7 +15,6 @@
   }
 }
 
-/* на мобильной и на тач-устройствах у кнопки «Добавить курс» без эффекта наведения */
 @media (max-width: 639px), (hover: none) {
   .card-add-btn,
   .card-add-btn:hover,
@@ -28,14 +26,12 @@
   }
 }
 
-/* тултип «Добавить курс» не показываем на тач-устройствах (там нет наведения) */
 @media (hover: none) {
   .card-add-tooltip {
     display: none !important;
   }
 }
 
-/* лоадер и переход плюс → лоадер → галочка */
 .card-add-btn-icon-wrap {
   position: relative;
   width: 32px;

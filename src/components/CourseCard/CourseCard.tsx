@@ -26,7 +26,6 @@ export function CourseCard({
           boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
         }}
       >
-        {/* Превью: mobile 343×325, desktop 360×325 */}
         <div className="w-full overflow-hidden relative rounded-t-[30px] aspect-[343/325] sm:aspect-[360/325] bg-white">
           <img
             src={imageSrc}
@@ -35,7 +34,6 @@ export function CourseCard({
             width={360}
             height={325}
           />
-          {/* Кнопка добавления - внутри карточки, чтобы масштабировалась вместе с ней */}
           <button
             type="button"
             disabled={addDisabled}
@@ -75,12 +73,10 @@ export function CourseCard({
             </span>
           </button>
         </div>
-        {/* Текстовый блок: по макету gap 20px, заголовок 32px, чипы gap 6px */}
         <div className="flex flex-col gap-5 w-full px-[21.5px] pb-[15px] sm:pb-1 rounded-b-[30px] bg-white">
           <h2 className="text-[24px] sm:text-[32px] font-medium leading-[1.1] text-[#000000] sm:transition-transform sm:duration-300 sm:ease-out origin-left sm:group-hover:scale-[1.03]">
             <span className="card-title-glow">{title}</span>
           </h2>
-          {/* Чипы: Frame 2043683021 - flex row, gap 6, padding 10, radius 50px, bg #F7F7F7; текст Roboto 16px 400, 110%, #202020 */}
           <div className="flex flex-col gap-[6px]">
             <div className="flex flex-row flex-wrap items-center gap-[6px]">
               <Chip icon="/images/calendar-icon.svg" label="25 дней" />
@@ -122,7 +118,6 @@ export function CourseCard({
   )
 }
 
-/** Чип по макету Frame 2043683021: 163×38, flex row, gap 6, padding 10, radius 50px, #F7F7F7; текст 16px Roboto 400, 110%, #202020. */
 function Chip({ icon, label }: { icon: string; label: string }) {
   return (
     <span

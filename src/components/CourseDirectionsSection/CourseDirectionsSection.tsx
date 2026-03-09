@@ -1,4 +1,4 @@
-import { StarIcon } from './StarIcon'
+import { StarIcon } from '@/components/StarIcon'
 
 type Props = {
   directions: string[]

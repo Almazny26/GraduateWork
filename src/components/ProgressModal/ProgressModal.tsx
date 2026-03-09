@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ExerciseItem } from './types'
+import type { ExerciseItem } from '@/pages/LessonPage/types'
 
 type Props = {
   open: boolean

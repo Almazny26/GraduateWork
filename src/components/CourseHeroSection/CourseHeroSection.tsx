@@ -66,7 +66,6 @@ export function CourseHeroSection({
 
   return (
     <section className="relative z-[120] max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-14 xl:px-[140px] pt-0 sm:pt-0 pb-0 sm:pb-[90px]">
-      {/* мобильный вариант */}
       <div className="md:hidden relative mt-[156px] pb-[30px] w-full max-w-[343px] mx-auto">
         <div
           className="pointer-events-none absolute z-[70]"
@@ -171,37 +170,39 @@ export function CourseHeroSection({
         </div>
       </div>
 
-      {/* десктоп: блок с текстом и картинкой */}
       <div className="hidden md:block">
         <div
           className="relative w-full max-w-[1160px] overflow-hidden"
           style={{ minHeight: 588 }}
-          onMouseEnter={() => setShowcaseHovered(true)}
-          onMouseLeave={() => setShowcaseHovered(false)}
         >
           <div
-            className="absolute left-0 w-full rounded-[30px] overflow-hidden"
+            className="absolute left-0 w-full rounded-[30px] overflow-visible"
             style={{
               top: 102,
               width: 1160,
               height: 486,
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-              boxShadow: '0px 4px 67px -12px rgba(0, 0, 0, 0.13)',
             }}
-          />
-
-          <div
-            className="absolute flex flex-col justify-start items-start pointer-events-auto z-10"
-            style={{
-              left: 40,
-              top: 142,
-              width: 660,
-              maxWidth: 660,
-              height: 406,
-              gap: 28,
-              overflow: 'hidden',
-            }}
+            onMouseEnter={() => setShowcaseHovered(true)}
+            onMouseLeave={() => setShowcaseHovered(false)}
           >
+            <div
+              className="absolute inset-0 rounded-[30px] overflow-hidden"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 1)',
+              }}
+              aria-hidden
+            />
+            <div
+              className="absolute flex flex-col justify-start items-start pointer-events-auto z-10 overflow-visible"
+              style={{
+                left: 40,
+                top: 40,
+                width: 660,
+                maxWidth: 660,
+                height: 406,
+                gap: 28,
+              }}
+            >
             <h2
               className="text-left break-words shrink-0"
               style={{
@@ -254,8 +255,9 @@ export function CourseHeroSection({
               isSelectedByUser={isSelectedByUser}
               isLoggedIn={isLoggedIn}
               fontSize={18}
-              className="flex flex-row justify-center items-center shrink-0 sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] sm:hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)] w-[437px] h-[52px] gap-2.5 px-[26px] py-4 rounded-[46px]"
+              className="relative z-20 flex flex-row justify-center items-center shrink-0 sm:hover:opacity-90 transition-all duration-300 ease-out sm:hover:scale-[1.03] sm:hover:shadow-[0px_8px_22px_rgba(188,236,48,0.45)] w-[437px] h-[52px] gap-2.5 px-[26px] py-4 rounded-[46px]"
             />
+            </div>
           </div>
 
           <div

@@ -4,14 +4,13 @@ import { toast } from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { SkillCourseCard } from '@/components/SkillCourseCard'
 import { ProfileCoursesLoading } from '@/components/Loading'
+import { CourseDirectionsSection } from '@/components/CourseDirectionsSection'
+import { CourseHeroSection } from '@/components/CourseHeroSection'
+import { CourseSuitsSection } from '@/components/CourseSuitsSection'
 import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi, type ApiCourse } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef } from '@/api/mappers'
-import { logError, logInfo } from '@/utils/logger'
-import { CourseDirectionsSection } from './CoursePage/CourseDirectionsSection'
-import { CourseHeroSection } from './CoursePage/CourseHeroSection'
-import { CourseSuitsSection } from './CoursePage/CourseSuitsSection'
-import { splitDescriptionToBullets } from './CoursePage/courseUtils'
+import { splitDescriptionToBullets } from './courseUtils'
 
 const PAGE_LAYOUT_CLASS =
   'min-h-screen bg-page font-sans text-text overflow-x-hidden'
@@ -30,23 +29,12 @@ export function CoursePage() {
   useEffect(() => {
     setApiLoading(true)
     setApiError(null)
-    logInfo('CoursePage', 'load course list started', { slug })
     fitnessApi
       .getCourses()
-      .then((data) => {
-        setApiCourses(data)
-        logInfo('CoursePage', 'load course list success', {
-          count: data.length,
-          slug,
-        })
-      })
-      .catch((error) => {
+      .then((data) => setApiCourses(data))
+      .catch(() => {
         setApiCourses(null)
         setApiError('Не удалось загрузить список курсов.')
-        logError('CoursePage', 'load course list failed', {
-          slug,
-          error: error instanceof Error ? error.message : String(error),
-        })
       })
       .finally(() => setApiLoading(false))
   }, [slug])
@@ -126,19 +114,11 @@ export function CoursePage() {
     if (addCourseLoading) return
 
     setAddCourseLoading(true)
-    logInfo('CoursePage', 'add course started', {
-      slug,
-      courseId: apiCourse._id,
-    })
     try {
       await fitnessApi.addCourseToUser(apiCourse._id, token)
       await refreshMe()
       setPendingAddCourse(false)
       toast.success('Курс добавлен в ваш профиль')
-      logInfo('CoursePage', 'add course success', {
-        slug,
-        courseId: apiCourse._id,
-      })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Не удалось добавить курс'
@@ -146,17 +126,8 @@ export function CoursePage() {
         await refreshMe()
         setPendingAddCourse(false)
         toast('Курс уже был добавлен')
-        logInfo('CoursePage', 'add course already added', {
-          slug,
-          courseId: apiCourse._id,
-        })
       } else {
         toast.error(message)
-        logError('CoursePage', 'add course failed', {
-          slug,
-          courseId: apiCourse._id,
-          message,
-        })
       }
     } finally {
       setAddCourseLoading(false)

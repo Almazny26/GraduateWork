@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* скроллбар в списке уроков в модалке выбора урока */
 .lesson-picker-scroll {
   scrollbar-width: thin;
   scrollbar-color: #000000 #f7f7f7;
@@ -64,7 +63,6 @@
   min-height: 116px;
 }
 
-/* Кастомный курсор по макету - один вид везде, в т.ч. при наведении на кнопки и ссылки */
 body,
 body *,
 body *:hover {
@@ -80,7 +78,6 @@ body {
     sans-serif;
 }
 
-/* при наведении на кнопки - чуть увеличиваю и делаю прозрачнее (только десктоп) */
 button:not(:disabled):not(.card-add-btn) {
   transition:
     transform 0.3s ease-out,
@@ -96,7 +93,6 @@ button:not(:disabled):not(.card-add-btn) {
   }
 }
 
-/* анимации на больших карточках курсов (йога, стретчинг и т.д.) при ховере */
 @keyframes skillcard-step {
   0% {
     transform: translateY(0);
@@ -187,7 +183,6 @@ button:not(:disabled):not(.card-add-btn) {
   }
 }
 
-/* Полоска прогресса на карточке курса: анимация при загрузке */
 @keyframes profile-progress-loading {
   0% {
     background-position: -100% 0;
@@ -212,7 +207,6 @@ button:not(:disabled):not(.card-add-btn) {
   animation: profile-progress-loading 1.4s ease-in-out infinite;
 }
 
-/* Модалка «Выберите тренировку» */
 .lesson-picker-modal {
   display: flex;
   flex-direction: column;
@@ -270,7 +264,6 @@ button:not(:disabled):not(.card-add-btn) {
   }
 }
 
-/* Модалка «Мой прогресс» */
 .progress-modal {
   width: min(343px, calc(100vw - 24px));
   height: 572px;

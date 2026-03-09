@@ -33,5 +33,3 @@ npm run build
 npm run lint
 npm test
 ```
-
-В .env можно задать `VITE_API_BASE_URL` если бэк на другом адресе. По умолчанию используется хост из задания.

@@ -7,19 +7,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { fitnessApi } from '@/api/fitness'
 import { mapApiCourseToAppCourseRef, type AppCourseRef } from '@/api/mappers'
 import { percentToReps, repsToPercent } from '@/utils/progress'
-import { logError, logInfo } from '@/utils/logger'
 import type {
   ExerciseDef,
   ExerciseItem,
   SelectedLessonItem,
-} from './LessonPage/types'
-import { ExercisesListDesktop, ExercisesListMobile } from './LessonPage/ExercisesList'
-import { ProgressModal } from './LessonPage/ProgressModal'
-import { ProgressSavedModal } from './LessonPage/ProgressSavedModal'
-import { SelectedLessonsList } from './LessonPage/SelectedLessonsList'
-import { VideoBlock } from './LessonPage/VideoBlock'
+} from './types'
+import { ExercisesListDesktop, ExercisesListMobile } from '@/components/ExercisesList'
+import { ProgressModal } from '@/components/ProgressModal'
+import { ProgressSavedModal } from '@/components/ProgressSavedModal'
+import { SelectedLessonsList } from '@/components/SelectedLessonsList'
+import { VideoBlock } from '@/components/VideoBlock'
 
-// начальные проценты по упражнениям (все 0 или одно значение)
 function createExerciseProgress(
   items: ExerciseItem[],
   value: number
@@ -31,7 +29,6 @@ function createDraftProgress(items: ExerciseItem[]): Record<string, string> {
   return Object.fromEntries(items.map((item) => [item.id, '']))
 }
 
-// страница урока: видео + список упражнений + модалка «Мой прогресс»
 export function LessonPage() {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>()
   const location = useLocation()
@@ -72,7 +69,6 @@ export function LessonPage() {
       .filter(Boolean)
   }, [location.search])
 
-  // открываю модалку прогресса и подставляю текущие значения в инпуты
   const openProgressModal = () => {
     if (isLessonLoading || exerciseItems.length === 0 || isSavingProgress)
       return
@@ -103,7 +99,6 @@ export function LessonPage() {
     }, 240)
   }
 
-  // сохраняю прогресс на бэк и закрываю модалку
   const saveProgress = async () => {
     if (isSavingProgress) return
     const normalizeReps = (value: string) => {
@@ -125,11 +120,6 @@ export function LessonPage() {
       ])
     ) as Record<string, number>
     setExerciseProgress(nextExerciseProgress)
-    logInfo('LessonPage', 'save progress started', {
-      slug,
-      lessonId,
-      exercises: progressData.length,
-    })
     setIsSavingProgress(true)
     let saveSucceeded = false
 
@@ -141,22 +131,11 @@ export function LessonPage() {
           progressData,
           token
         )
-        logInfo('LessonPage', 'save progress success', {
-          slug,
-          lessonId,
-          courseId,
-        })
         saveSucceeded = true
       }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : String(error)
-      logError('LessonPage', 'save progress failed', {
-        slug,
-        lessonId,
-        courseId,
-        error: message,
-      })
       toast.error(
         message ||
           'Не удалось сохранить прогресс. Проверьте интернет и попробуйте снова.'
@@ -239,7 +218,6 @@ export function LessonPage() {
     setExerciseProgress({})
     setDraftProgress({})
     setSelectedLessons([])
-    logInfo('LessonPage', 'load lesson started', { slug, lessonId })
     setShowVideo(false)
     setVideoLoaded(false)
     fitnessApi
@@ -252,7 +230,6 @@ export function LessonPage() {
         if (!matchedCourse) {
           if (cancelled) return
           setLessonLoadError('Курс не найден в API')
-          logError('LessonPage', 'course not found by slug', { slug, lessonId })
           return
         }
         const mappedCourseRef = mapApiCourseToAppCourseRef(matchedCourse)
@@ -323,21 +300,10 @@ export function LessonPage() {
           setExerciseProgress(createExerciseProgress(mappedItems, 0))
         }
         setDraftProgress(createDraftProgress(mappedItems))
-        logInfo('LessonPage', 'load lesson success', {
-          slug,
-          lessonId,
-          courseId: matchedCourse._id,
-          exerciseCount: mappedItems.length,
-        })
       })
-      .catch((error) => {
+      .catch(() => {
         if (cancelled) return
         setLessonLoadError('Не удалось загрузить данные тренировки')
-        logError('LessonPage', 'load lesson failed', {
-          slug,
-          lessonId,
-          error: error instanceof Error ? error.message : String(error),
-        })
       })
       .finally(() => {
         if (!cancelled) setIsLessonLoading(false)

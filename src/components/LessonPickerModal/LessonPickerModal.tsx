@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ProfileCoursesLoading } from '@/components/Loading'
-import type { PickerLesson } from './types'
+import type { PickerLesson } from '@/pages/ProfilePage/types'
 
 type Props = {
   visible: boolean

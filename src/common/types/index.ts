@@ -1,5 +1,3 @@
-// сюда вынес то, что юзается в разных местах - чтобы не дублировать
-
 export type User = {
   name: string
   login: string
@@ -20,7 +18,6 @@ export type AuthContextValue = {
   closeLoginModal: () => void
 }
 
-/** ссылка на курс для карточек и навигации (после маппинга с API) */
 export type AppCourseRef = {
   courseId: string
   slug: string
