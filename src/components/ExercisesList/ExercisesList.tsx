@@ -1,3 +1,4 @@
+// список упражнений тренировки и кнопки для обновления прогресса
 import type { ExerciseItem } from '@/pages/LessonPage/types'
 
 type Props = {

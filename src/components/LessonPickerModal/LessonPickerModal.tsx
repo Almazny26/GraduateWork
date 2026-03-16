@@ -1,3 +1,4 @@
+// модальное окно для выбора одной или нескольких тренировок внутри курса
 import { useEffect, useRef, useState } from 'react'
 import { ProfileCoursesLoading } from '@/components/Loading'
 import type { PickerLesson } from '@/pages/ProfilePage/types'

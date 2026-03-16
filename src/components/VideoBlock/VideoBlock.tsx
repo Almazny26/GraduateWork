@@ -1,3 +1,4 @@
+// блок с видео тренировки, который показывает обложку и запускает ролик по нажатию
 type Props = {
   lessonVideoUrl: string
   lessonTitle: string

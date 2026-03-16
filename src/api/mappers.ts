@@ -1,9 +1,12 @@
+// здесь находятся функции, которые приводят данные из API к удобному виду для интерфейса
 import type { ApiCourse } from '@/api/types'
-import type { AppCourseRef } from '@/common/types'
+import type { AppCourseRef } from '@/common.types'
 import { COURSES } from '@/data/courses'
 
 export type { AppCourseRef } from '@/common/types'
 
+// некоторые названия курсов могут приходить в разных вариантах,
+// здесь задаём словарь, который приводит их к одному slug
 const COURSE_SLUG_ALIASES: Record<string, string> = {
   yoga: 'yoga',
   stretching: 'stretching',
@@ -18,6 +21,7 @@ const COURSE_SLUG_ALIASES: Record<string, string> = {
   'body-flexx': 'bodyflex',
 }
 
+// приводим английское название курса к аккуратному виду для slug
 function normalizeCourseNameEN(value: string): string {
   return value
     .trim()
@@ -27,6 +31,7 @@ function normalizeCourseNameEN(value: string): string {
     .replace(/-+/g, '-')
 }
 
+// приводим русское название курса к виду, удобному для сравнения
 function normalizeCourseNameRU(value: string): string {
   return value
     .trim()
@@ -36,16 +41,20 @@ function normalizeCourseNameRU(value: string): string {
     .replace(/[^\p{L}\p{N}\s-]/gu, '')
 }
 
+// получаем slug из английского названия курса с учётом словаря алиасов
 export function toSlugFromNameEN(nameEN: string): string {
   const normalized = normalizeCourseNameEN(nameEN)
   if (!normalized) return ''
   return COURSE_SLUG_ALIASES[normalized] ?? normalized
 }
 
+// по slug пытаемся найти "визуальный" курс из локального списка COURSES
 export function getVisualCourseBySlug(slug: string) {
   return COURSES.find((course) => course.slug === slug)
 }
 
+// главная функция маппинга курса из API в формат,
+// который удобно использовать в компонентах интерфейса
 export function mapApiCourseToAppCourseRef(course: ApiCourse): AppCourseRef {
   const slugFromEN = toSlugFromNameEN(course.nameEN)
   const visualByEN = getVisualCourseBySlug(slugFromEN)
