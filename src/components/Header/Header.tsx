@@ -1,3 +1,4 @@
+// верхняя панель сайта с логотипом и зоной профиля пользователя
 import './Header.css'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -11,9 +12,11 @@ export function Header() {
   const [dropdownAnimated, setDropdownAnimated] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const closeTimeoutRef = useRef<number | null>(null)
+  // на главной и странице курса под логотипом показываем подпись
   const showTagline =
     location.pathname === '/' || /^\/course\/[^/]+\/?$/.test(location.pathname)
 
+  // закрываем выпадающее меню профиля с небольшой анимацией
   const closeDropdown = useCallback(() => {
     if (closeTimeoutRef.current) {
       window.clearTimeout(closeTimeoutRef.current)

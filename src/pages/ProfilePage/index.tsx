@@ -1,3 +1,4 @@
+// страница профиля пользователя с его курсами
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
@@ -19,35 +20,56 @@ import type { PickerLesson, ProfileCourse } from './types'
 
 export function ProfilePage() {
   const navigate = useNavigate()
+  // из контекста получаем информацию о пользователе и функции авторизации
   const { user, token, logout, openLoginModal, refreshMe } = useAuth()
+  // здесь храним общий процент прогресса по каждому курсу (по slug)
   const [courseProgressMap, setCourseProgressMap] = useState<
     Record<string, number>
   >({})
+  // список курсов, который пришёл с API
   const [apiCourses, setApiCourses] = useState<ApiCourse[]>([])
+  // здесь отдельно дозакачиваем курсы по id, если их не было в общем списке
   const [coursesById, setCoursesById] = useState<Record<string, ApiCourse>>({})
+  // флаг, что профиль ещё грузит курсы
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+  // текст ошибки при загрузке курсов профиля
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null)
+  // id курса, который сейчас удаляется из профиля
   const [removingCourseId, setRemovingCourseId] = useState<string | null>(null)
+  // id курса, по которому сейчас запускается тренировка
   const [startingCourseId, setStartingCourseId] = useState<string | null>(null)
+  // id курсов, которые уже удалены, чтобы не показывать их в списке
   const [removedCourseIds, setRemovedCourseIds] = useState<string[]>([])
+  // сюда кладём список уроков (тренировок) для каждого курса
   const [courseWorkoutsMap, setCourseWorkoutsMap] = useState<
     Record<string, PickerLesson[]>
   >({})
+  // курс, для которого сейчас открыт выбор урока
   const [lessonPickerCourse, setLessonPickerCourse] =
     useState<ProfileCourse | null>(null)
+  // видна ли модалка выбора урока
   const [lessonPickerVisible, setLessonPickerVisible] = useState(false)
+  // флаг загрузки уроков для модалки
   const [isLessonPickerLoading, setIsLessonPickerLoading] = useState(false)
+  // текст ошибки при загрузке уроков
   const [lessonPickerLoadError, setLessonPickerLoadError] = useState<
     string | null
   >(null)
+  // какие уроки пользователь выбрал в модалке
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([])
+  // таймер, чтобы чуть позже полностью очистить состояние модалки
   const lessonPickerCloseTimerRef = useRef<number | null>(null)
+  // счётчик запросов к API для модалки, чтобы не путать ответы
   const lessonPickerRequestIdRef = useRef(0)
+  // просто счётчик, чтобы форсировать обновление прогресса
   const [progressRefreshTrigger, setProgressRefreshTrigger] = useState(0)
+  // сюда складываем slug-и курсов, по которым уже удалось получить прогресс
   const [progressLoadedSlugs, setProgressLoadedSlugs] = useState<Set<string>>(
     () => new Set()
   )
 
+  // если пользователь долго отсутствовал (страница была неактивна),
+  // то при возвращении обновляем прогресс по курсам
   useEffect(() => {
     let hiddenAt: number | null = null
     let timeoutId: number | null = null
@@ -71,6 +93,7 @@ export function ProfilePage() {
     }
   }, [])
 
+  // если пользователь не авторизован, перенаправляем на главную и открываем модалку входа
   useEffect(() => {
     if (!user) {
       openLoginModal()
@@ -78,11 +101,13 @@ export function ProfilePage() {
     }
   }, [user, openLoginModal, navigate])
 
+  // выход из профиля
   const handleLogout = () => {
     logout()
     navigate('/')
   }
 
+  // открытие модалки выбора урока для конкретного курса
   const openLessonPicker = async (course: ProfileCourse) => {
     if (lessonPickerCloseTimerRef.current) {
       window.clearTimeout(lessonPickerCloseTimerRef.current)
@@ -92,12 +117,14 @@ export function ProfilePage() {
     setLessonPickerCourse(course)
     setLessonPickerLoadError(null)
     setSelectedLessonIds([])
+    // небольшая задержка для плавной анимации появления модалки
     requestAnimationFrame(() => setLessonPickerVisible(true))
     setIsLessonPickerLoading(true)
 
     let lessons = courseWorkoutsMap[course.courseId] ?? []
     let failedToLoad = false
     const requestId = ++lessonPickerRequestIdRef.current
+    // если уроки ещё не загружали, запрашиваю их с API
     if (lessons.length === 0) {
       try {
         const workouts = await fitnessApi.getCourseWorkouts(
@@ -124,19 +151,23 @@ export function ProfilePage() {
     if (lessons.length === 0 && !failedToLoad) {
       setLessonPickerLoadError('Для курса пока нет доступных уроков')
     }
+    // по умолчанию выбираю первый урок в списке
     setSelectedLessonIds(lessons[0]?.id ? [lessons[0].id] : [])
     setIsLessonPickerLoading(false)
   }
 
+  // сброс прогресса по курсу (когда уже 100% и хотим пройти заново)
   const resetCourseProgress = async (course: ProfileCourse) => {
     if (!token) return
     try {
       await fitnessApi.resetCourseProgress(course.courseId, token)
       setCourseProgressMap((prev) => ({ ...prev, [course.slug]: 0 }))
     } catch {
+      // здесь ошибки не показываю, просто не меняю состояние
     }
   }
 
+  // начать курс: если закончен - сбрасываем прогресс, потом открываем модалку выбора урока
   const startCourse = async (course: ProfileCourse, progress: number) => {
     if (
       startingCourseId === course.courseId ||
@@ -154,6 +185,7 @@ export function ProfilePage() {
     }
   }
 
+  // удалить курс из профиля
   const removeCourse = async (course: ProfileCourse) => {
     if (!token) return
     if (removingCourseId === course.courseId) return
@@ -181,6 +213,8 @@ export function ProfilePage() {
     }
   }
 
+  // если пользователь снова выбрал курс, который раньше считался удалённым,
+  // убираем его из списка удалённых
   useEffect(() => {
     if (!user) return
     setRemovedCourseIds((prev) =>
@@ -188,6 +222,7 @@ export function ProfilePage() {
     )
   }, [user, user?.selectedCourses])
 
+  // закрытие модалки выбора урока с небольшим таймером для анимации
   const closeLessonPicker = () => {
     setLessonPickerVisible(false)
     setIsLessonPickerLoading(false)
@@ -203,6 +238,7 @@ export function ProfilePage() {
     }, 240)
   }
 
+  // начать тренировку, опираясь на выбранные в модалке уроки
   const startSelectedLesson = () => {
     if (!lessonPickerCourse || selectedLessonIds.length === 0) return
     const orderedSelection = pickerLessons
@@ -220,6 +256,7 @@ export function ProfilePage() {
     closeLessonPicker()
   }
 
+  // переключение выбранного урока в модалке
   const toggleLessonSelection = (lessonId: string) => {
     setSelectedLessonIds((prev) =>
       prev.includes(lessonId)
@@ -228,6 +265,7 @@ export function ProfilePage() {
     )
   }
 
+  // объединяем курсы из общего списка и из точечных запросов по id
   const allKnownCourses = useMemo(
     () => [
       ...apiCourses,
@@ -239,10 +277,12 @@ export function ProfilePage() {
     [apiCourses, coursesById]
   )
 
+  // фактически выбранные курсы пользователя, из которых исключаем уже удалённые
   const effectiveSelectedCourses = user
     ? user.selectedCourses.filter((id) => !removedCourseIds.includes(id))
     : []
 
+  // здесь мы собираем курсы пользователя вместе с их прогрессом
   const purchasedWithCourse = user
     ? (effectiveSelectedCourses
         .map((courseId) => {
@@ -260,11 +300,15 @@ export function ProfilePage() {
         })
         .filter(Boolean) as { course: ProfileCourse; progress: number }[])
     : []
+
+  // уроки, которые есть у курса, выбранного в модалке
   const pickerLessons = lessonPickerCourse
     ? (courseWorkoutsMap[lessonPickerCourse.courseId] ?? [])
     : []
+  // заголовок для модалки: название курса плюс приписка
   const lessonSeriesTitle = `${lessonPickerCourse?.title ?? ''} на каждый день`
 
+  // при размонтировании страницы профиля чистим таймер модалки
   useEffect(() => {
     return () => {
       if (lessonPickerCloseTimerRef.current) {
@@ -273,6 +317,7 @@ export function ProfilePage() {
     }
   }, [])
 
+  // первый запрос за курсами профиля
   useEffect(() => {
     setIsLoadingCourses(true)
     setProfileLoadError(null)
@@ -286,6 +331,8 @@ export function ProfilePage() {
       .finally(() => setIsLoadingCourses(false))
   }, [])
 
+  // если у пользователя в профиле есть id курсов, которых нет в apiCourses,
+  // то дозакачиваем их по одному
   useEffect(() => {
     if (!user || user.selectedCourses.length === 0) return
     if (typeof fitnessApi.getCourseById !== 'function') return
@@ -320,6 +367,7 @@ export function ProfilePage() {
     })
   }, [user, apiCourses, coursesById])
 
+  // здесь считаем общий прогресс по каждому курсу (средний процент по всем тренировкам)
   useEffect(() => {
     const courseIds =
       user?.selectedCourses.filter((id) => !removedCourseIds.includes(id)) ?? []
@@ -328,6 +376,7 @@ export function ProfilePage() {
     if (courseIds.length === 0) return
     let cancelled = false
     setProgressLoadedSlugs(new Set())
+    // запасной таймаут: если прогресс долго грузится, всё равно считаем, что данные пришли
     const progressLoadMaxWait = window.setTimeout(() => {
       if (cancelled) return
       const timeoutSlugs = courseIds
@@ -358,6 +407,8 @@ export function ProfilePage() {
               ? progress.workoutsProgress
               : []
 
+          // если не пришёл сводный прогресс по всем тренировкам,
+          // пробуем отдельно запросить прогресс по каждой тренировке
           if (workoutsProgress.length === 0 && workoutsList.length > 0) {
             const fallbackProgress = await Promise.all(
               workoutsList.map((workout) =>
@@ -375,6 +426,7 @@ export function ProfilePage() {
             workoutsProgress.map((wp) => [wp.workoutId, wp])
           )
 
+          // вспомогательная функция: считает процент по одной тренировке
           function getWorkoutPercent(
             workout: { _id: string; exercises?: { quantity?: number }[] },
             workoutProgress: ApiWorkoutProgress | undefined
@@ -384,6 +436,7 @@ export function ProfilePage() {
             const progressData = Array.isArray(workoutProgress.progressData)
               ? workoutProgress.progressData
               : []
+            // если нет списка упражнений, то просто проверяем, было ли хоть какое-то движение
             if (
               !Array.isArray(workout.exercises) ||
               workout.exercises.length === 0
@@ -408,6 +461,7 @@ export function ProfilePage() {
             )
           }
 
+          // список id тренировок, которые входят в курс
           const allWorkoutIds = Array.isArray(apiCourse.workouts)
             ? apiCourse.workouts
             : workoutsList.map((w) => w._id)
@@ -430,6 +484,8 @@ export function ProfilePage() {
           return [mapped.slug, avg] as const
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err)
+          // если сервер говорит, что курс не добавлен или не найден,
+          // то просто считаем прогресс по нему равным 0
           if (
             msg.includes('не был добавлен') ||
             msg.includes('не был добавлен этот курс')
@@ -478,6 +534,7 @@ export function ProfilePage() {
       <Header />
       <main className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[50px] sm:pt-[95px] pb-0 sm:pb-12">
         <div className="flex flex-col gap-[24px] sm:gap-[60px] max-w-[1160px]">
+          {/* шапка профиля с именем пользователя и кнопкой выхода */}
           <ProfileHeaderSection user={user} onLogout={handleLogout} />
 
           <section className="flex flex-col gap-[40px]">
@@ -488,7 +545,9 @@ export function ProfilePage() {
               Мои курсы
             </h2>
             <div className="flex flex-row flex-wrap gap-6 sm:gap-[40px] overflow-visible">
+              {/* пока список курсов профиля грузится, показываю лоадер */}
               {isLoadingCourses && <ProfileCoursesLoading />}
+              {/* если была ошибка при загрузке курсов профиля */}
               {!isLoadingCourses && profileLoadError && (
                 <p
                   style={{ fontFamily: 'Roboto, sans-serif', color: '#dc2626' }}
@@ -496,6 +555,7 @@ export function ProfilePage() {
                   {profileLoadError}
                 </p>
               )}
+              {/* сами карточки курсов профиля с прогрессом */}
               {purchasedWithCourse.map(({ course, progress }) => (
                 <ProfileCourseCard
                   key={course.slug}
@@ -516,6 +576,7 @@ export function ProfilePage() {
                   startLoading={startingCourseId === course.courseId}
                 />
               ))}
+              {/* если курсов ещё нет, честно это показываю */}
               {!isLoadingCourses &&
                 !profileLoadError &&
                 purchasedWithCourse.length === 0 && (
@@ -527,6 +588,7 @@ export function ProfilePage() {
           </section>
         </div>
       </main>
+      {/* футер с кнопкой "наверх" */}
       <footer className="max-w-[1440px] mx-auto px-4 sm:px-10 md:px-14 lg:px-[140px] pt-[24px] sm:pt-0 pb-12 sm:pb-16">
         <div className="w-full max-w-[343px] sm:max-w-none mx-auto flex justify-end sm:justify-center">
           <a
@@ -560,6 +622,7 @@ export function ProfilePage() {
           </a>
         </div>
       </footer>
+      {/* модальное окно выбора урока для старта тренировки */}
       {lessonPickerCourse && (
         <LessonPickerModal
           visible={lessonPickerVisible}

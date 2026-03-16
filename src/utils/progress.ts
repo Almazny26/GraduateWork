@@ -1,9 +1,11 @@
+// утилита для перевода количества повторений в проценты выполнения
 export function repsToPercent(reps: number, quantity: number): number {
   const safeQuantity = Math.max(1, quantity)
   const raw = Math.round((reps / safeQuantity) * 100)
   return Math.min(100, Math.max(0, raw))
 }
 
+// обратная утилита: из процента получаем примерное количество повторений
 export function percentToReps(percent: number, quantity: number): number {
   const safeQuantity = Math.max(1, quantity)
   const safePercent = Math.min(100, Math.max(0, percent))

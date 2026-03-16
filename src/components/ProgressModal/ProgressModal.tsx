@@ -1,3 +1,4 @@
+// модальное окно, в котором пользователь вручную вводит количество повторений по упражнениям
 import { useEffect, useRef, useState } from 'react'
 import type { ExerciseItem } from '@/pages/LessonPage/types'
 

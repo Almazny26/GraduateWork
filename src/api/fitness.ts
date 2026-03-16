@@ -1,3 +1,4 @@
+// модуль, который отвечает за все запросы к API бэкенда
 import axios, { type AxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '@/api/config'
 import type {
@@ -16,8 +17,10 @@ export type {
   ApiWorkoutProgress,
 } from '@/api/types'
 
+// максимальное время ожидания ответа сервера в миллисекундах
 const API_TIMEOUT_MS = 45000
 
+// пробуем вытащить человеко-понятное сообщение об ошибке из ответа API
 function getApiMessage(response: { data?: unknown; status: number }, path: string): string | null {
   const data = response.data
   if (typeof data === 'object' && data !== null) {
@@ -34,11 +37,14 @@ function getApiMessage(response: { data?: unknown; status: number }, path: strin
   return null
 }
 
+// общий экземпляр axios с базовым адресом и таймаутом
 const client = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT_MS,
 })
 
+// перехватчик запросов: здесь сбрасываем старый заголовок Content-Type
+// и всегда отправляем данные как текст, чтобы сервер не путался
 client.interceptors.request.use((cfg) => {
   if (cfg.headers && cfg.data !== undefined) {
     delete cfg.headers['Content-Type']
@@ -48,6 +54,8 @@ client.interceptors.request.use((cfg) => {
   return cfg
 })
 
+// универсальная функция-обёртка над axios
+// принимает метод, путь и опции и возвращает данные ожидаемого типа T
 async function request<T>(
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
@@ -99,6 +107,7 @@ async function request<T>(
   }
 }
 
+// объект с конкретными методами API, которые использует приложение
 export const fitnessApi = {
   register: (email: string, password: string) =>
     request<{ message: string }>('POST', '/auth/register', {
